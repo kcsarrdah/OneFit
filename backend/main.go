@@ -22,10 +22,23 @@ func main() {
 
 	// Setup Database
 	db := models.SetupDB()
-	db.AutoMigrate(&models.User{}, &models.Workout{}, &models.Meal{})
+
+	db.AutoMigrate(
+		&models.User{},
+		&models.FastType{},
+		&models.FastingSession{},
+		&models.Workout{},
+		&models.Meal{},
+	)
+
+	// Initialize default fast types
+	if err := models.InitializeDefaultFastTypes(db); err != nil {
+		log.Printf("Error initializing default fast types: %v", err)
+	}
 
 	// Setup Routes
 	routes.SetupAuthRoutes(r, db)
+	routes.SetupFastingRoutes(r, db) // Add fasting routes
 
 	// Basic Routes
 	r.GET("/", func(c *gin.Context) {
@@ -37,6 +50,11 @@ func main() {
 			"status":   "healthy",
 			"database": "connected",
 		})
+	})
+
+	r.GET("/debug/routes", func(c *gin.Context) {
+		routes := r.Routes()
+		c.JSON(200, routes)
 	})
 
 	// Start Server
