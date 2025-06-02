@@ -25,6 +25,11 @@ const MAPPING = {
   'heart.fill': 'favorite',
   'fork.knife': 'restaurant',
   'figure.run': 'directions-run',
+  'chevron.down': 'keyboard-arrow-down',
+  'chevron.up': 'keyboard-arrow-up', 
+  'flame.fill': 'local-fire-department',
+  'arrow.2.circlepath': 'refresh',
+  'shield.fill': 'shield',
 } as const satisfies Record<string, string>;
 
 /**

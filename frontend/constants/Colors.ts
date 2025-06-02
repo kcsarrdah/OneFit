@@ -36,6 +36,7 @@ export const Colors = {
     border: '#e2e8f0',               // 214.3 31.8% 91.4%
     input: '#e2e8f0',                // 214.3 31.8% 91.4%
     ring: '#66a3a3',                 // 174 45% 56%
+    overlay: 'rgba(0, 0, 0, 0.5)',
     
     // Chart colors
     chart1: '#f97316',               // 12 76% 61%
@@ -73,6 +74,7 @@ export const Colors = {
     border: '#262626',               // 217.2 32.6% 17.5%
     input: '#262626',                // 217.2 32.6% 17.5%
     ring: '#66a3a3',                 // 174 45% 56%
+    overlay: 'rgba(0, 0, 0, 0.7)',
     
     // Chart colors (dark mode variants)
     chart1: '#3b82f6',               // 220 70% 50%
