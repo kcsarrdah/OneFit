@@ -7,7 +7,8 @@ import {
   TextStyle, 
   TouchableOpacityProps,
   Animated,
-  View
+  View,
+  StyleProp
 } from 'react-native';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
@@ -37,8 +38,8 @@ export interface ButtonProps extends Omit<TouchableOpacityProps, 'style'> {
   size?: ButtonSize;
   asChild?: boolean;
   children: React.ReactNode;
-  style?: ViewStyle;
-  textStyle?: TextStyle;
+  style?: StyleProp<ViewStyle>;
+  textStyle?: StyleProp<TextStyle>; 
 }
 
 export const Button = React.forwardRef<React.ElementRef<typeof TouchableOpacity>, ButtonProps>(

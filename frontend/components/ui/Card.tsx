@@ -6,7 +6,8 @@ import {
   ViewStyle, 
   TextStyle, 
   ViewProps,
-  TextProps
+  TextProps,
+  StyleProp
 } from 'react-native';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
@@ -40,12 +41,12 @@ import { Colors } from '@/constants/Colors';
  */
 
 interface CardProps extends ViewProps {
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>; 
 }
 
 interface CardTextProps extends Omit<TextProps, 'style'> {
   children: React.ReactNode;
-  style?: TextStyle;
+  style?: StyleProp<TextStyle>;
 }
 
 export const Card = React.forwardRef<View, CardProps>(
