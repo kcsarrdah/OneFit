@@ -149,37 +149,35 @@ describe('useFastingTimer', () => {
     jest.useRealTimers();
   });
 
-  it('should auto-stop when goal duration is reached', async () => {
+it('should continue running past goal duration without auto-stopping', async () => {
     jest.useFakeTimers();
     
     const shortGoal = 30; // 30 seconds for quick test
     const { result } = renderHook(() => 
       useFastingTimer({ goalDurationSeconds: shortGoal, onComplete: mockOnComplete })
     );
-
+  
     const startTime = Date.now();
     jest.spyOn(Date, 'now').mockReturnValue(startTime);
-
+  
     await act(async () => {
       result.current.startFast();
     });
-
-    // Advance time to exactly the goal duration
-    const endTime = startTime + (shortGoal * 1000);
-    jest.spyOn(Date, 'now').mockReturnValue(endTime);
+  
+    // Advance time past the goal duration (10 seconds overtime)
+    const overtimeEndTime = startTime + (shortGoal + 10) * 1000;
+    jest.spyOn(Date, 'now').mockReturnValue(overtimeEndTime);
     
     act(() => {
       jest.advanceTimersByTime(1000); // Trigger the interval check
     });
-
-    expect(result.current.isActive).toBe(false);
-    expect(mockOnComplete).toHaveBeenCalledWith({
-      startTime,
-      endTime,
-      actualDurationSeconds: shortGoal,
-      goalDurationSeconds: shortGoal,
-    });
-
+  
+    // Should still be active and continue counting
+    expect(result.current.isActive).toBe(true);
+    expect(result.current.elapsedSeconds).toBe(shortGoal + 10); // 40 seconds total
+    expect(result.current.progressPercentage).toBe(100); // Capped at 100% for display
+    expect(mockOnComplete).not.toHaveBeenCalled(); // No auto-completion
+  
     jest.useRealTimers();
   });
 

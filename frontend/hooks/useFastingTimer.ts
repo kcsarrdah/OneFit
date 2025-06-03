@@ -104,14 +104,7 @@ export function useFastingTimer({ goalDurationSeconds, onComplete }: UseFastingT
       intervalRef.current = setInterval(() => {
         const now = Date.now();
         const elapsed = Math.floor((now - startTime) / 1000);
-        
-        if (elapsed >= goalDurationSeconds) {
-          // Auto-stop at goal
-          setElapsedSeconds(goalDurationSeconds);
-          completeState(startTime + goalDurationSeconds * 1000);
-        } else {
-          setElapsedSeconds(elapsed);
-        }
+        setElapsedSeconds(elapsed);
       }, 1000);
     }
 
@@ -121,7 +114,7 @@ export function useFastingTimer({ goalDurationSeconds, onComplete }: UseFastingT
         intervalRef.current = null;
       }
     };
-  }, [isActive, startTime, goalDurationSeconds, completeState]);
+  }, [isActive, startTime]);
 
   // Background/foreground sync
   useEffect(() => {

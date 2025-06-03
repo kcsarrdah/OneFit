@@ -30,6 +30,10 @@ const MAPPING = {
   'flame.fill': 'local-fire-department',
   'arrow.2.circlepath': 'refresh',
   'shield.fill': 'shield',
+  'gearshape': 'settings',
+  'play.fill': 'play-arrow',
+  'stop.fill': 'stop',
+  'arrow.counterclockwise': 'refresh',
 } as const satisfies Record<string, string>;
 
 /**
