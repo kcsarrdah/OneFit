@@ -7,8 +7,20 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// Use this for development/testing only
+const DEV_MODE = true
+const TEST_USER_ID = 1
+
 func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// Development/testing bypass
+		if DEV_MODE {
+			c.Set("userId", uint(TEST_USER_ID))
+			c.Next()
+			return
+		}
+
+		// Normal authentication flow
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
 			c.JSON(401, gin.H{"error": "Authorization header required"})

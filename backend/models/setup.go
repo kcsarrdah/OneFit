@@ -13,7 +13,7 @@ func SetupDB() *gorm.DB {
 	}
 
 	// Auto create tables
-	db.AutoMigrate(&User{}, &Workout{}, &Meal{})
+	db.AutoMigrate(&User{}, &Workout{}, &Meal{}, &FastSession{})
 
 	return db
 }

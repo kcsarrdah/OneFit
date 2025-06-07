@@ -7,6 +7,8 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 func main() {
@@ -22,10 +24,16 @@ func main() {
 
 	// Setup Database
 	db := models.SetupDB()
-	db.AutoMigrate(&models.User{}, &models.Workout{}, &models.Meal{})
+
+	// FIXED: Include FastSession in migration
+	db.AutoMigrate(&models.User{}, &models.Workout{}, &models.Meal{}, &models.FastSession{})
+
+	// ADDED: Create test user for development (auth middleware expects user ID 1)
+	createTestUser(db)
 
 	// Setup Routes
 	routes.SetupAuthRoutes(r, db)
+	routes.SetupFastingRoutes(r, db)
 
 	// Basic Routes
 	r.GET("/", func(c *gin.Context) {
@@ -39,7 +47,41 @@ func main() {
 		})
 	})
 
-	// Start Server
-	log.Println("Server started on :8080")
-	r.Run(":8080")
+	// FIXED: Start server on port 3000 to match frontend expectations
+	log.Println("Server started on :3000")
+	r.Run(":3000")
+}
+
+// createTestUser creates a test user for development purposes
+func createTestUser(db *gorm.DB) {
+	var testUser models.User
+
+	// Check if test user already exists
+	if err := db.First(&testUser, 1).Error; err != nil {
+		// User doesn't exist, create it
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte("testpassword"), bcrypt.DefaultCost)
+		if err != nil {
+			log.Printf("Error hashing test password: %v", err)
+			return
+		}
+
+		testUser = models.User{
+			Email:    "test@onefit.com",
+			Password: string(hashedPassword),
+			Name:     "Test User",
+		}
+
+		// Set ID to 1 explicitly (for development only)
+		testUser.ID = 1
+
+		if result := db.Create(&testUser); result.Error != nil {
+			log.Printf("Error creating test user: %v", result.Error)
+		} else {
+			log.Println("✅ Created test user (ID: 1) for development")
+			log.Println("   Email: test@onefit.com")
+			log.Println("   Password: testpassword")
+		}
+	} else {
+		log.Println("✅ Test user already exists (ID: 1)")
+	}
 }
