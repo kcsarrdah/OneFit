@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 
 import { ThemeProvider as CustomThemeProvider, useTheme } from '@/contexts/ThemeContext';
+import { NavigationProvider } from '@/contexts/NavigationContext';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 
 function RootLayoutContent() {
@@ -18,6 +19,7 @@ function RootLayoutContent() {
   }
 
   return (
+    <NavigationProvider>
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack>
         <Stack.Screen 
@@ -32,6 +34,7 @@ function RootLayoutContent() {
       </Stack>
       <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
     </ThemeProvider>
+    </NavigationProvider>
   );
 }
 
