@@ -26,7 +26,7 @@ export function ScrollableTabBar({ state, descriptors, navigation }: BottomTabBa
   const inactiveTintColor = Colors[colorScheme ?? 'light'].tabIconDefault;
 
   return (
-    <View style={[styles.container, { bottom: insets.bottom + 50 }]}>
+    <View style={[styles.container, { bottom: insets.bottom + 10 }]}>
       <View style={[styles.background, { backgroundColor: backgroundColor + 'F0' }]} />
       <ScrollView
         horizontal

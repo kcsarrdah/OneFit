@@ -23,13 +23,10 @@ export function VerticalTabBar({
   const colorScheme = useColorScheme();
   const insets = useSafeAreaInsets();
   const backgroundColor = useThemeColor({}, 'secondary');
-  const activeTintColor = Colors[colorScheme ?? 'light'].foreground;
-  const inactiveTintColor = Colors[colorScheme ?? 'light'].tabIconDefault;
-  const mutedColor = Colors[colorScheme ?? 'light'].mutedForeground;
 
-  const darkerInactiveColor = colorScheme === 'dark' ? '#B0B0B0' : '#404040'; // Dark gray
-  const darkerMutedColor = colorScheme === 'dark' ? '#888888' : '#606060';   // Medium dark gray
-  const darkerActiveColor = colorScheme === 'dark' ? '#FFFFFF' : '#1A1A1A';  // High contrast
+  const darkerInactiveColor = colorScheme === 'dark' ? '#B0B0B0' : '#404040';
+  const darkerMutedColor = colorScheme === 'dark' ? '#888888' : '#606060';
+  const darkerActiveColor = colorScheme === 'dark' ? '#FFFFFF' : '#1A1A1A';
   
   const router = useRouter();
   const { 
@@ -68,7 +65,7 @@ export function VerticalTabBar({
     <View style={[
       styles.container, 
       {
-        [position]: 25,
+        [position]: 15,
         top: insets.top + topOffset,
         height: dynamicHeight,
       }
@@ -147,8 +144,8 @@ export function VerticalTabBar({
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    width: Platform.OS === 'android' ? 70 : 55,
-    borderRadius: Platform.OS === 'android' ? 35 : 27.5,
+    width: Platform.OS === 'android' ? 60 : 55,
+    borderRadius: Platform.OS === 'android' ? 30 : 22.5,
     elevation: 8,
     shadowColor: '#000',
     shadowOffset: { width: 2, height: 0 },
@@ -160,12 +157,12 @@ const styles = StyleSheet.create({
   },
   background: {
     ...StyleSheet.absoluteFillObject,
-    borderRadius: Platform.OS === 'android' ? 35 : 27.5,
+    borderRadius: Platform.OS === 'android' ? 30 : 22.5,
     overflow: 'hidden',
   },
   blur: {
     ...StyleSheet.absoluteFillObject,
-    borderRadius: Platform.OS === 'android' ? 35 : 27.5,
+    borderRadius: Platform.OS === 'android' ? 30 : 22.5,
     backgroundColor: 'rgba(255, 255, 255, 0.05)', 
     overflow: 'hidden',
   },
