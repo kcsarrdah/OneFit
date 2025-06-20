@@ -1,6 +1,7 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { ScrollableTabBar } from '@/components/ui/ScrollableTabBar';
+import { SidebarLayout } from '@/components/ui/SideBarLayout';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 
@@ -8,6 +9,7 @@ export default function TabLayout() {
   const colorScheme = useColorScheme();
 
   return (
+    <SidebarLayout>
     <Tabs
       tabBar={(props) => <ScrollableTabBar {...props} />}
       screenOptions={{
@@ -58,5 +60,6 @@ export default function TabLayout() {
         }}
       />
     </Tabs>
+    </SidebarLayout>
   );
 }
