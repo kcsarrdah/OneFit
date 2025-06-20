@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, ScrollView, TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { View, ScrollView, TouchableOpacity, Text, StyleSheet, Platform } from 'react-native';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { IconSymbol } from './IconSymbol';
@@ -92,7 +92,9 @@ export function ScrollableTabBar({ state, descriptors, navigation }: BottomTabBa
                   styles.label,
                   {
                     color: isFocused ? activeTintColor : inactiveTintColor,
-                    fontSize: isFocused ? 11 : 10,
+                    fontSize: Platform.OS === 'android' 
+                      ? (isFocused ? 12 : 11)
+                      : (isFocused ? 11 : 10),
                     fontWeight: isFocused ? '600' : '400',
                   },
                 ]}
@@ -112,8 +114,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 40,
     right: 40,
-    height: 55,
-    borderRadius: 27.5,
+    height: Platform.OS === 'android' ? 70 : 55,
+    borderRadius: Platform.OS === 'android' ? 35 : 27.5, 
     elevation: 10,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 5 },
@@ -123,7 +125,7 @@ const styles = StyleSheet.create({
   },
   background: {
     ...StyleSheet.absoluteFillObject,
-    borderRadius: 27.5,
+    borderRadius: Platform.OS === 'android' ? 35 : 27.5,
     overflow: 'hidden',
   },
   scrollView: {
@@ -137,10 +139,10 @@ const styles = StyleSheet.create({
   tab: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 5,
+    paddingVertical: Platform.OS === 'android' ? 8 : 5, 
     paddingHorizontal: 12,
-    minWidth: 70,
-    maxWidth: 80,
+    minWidth: Platform.OS === 'android' ? 80 : 70, 
+    maxWidth: Platform.OS === 'android' ? 95 : 80, 
   },
   label: {
     marginTop: 2,

@@ -6,6 +6,22 @@
 const tintColorLight = '#66a3a3'; // Your accent color
 const tintColorDark = '#66a3a3'; // Same accent for consistency
 
+export const WaterColors = {
+  // Core water colors (same in light and dark)
+  primary: '#1E88E5',      // Main water blue
+  secondary: '#42A5F5',    // Medium water blue  
+  light: '#64B5F6',        // Light water blue
+  surface: '#90CAF9',      // Water surface
+  drop: '#0D47A1',         // Water droplet
+  
+  // Progress states (same in both modes)
+  empty: '#E0E0E0',        // Empty/no water
+  low: '#FF9800',          // Warning orange
+  medium: '#2196F3',       // Progress blue
+  high: '#1976D2',         // Good blue
+  full: '#0D47A1',         // Complete deep blue
+};
+
 export const Colors = {
   light: {
     // Original Expo colors (keeping for compatibility)
@@ -44,6 +60,13 @@ export const Colors = {
     chart3: '#1e40af',               // 197 37% 24%
     chart4: '#eab308',               // 43 74% 66%
     chart5: '#ea580c',               // 27 87% 67%
+
+    // Water colors
+    waterPrimary: WaterColors.primary,
+    waterSecondary: WaterColors.secondary,
+    waterLight: WaterColors.light,
+    waterSurface: WaterColors.surface,
+    waterDrop: WaterColors.drop,
   },
   dark: {
     // Original Expo colors (keeping for compatibility)
@@ -82,5 +105,21 @@ export const Colors = {
     chart3: '#f59e0b',               // 30 80% 55%
     chart4: '#8b5cf6',               // 280 65% 60%
     chart5: '#f43f5e',               // 340 75% 55%
+
+    waterPrimary: WaterColors.primary,
+    waterSecondary: WaterColors.secondary, 
+    waterLight: WaterColors.light,
+    waterSurface: WaterColors.surface,
+    waterDrop: WaterColors.drop,
   },
+};
+
+
+export const getWaterProgressColor = (percentage: number, colorScheme: 'light' | 'dark') => {
+  // Use the same colors regardless of theme
+  if (percentage >= 100) return WaterColors.full;
+  if (percentage >= 75) return WaterColors.high;
+  if (percentage >= 50) return WaterColors.medium;
+  if (percentage >= 25) return WaterColors.low;
+  return WaterColors.empty;
 };

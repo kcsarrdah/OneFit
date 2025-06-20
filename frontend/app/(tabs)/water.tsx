@@ -1,22 +1,22 @@
 import React from 'react';
-import { StyleSheet } from 'react-native';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+import { View, StyleSheet } from 'react-native';
+import { Colors } from '@/constants/Colors';
+import { useColorScheme } from '@/hooks/useColorScheme';
+import { useThemeColor } from '@/hooks/useThemeColor';
+import HydrationTracker from '@/components/HydraionTracker';
 
-export default function WaterScreen() {
+export default function WaterTrackingScreen() {
+  const backgroundColor = useThemeColor({}, 'background');
+
   return (
-    <ThemedView style={styles.container}>
-      <ThemedText type="title">Water Tracker</ThemedText>
-      <ThemedText>Track your daily water intake</ThemedText>
-    </ThemedView>
+    <View style={[styles.container, { backgroundColor }]}>
+      <HydrationTracker userName="User" />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 16,
   },
 });
