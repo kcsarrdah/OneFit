@@ -25,15 +25,14 @@ func main() {
 	// Setup Database
 	db := models.SetupDB()
 
-	// FIXED: Include FastSession in migration
-	db.AutoMigrate(&models.User{}, &models.Workout{}, &models.Meal{}, &models.FastSession{})
+	db.AutoMigrate(&models.User{}, &models.Workout{}, &models.Meal{}, &models.FastSession{}, &models.WaterLog{})
 
-	// ADDED: Create test user for development (auth middleware expects user ID 1)
 	createTestUser(db)
 
 	// Setup Routes
 	routes.SetupAuthRoutes(r, db)
 	routes.SetupFastingRoutes(r, db)
+	routes.SetupWaterRoutes(r, db)
 
 	// Basic Routes
 	r.GET("/", func(c *gin.Context) {
