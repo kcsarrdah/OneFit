@@ -25,7 +25,7 @@ func main() {
 	// Setup Database
 	db := models.SetupDB()
 
-	db.AutoMigrate(&models.User{}, &models.Workout{}, &models.Meal{}, &models.FastSession{}, &models.WaterLog{})
+	db.AutoMigrate(&models.User{}, &models.Meal{}, &models.FastSession{}, &models.WaterLog{})
 
 	createTestUser(db)
 
