@@ -12,8 +12,19 @@ func SetupDB() *gorm.DB {
 		panic("Failed to connect database")
 	}
 
-	// Auto create tables
-	db.AutoMigrate(&User{}, &Workout{}, &Meal{}, &FastSession{})
+	// Auto create tables - add all the new workout models
+	db.AutoMigrate(
+		&User{},
+		&Meal{},
+		&FastSession{},
+		&WaterLog{},
+		&Exercise{},
+		&WorkoutTemplate{},
+		&TemplateExercise{},
+		&WorkoutSession{},
+		&SessionExercise{},
+		&ExerciseSet{},
+	)
 
 	return db
 }
