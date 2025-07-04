@@ -47,7 +47,17 @@ export function VerticalTabBar({
     }
 
     setCurrentSidebarOption(option.id);
-    router.push(option.route as any);
+    
+    // Only navigate for global options (settings, analytics) or when switching modes
+    // Don't navigate for mode-specific options within the same mode
+    const isGlobalOption = config?.globalOptions.some(go => go.id === option.id);
+    
+    if (isGlobalOption) {
+      // Navigate to global routes like /settings, /analytics
+      router.push(option.route as any);
+    }
+    // For mode-specific options, just setting the sidebar option is enough
+    // The workouts screen will handle internal navigation based on currentSidebarOption
   };
 
   if (!config) return null;

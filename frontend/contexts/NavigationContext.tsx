@@ -35,7 +35,6 @@ const NavigationContext = createContext<NavigationContextType | undefined>(undef
 // Common/Global Options (appear across all modes)
 const GLOBAL_OPTIONS: SidebarOption[] = [
   { id: 'analytics', label: 'Analytics', icon: 'chart.bar.fill', route: '/analytics' },
-  { id: 'history', label: 'History', icon: 'clock.fill', route: '/history' },
   { id: 'settings', label: 'Settings', icon: 'gearshape.fill', route: '/settings' },
 ];
 
@@ -81,10 +80,10 @@ const NAVIGATION_CONFIG: NavigationConfig[] = [
     icon: 'figure.run',
     globalOptions: GLOBAL_OPTIONS,
     modeSpecificOptions: [
-      { id: 'routines', label: 'Routines', icon: 'list.bullet', route: '/workouts' },
+      { id: 'workout', label: 'Workout', icon: 'timer', route: '/workouts' },
+      { id: 'routines', label: 'Routines', icon: 'list.bullet', route: '/workouts/routines' },
       { id: 'exercises', label: 'Exercises', icon: 'dumbbell.fill', route: '/workouts/exercises' },
-      { id: 'programs', label: 'Programs', icon: 'calendar.badge.plus', route: '/workouts/programs' },
-      { id: 'records', label: 'Records', icon: 'trophy.fill', route: '/workouts/records' },
+      { id: 'workout-history', label: 'History', icon: 'clock.fill', route: '/workouts/history' },
     ]
   },
   {
