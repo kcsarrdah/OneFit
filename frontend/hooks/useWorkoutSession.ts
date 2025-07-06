@@ -161,6 +161,44 @@ export function useWorkoutSession() {
     setError(null);
   }, []);
 
+  const addExercisesFromRoutine = useCallback((exercises: Exercise[]) => {
+    const newWorkoutExercises: WorkoutExercise[] = exercises.map((exercise, index) => {
+      const baseTime = Date.now() + index; // Ensure unique IDs
+      
+      // Create 3 default sets with integer weights
+      const defaultSets: WorkoutSet[] = [
+        {
+          id: `set_${baseTime}_1`,
+          weight: 20, // Start with 20kg/lbs as default
+          reps: 8,
+          completed: false,
+        },
+        {
+          id: `set_${baseTime}_2`,
+          weight: 20,
+          reps: 8,
+          completed: false,
+        },
+        {
+          id: `set_${baseTime}_3`,
+          weight: 20,
+          reps: 8,
+          completed: false,
+        },
+      ];
+
+      return {
+        id: `${baseTime}_${Math.random()}`,
+        exercise,
+        sets: defaultSets,
+        notes: '',
+      };
+    });
+    
+    setExercises(prev => [...prev, ...newWorkoutExercises]);
+    setError(null);
+  }, []);
+
   const removeExercise = useCallback((exerciseId: string) => {
     setExercises(prev => prev.filter(ex => ex.id !== exerciseId));
     setError(null);
@@ -276,6 +314,7 @@ export function useWorkoutSession() {
     
     // Exercise operations
     addExercise,
+    addExercisesFromRoutine,
     removeExercise,
     updateExerciseNotes,
     

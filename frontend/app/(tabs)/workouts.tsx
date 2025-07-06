@@ -17,6 +17,7 @@ import { Exercise, WorkoutSet, SavedWorkout, WorkoutExercise, WorkoutRoutine, WO
 import { WheelPicker } from '@/components/ui/WheelPicker';
 import { useWorkoutHistory } from '@/hooks/useWorkoutHistory';
 import { useCustomRoutines, CustomRoutine } from '@/hooks/useCustomRoutines';
+import { CreateCustomRoutineModal } from '@/components/CreateCustomRoutineModal';
 
 /**
  * @file workouts.tsx
@@ -30,24 +31,91 @@ import { useCustomRoutines, CustomRoutine } from '@/hooks/useCustomRoutines';
  */
 
 export default function WorkoutsScreen() {
-  const { currentSidebarOption } = useNavigation();
+  const { currentSidebarOption, setCurrentSidebarOption } = useNavigation();
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const insets = useSafeAreaInsets();
 
+  // Workout session hooks - shared across components
+  const { 
+    exercises, 
+    workoutStats, 
+    hasActiveWorkout,
+    addExercise,
+    addExercisesFromRoutine,
+    resetSession,
+    addSetToExercise,
+    updateSet,
+    removeSet,
+    isLoading: sessionLoading 
+  } = useWorkoutSession();
+
+  // Workout timer hooks - shared across components
+  const { 
+    duration, 
+    isActive, 
+    start, 
+    pause, 
+    stop, 
+    reset, 
+    formattedTime,
+    isLoading: timerLoading 
+  } = useWorkoutTimer();
+
   // Render content based on selected sidebar option
   const renderContent = () => {
+    const timerProps = {
+      duration,
+      isActive,
+      start,
+      pause,
+      stop,
+      reset,
+      formattedTime,
+    };
+
+    const sessionProps = {
+      exercises,
+      workoutStats,
+      hasActiveWorkout,
+      addExercise,
+      addExercisesFromRoutine,
+      resetSession,
+      addSetToExercise,
+      updateSet,
+      removeSet,
+    };
+
     switch (currentSidebarOption) {
       case 'workout':
-        return <WorkoutScreen />;
+        return <WorkoutScreen 
+          timer={timerProps}
+          session={sessionProps}
+          timerLoading={timerLoading}
+          sessionLoading={sessionLoading}
+        />;
       case 'routines':
-        return <RoutinesScreen />;
+        return <RoutinesScreen 
+          onStartRoutine={(routine) => {
+            // Add all exercises from routine to workout session
+            addExercisesFromRoutine(routine.exercises);
+            // Start the timer
+            start();
+            // Navigate to workout screen
+            setCurrentSidebarOption('workout');
+          }}
+        />;
       case 'exercises':
         return <ExercisesScreen />;
       case 'workout-history':
         return <HistoryScreen />;
       default:
-        return <WorkoutScreen />; // Default to workout screen
+        return <WorkoutScreen 
+          timer={timerProps}
+          session={sessionProps}
+          timerLoading={timerLoading}
+          sessionLoading={sessionLoading}
+        />; // Default to workout screen
     }
   };
 
@@ -60,7 +128,34 @@ export default function WorkoutsScreen() {
 }
 
 // Main Workout Screen Component
-function WorkoutScreen() {
+interface WorkoutScreenProps {
+  timer: {
+    duration: number;
+    isActive: boolean;
+    start: () => void;
+    pause: () => void;
+    stop: () => void;
+    reset: () => void;
+    formattedTime: string;
+  };
+  session: {
+    exercises: any[];
+    workoutStats: any;
+    hasActiveWorkout: boolean;
+    addExercise: (exercise: Exercise) => void;
+    addExercisesFromRoutine: (exercises: Exercise[]) => void;
+    resetSession: () => void;
+    addSetToExercise: (exerciseId: string, weight: number, reps: number) => void;
+    updateSet: (exerciseId: string, setId: string, updates: any) => void;
+    removeSet: (exerciseId: string, setId: string) => void;
+  };
+  timerLoading: boolean;
+  sessionLoading: boolean;
+}
+
+function WorkoutScreen({ timer, session, timerLoading, sessionLoading }: WorkoutScreenProps) {
+  const { saveWorkout } = useWorkoutHistory();
+  
   const { 
     duration, 
     isActive, 
@@ -68,23 +163,20 @@ function WorkoutScreen() {
     pause, 
     stop, 
     reset, 
-    formattedTime,
-    isLoading: timerLoading 
-  } = useWorkoutTimer();
+    formattedTime 
+  } = timer;
   
   const { 
     exercises, 
     workoutStats, 
     hasActiveWorkout,
     addExercise,
+    addExercisesFromRoutine,
     resetSession,
-    addSetToExercise, // Add this
-    updateSet, // Add this
-    removeSet, // Add this
-    isLoading: sessionLoading 
-  } = useWorkoutSession();
-
-  const { saveWorkout } = useWorkoutHistory();
+    addSetToExercise,
+    updateSet,
+    removeSet
+  } = session;
 
   console.log('WorkoutScreen Debug:', {
     exercisesCount: exercises.length,
@@ -149,7 +241,8 @@ interface EmptyWorkoutStateProps {
 
 function EmptyWorkoutState({ timer, onAddExercise }: EmptyWorkoutStateProps) {
   const [showExerciseModal, setShowExerciseModal] = useState(false);
-  const insets = useSafeAreaInsets(); // Add this line
+  const { setCurrentSidebarOption } = useNavigation(); // Add this line
+  const insets = useSafeAreaInsets();
   
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
@@ -245,7 +338,7 @@ function EmptyWorkoutState({ timer, onAddExercise }: EmptyWorkoutStateProps) {
           {/* Action Buttons */}
           <View style={styles.actionButtons}>
             <Button 
-              onPress={() => {}} // TODO: Open routine selection
+              onPress={() => setCurrentSidebarOption('routines')} // Updated this line
               variant="default"
               size="lg"
               style={[styles.actionButton, { backgroundColor: colors.accent }]}
@@ -572,8 +665,12 @@ function ActiveWorkoutState({
 }
 
 // Placeholder components for other screens
-function RoutinesScreen() {
-  const { getAllRoutines, isLoading, duplicateRoutine, deleteCustomRoutine } = useCustomRoutines();
+interface RoutinesScreenProps {
+  onStartRoutine: (routine: WorkoutRoutine | CustomRoutine) => void;
+}
+
+function RoutinesScreen({ onStartRoutine }: RoutinesScreenProps) {
+  const { getAllRoutines, isLoading, duplicateRoutine, deleteCustomRoutine, createCustomRoutine } = useCustomRoutines();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>('All');
@@ -594,10 +691,9 @@ function RoutinesScreen() {
   });
 
   const handleStartRoutine = useCallback((routine: WorkoutRoutine | CustomRoutine) => {
-    // TODO: Start workout with all exercises from routine
     console.log('Starting routine:', routine.name);
-    // This would add all exercises from the routine to the workout session
-  }, []);
+    onStartRoutine(routine);
+  }, [onStartRoutine]);
 
   const handleDuplicateRoutine = useCallback(async (routine: WorkoutRoutine | CustomRoutine) => {
     try {
@@ -616,6 +712,23 @@ function RoutinesScreen() {
       console.error('Failed to delete routine:', error);
     }
   }, [deleteCustomRoutine]);
+
+  const handleCreateRoutine = async (
+    name: string,
+    description: string,
+    exercises: Exercise[],
+    estimatedDuration: number,
+    difficulty: 'Beginner' | 'Intermediate' | 'Advanced',
+    category: 'Strength' | 'Cardio' | 'HIIT' | 'Full Body' | 'Upper Body' | 'Lower Body'
+  ) => {
+    try {
+      await createCustomRoutine(name, description, exercises, estimatedDuration, difficulty, category);
+      console.log('Custom routine created successfully');
+    } catch (error) {
+      console.error('Failed to create custom routine:', error);
+      throw error;
+    }
+  };
 
   if (isLoading) {
     return (
@@ -806,7 +919,12 @@ function RoutinesScreen() {
         )}
       </View>
 
-      {/* TODO: Add Create Routine Modal */}
+      {/* Replace the TODO comment with the actual modal */}
+      <CreateCustomRoutineModal
+        visible={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onCreateRoutine={handleCreateRoutine}
+      />
     </ScrollView>
   );
 }
