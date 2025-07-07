@@ -3,7 +3,6 @@ import { View, ScrollView, StyleSheet, Text, TouchableOpacity } from 'react-nati
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Badge } from '@/components/ui/Badge';
 import { Card, CardContent } from '@/components/ui/Card';
 import { ThemedText } from '@/components/ThemedText';
 import { useColorScheme } from '@/hooks/useColorScheme';
@@ -11,9 +10,7 @@ import { Colors } from '@/constants/Colors';
 import { 
   EXERCISES, 
   MUSCLE_GROUPS, 
-  EQUIPMENT_TYPES, 
   Exercise, 
-  getExercisesByMuscleGroup 
 } from '@/constants/workoutData';
 
 interface ExerciseSelectionModalProps {
@@ -50,11 +47,18 @@ export function ExerciseSelectionModal({ visible, onClose, onSelectExercise }: E
     setSelectedEquipment(null);
   };
 
-  console.log('Filtered exercises:', filteredExercises.length, filteredExercises.map(e => e.name));
 
   return (
-    <Dialog visible={visible} onDismiss={onClose}>
-      <DialogContent style={[styles.modalContent, { backgroundColor: colors.card }]}>
+    <Dialog 
+      visible={visible} 
+      onDismiss={onClose} 
+    >
+      <DialogContent style={[
+        styles.modalContent, 
+        { 
+          backgroundColor: colors.card,
+        }
+      ]}>
         <DialogHeader>
           <DialogTitle style={[styles.modalTitle, { color: colors.foreground }]}>
             Browse Exercises
@@ -81,16 +85,25 @@ export function ExerciseSelectionModal({ visible, onClose, onSelectExercise }: E
                 <TouchableOpacity
                   key={group}
                   onPress={() => setSelectedMuscleGroup(selectedMuscleGroup === group ? null : group)}
+                  style={[
+                    styles.filterBadge,
+                    {
+                      backgroundColor: selectedMuscleGroup === group ? colors.accent : colors.card,
+                      borderWidth: 1,
+                      borderColor: selectedMuscleGroup === group ? colors.accent : colors.border,
+                      paddingHorizontal: 16,
+                      paddingVertical: 8,
+                      borderRadius: 16,
+                    }
+                  ]}
                 >
-                  <Badge
-                    variant={selectedMuscleGroup === group ? 'default' : 'outline'}
-                    style={[
-                      styles.filterBadge,
-                      selectedMuscleGroup === group && { backgroundColor: colors.accent }
-                    ]}
-                  >
+                  <ThemedText style={{
+                    color: selectedMuscleGroup === group ? colors.accentForeground : colors.foreground,
+                    fontSize: 12,
+                    fontWeight: '500'
+                  }}>
                     {group}
-                  </Badge>
+                  </ThemedText>
                 </TouchableOpacity>
               ))}
             </View>
@@ -105,32 +118,29 @@ export function ExerciseSelectionModal({ visible, onClose, onSelectExercise }: E
           </Button>
         )}
 
-        {/* Exercise List - TEMPORARY DEBUG VERSION */}
+        {/* Exercise List - Replace the debug version with proper cards */}
         <ScrollView style={styles.exerciseList} showsVerticalScrollIndicator={false}>
           {filteredExercises.length === 0 ? (
-            <Text style={{ color: colors.foreground, padding: 20 }}>No exercises match your filters</Text>
+            <ThemedText style={[{ color: colors.foreground, padding: 20 }]}>
+              No exercises match your filters
+            </ThemedText>
           ) : (
             filteredExercises.map(exercise => (
-              <TouchableOpacity 
-                key={exercise.id} 
-                onPress={() => handleSelectExercise(exercise)}
-                style={{ 
-                  backgroundColor: colors.secondary, 
-                  padding: 15, 
-                  marginBottom: 10, 
-                  borderRadius: 8 
-                }}
-              >
-                <Text style={{ color: colors.foreground, fontSize: 16, fontWeight: 'bold' }}>
-                  {exercise.name}
-                </Text>
-                <Text style={{ color: colors.mutedForeground, fontSize: 14 }}>
-                  {exercise.muscleGroup} • {exercise.equipment}
-                </Text>
-                <Text style={{ color: colors.accent, fontSize: 14, marginTop: 5 }}>
-                  Tap to Add
-                </Text>
-              </TouchableOpacity>
+              <Card key={exercise.id} style={[styles.exerciseCard, { backgroundColor: colors.card }]}>
+                <TouchableOpacity onPress={() => handleSelectExercise(exercise)}>
+                  <CardContent style={styles.exerciseCardContent}>
+                    <View style={styles.exerciseInfo}>
+                      <ThemedText style={[styles.exerciseName, { color: colors.foreground }]}>
+                        {exercise.name}
+                      </ThemedText>
+                      <ThemedText style={[{ color: colors.mutedForeground, fontSize: 14 }]}>
+                        {exercise.muscleGroup} • {exercise.equipment}
+                      </ThemedText>
+                    </View>
+                    {/* Remove the button - whole card is tappable */}
+                  </CardContent>
+                </TouchableOpacity>
+              </Card>
             ))
           )}
         </ScrollView>
@@ -148,24 +158,24 @@ export function ExerciseSelectionModal({ visible, onClose, onSelectExercise }: E
 
 const styles = StyleSheet.create({
   modalContent: {
-    maxHeight: '80%',        // Reduce from '90%' to '80%'
-    maxWidth: '95%',
+    maxHeight: '100%',     
+    maxWidth: '100%',
     borderRadius: 16,
-    padding: 16,             // Reduce padding from 20 to 16
+    padding: 16, 
   },
   modalTitle: {
-    fontSize: 18,            // Reduce from 20
+    fontSize: 18,            
     fontWeight: 'bold',
-    marginBottom: 12,        // Reduce from 16
+    marginBottom: 10,        
   },
   searchSection: {
-    marginBottom: 12,        // Reduce from 16
+    marginBottom: 10,        
   },
   searchInput: {
     marginBottom: 0,
   },
   filterSection: {
-    marginBottom: 8,         // Reduce from 12
+    marginBottom: 8,      
   },
   filterTitle: {
     fontSize: 13,            // Reduce from 14
@@ -188,17 +198,19 @@ const styles = StyleSheet.create({
     marginBottom: 12,        // Reduce from 16
   },
   exerciseList: {
-    height:300,         // Add this - limit the list height
-    marginBottom: 8,         // Reduce from 12
+    marginTop: 10,
+    marginBottom: 12,         // Reduce from 12
   },
   exerciseCard: {
-    marginBottom: 8,
+    marginBottom: 10,
     borderRadius: 12,
   },
   exerciseCardContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
+    paddingTop: 12,
+    paddingBottom: 10,
+
   },
   exerciseInfo: {
     flex: 1,

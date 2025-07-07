@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, StyleSheet, Platform } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { VerticalTabBar } from '@/components/ui/VerticalTabBar';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
@@ -11,13 +10,12 @@ interface SidebarLayoutProps {
 }
 
 export function SidebarLayout({ children, sidebarWidth = 280 }: SidebarLayoutProps) {
-  const insets = useSafeAreaInsets();
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.content, { paddingTop: insets.top }]}>
+      <View style={[styles.content]}>
         {/* Vertical Sidebar */}
         <VerticalTabBar 
         />
