@@ -137,11 +137,12 @@ export function NavigationProvider({ children }: { children: React.ReactNode }) 
         (firstSegment === '(tabs)' && segments[1] && config.mode === segments[1])
       );
       
-      if (modeFromRoute) {
+      if (modeFromRoute && modeFromRoute.mode !== currentMode) {
         setCurrentModeState(modeFromRoute.mode);
+        setCurrentSidebarOption(null); // Reset sidebar selection when mode changes via route
       }
     }
-  }, [segments]);
+  }, [segments, currentMode]); // Added currentMode as dependency
 
   const setCurrentMode = (mode: NavigationMode) => {
     setCurrentModeState(mode);

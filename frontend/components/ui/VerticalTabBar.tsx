@@ -38,6 +38,16 @@ export function VerticalTabBar({
   const config = getCurrentConfig(); 
   const sidebarOptions = getSidebarOptions();
 
+  // Set default to first item if no current selection
+  React.useEffect(() => {
+    if (!currentSidebarOption && sidebarOptions.length > 0) {
+      const firstOption = sidebarOptions.find(opt => opt.id !== 'separator');
+      if (firstOption) {
+        setCurrentSidebarOption(firstOption.id);
+      }
+    }
+  }, [currentSidebarOption, sidebarOptions, setCurrentSidebarOption]);
+
   const handleOptionPress = (option: SidebarOption) => {
     if (option.id === 'separator') return;
     
@@ -112,6 +122,18 @@ export function VerticalTabBar({
               style={styles.tab}
               activeOpacity={0.7}
             >
+              {/* Bullet indicator for active tab */}
+              {isActive && (
+                <View style={[styles.bulletIndicator, { 
+                  backgroundColor: glassColors.background,
+                  borderColor: glassColors.border,
+                  // Platform-specific positioning - Android uses absolute positioning in styles
+                  ...(Platform.OS === 'ios' 
+                    ? (position === 'left' ? { right: -8 } : { left: -8 })
+                    : {}),
+                }]} />
+              )}
+              
               <IconSymbol
                 name={option.icon as any}
                 size={isActive ? 28 : 24}
@@ -163,6 +185,7 @@ const styles = StyleSheet.create({
     zIndex: 1000,
     borderWidth: 1,
     borderColor: 'transparent',
+    overflow: 'hidden', // Changed from 'visible' to 'hidden' to contain the indicator
   },
   glassBackground: {
     ...StyleSheet.absoluteFillObject,
@@ -225,4 +248,42 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
   },
+  bulletIndicator: {
+    position: 'absolute',
+    borderWidth: 1,
+    shadowColor: '#000',
+    zIndex: 0,
+    ...Platform.select({
+      android: {
+        width: 48,
+        height: 70,
+        borderRadius: 25,
+        top: '40%',
+        right: 5, // Changed from left: '87%' to right: 4 (inside bounds)
+        transform: [
+          { translateX: 0 }, // Removed translateX since we're positioning from right
+          { translateY: -17.5 }
+        ],
+        marginTop: 0,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.4,
+        shadowRadius: 12,
+      },
+      ios: {
+        width: 47,
+        height: 62,
+        borderRadius: 20,
+        top: '75%',
+        left: '8%', // Changed from left: '8%' to right: 6 (inside bounds)
+        transform: [
+          { translateX: 0 }, // Removed translateX
+          { translateY: -16 }
+        ],
+        marginTop: -16,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3,
+      },
+    }),
+  }
 });

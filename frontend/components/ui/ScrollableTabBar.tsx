@@ -87,6 +87,14 @@ export function ScrollableTabBar({ state, descriptors, navigation }: BottomTabBa
               style={styles.tab}
               activeOpacity={0.7}
             >
+              {/* Bullet indicator for active tab */}
+              {isFocused && (
+                <View style={[styles.bulletIndicator, { 
+                  backgroundColor: glassColors.background,
+                  borderColor: glassColors.border,
+                }]} />
+              )}
+              
               <IconSymbol
                 name={iconName}
                 size={isFocused ? 28 : 24}
@@ -126,7 +134,8 @@ const styles = StyleSheet.create({
     shadowColor: '#000',
     zIndex: 1000,
     borderWidth: 1,
-    borderColor: 'transparent', // Will be overridden by dynamic color
+    borderColor: 'transparent',
+    overflow: 'hidden', // Changed back to hidden to contain the indicator
   },
   glassBackground: {
     ...StyleSheet.absoluteFillObject,
@@ -167,4 +176,40 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 0.5 },
     textShadowRadius: 1,
   },
+  bulletIndicator: {
+    position: 'absolute',
+    borderWidth: 1,
+    shadowColor: '#000',
+    zIndex: 0,
+    ...Platform.select({
+      android: {
+        width: 70,
+        height: 53,
+        borderRadius: 25,
+        bottom: 7.8, 
+        left: '68%',
+        transform: [
+          { translateX: -35 },
+          { translateY: 0 }
+        ],
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.4,
+        shadowRadius: 12,
+      },
+      ios: {
+        width: 60,
+        height: 47,
+        borderRadius: 20,
+        bottom: 4,
+        left: '73%',
+        transform: [
+          { translateX: -30 },
+          { translateY: 0 } 
+        ],
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3,
+      },
+    }),
+  }
 });
