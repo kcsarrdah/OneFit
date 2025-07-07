@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ScrollView, View, Text, TouchableOpacity, StyleSheet, ViewStyle, Platform } from 'react-native';
+import React, { useCallback, useEffect, useRef, useMemo, useState } from 'react';
+import { ScrollView, View, Text, TouchableOpacity, StyleSheet, ViewStyle } from 'react-native';
 import { useThemeColor } from '@/hooks/useThemeColor';
 
 interface WheelPickerProps {
@@ -24,18 +24,28 @@ export const WheelPicker: React.FC<WheelPickerProps> = ({
   style,
 }) => {
   const scrollViewRef = useRef<ScrollView>(null);
-  const [isScrolling, setIsScrolling] = useState(false);
-  const scrollTimeoutRef = useRef<number | undefined>(undefined);
+  const [isUserScrolling, setIsUserScrolling] = useState(false);
+  const [centerValue, setCenterValue] = useState(selectedValue);
+  const lastValueRef = useRef(selectedValue);
   
-  const backgroundColor = useThemeColor({}, 'background');
-  const borderColor = useThemeColor({}, 'border');
+  // Timeout refs for magnetic snap
+  const snapTimeoutRef = useRef<number | null>(null);
+  const centerStartTimeRef = useRef<number>(0);
+  
+  // Theme colors
   const foregroundColor = useThemeColor({}, 'foreground');
   const mutedColor = useThemeColor({}, 'mutedForeground');
   const accentColor = useThemeColor({}, 'accent');
   const cardColor = useThemeColor({}, 'card');
+  const borderColor = useThemeColor({}, 'border');
 
-  // Generate values
-  const values = React.useMemo(() => {
+  const ITEM_HEIGHT = 40;
+  const CONTAINER_HEIGHT = 3 * ITEM_HEIGHT;
+  const CENTER_OFFSET = ITEM_HEIGHT;
+  const SNAP_TIMEOUT = 300; // 300ms delay before auto-snap
+
+  // Generate values (memoized)
+  const values = useMemo(() => {
     const result = [];
     for (let i = min; i <= max; i += step) {
       result.push(i);
@@ -43,132 +53,149 @@ export const WheelPicker: React.FC<WheelPickerProps> = ({
     return result;
   }, [min, max, step]);
 
-  const ITEM_HEIGHT = 40;
+  // Clear any pending snap timeout
+  const clearSnapTimeout = useCallback(() => {
+    if (snapTimeoutRef.current) {
+      clearTimeout(snapTimeoutRef.current);
+      snapTimeoutRef.current = null;
+    }
+  }, []);
 
-  // Find index of selected value
-  const selectedIndex = values.indexOf(selectedValue);
-
-  // Scroll to selected item when selectedValue changes
-  useEffect(() => {
-    if (scrollViewRef.current && selectedIndex !== -1 && !isScrolling) {
-      const scrollY = selectedIndex * ITEM_HEIGHT;
-      setTimeout(() => {
-        scrollViewRef.current?.scrollTo({
-          y: scrollY,
+  // Force snap to center and select the value
+  const snapToCenter = useCallback((scrollY: number, valueToSelect: number) => {
+    const index = values.indexOf(valueToSelect);
+    if (index !== -1 && scrollViewRef.current) {
+      const exactScrollY = index * ITEM_HEIGHT;
+      
+      // Only snap if not already in exact position
+      if (Math.abs(scrollY - exactScrollY) > 1) {
+        scrollViewRef.current.scrollTo({
+          y: exactScrollY,
           animated: true,
         });
-      }, 100);
+      }
+      
+      // Update selection
+      if (valueToSelect !== lastValueRef.current) {
+        lastValueRef.current = valueToSelect;
+        onValueChange(valueToSelect);
+      }
     }
-  }, [selectedIndex, isScrolling]);
+  }, [values, onValueChange]);
 
-  const updateSelectedValue = useCallback((scrollY: number) => {
+  // Track center item during scroll + set up magnetic snap timeout
+  const handleScroll = useCallback((event: any) => {
     if (disabled) return;
     
-    const index = Math.round(scrollY / ITEM_HEIGHT);
+    const scrollY = event.nativeEvent.contentOffset.y;
+    const centerIndex = Math.round(scrollY / ITEM_HEIGHT);
     
-    if (index >= 0 && index < values.length) {
-      const value = values[index];
-      if (value !== selectedValue) {
-        onValueChange(value);
+    if (centerIndex >= 0 && centerIndex < values.length) {
+      const newCenterValue = values[centerIndex];
+      
+      if (newCenterValue !== centerValue) {
+        // Center value changed - clear old timeout and start new one
+        clearSnapTimeout();
+        setCenterValue(newCenterValue);
+        centerStartTimeRef.current = Date.now();
+        
+        // Set timeout for magnetic snap
+        snapTimeoutRef.current = setTimeout(() => {
+          // Double-check the value is still in center after timeout
+          const currentScrollY = scrollY; // This might not be current, but we'll use momentum end as backup
+          snapToCenter(currentScrollY, newCenterValue);
+        }, SNAP_TIMEOUT);
       }
     }
-  }, [values, selectedValue, onValueChange, disabled]);
+  }, [values, centerValue, disabled, clearSnapTimeout, snapToCenter]);
 
+  // Handle tap to select value
   const handlePress = useCallback((value: number) => {
     if (!disabled) {
+      clearSnapTimeout(); // Clear any pending snaps
       onValueChange(value);
     }
-  }, [onValueChange, disabled]);
+  }, [onValueChange, disabled, clearSnapTimeout]);
 
-  // Use onScroll for Android, onMomentumScrollEnd for iOS
-  const handleScroll = useCallback((event: any) => {
-    if (!event || !event.nativeEvent || typeof event.nativeEvent.contentOffset === 'undefined') {
-      return;
-    }
-
-    const scrollY = event.nativeEvent.contentOffset.y;
-
-    if (Platform.OS === 'android') {
-      // Clear previous timeout
-      if (scrollTimeoutRef.current !== undefined) {
-        clearTimeout(scrollTimeoutRef.current);
-      }
-
-      // Set a new timeout to handle the scroll end
-      scrollTimeoutRef.current = setTimeout(() => {
-        updateSelectedValue(scrollY);
-        setIsScrolling(false);
-      }, 150);
-    }
-  }, [updateSelectedValue]);
-
+  // Force snap when momentum ends (immediate)
   const handleMomentumScrollEnd = useCallback((event: any) => {
-    if (!event || !event.nativeEvent || typeof event.nativeEvent.contentOffset === 'undefined') {
-      setIsScrolling(false);
-      return;
-    }
-
+    if (disabled) return;
+    
+    clearSnapTimeout(); // Clear timeout since we're handling it now
+    
     const scrollY = event.nativeEvent.contentOffset.y;
-
-    if (Platform.OS === 'ios') {
-      updateSelectedValue(scrollY);
+    const centerIndex = Math.round(scrollY / ITEM_HEIGHT);
+    
+    if (centerIndex >= 0 && centerIndex < values.length) {
+      const centerValue = values[centerIndex];
+      snapToCenter(scrollY, centerValue);
+      setCenterValue(centerValue);
     }
-    setIsScrolling(false);
-  }, [updateSelectedValue]);
+    
+    setIsUserScrolling(false);
+  }, [values, disabled, clearSnapTimeout, snapToCenter]);
 
   const handleScrollBeginDrag = useCallback(() => {
-    setIsScrolling(true);
-    // Clear any pending timeout on Android
-    if (Platform.OS === 'android' && scrollTimeoutRef.current !== undefined) {
-      clearTimeout(scrollTimeoutRef.current);
-    }
-  }, []);
+    setIsUserScrolling(true);
+    clearSnapTimeout(); // Clear any pending snaps when user starts scrolling
+  }, [clearSnapTimeout]);
 
-  const handleScrollEndDrag = useCallback(() => {
-    // Don't set isScrolling to false here for Android, let the timeout handle it
-    if (Platform.OS === 'ios') {
-      setIsScrolling(false);
+  // ONLY scroll when parent changes selectedValue AND user is not scrolling
+  useEffect(() => {
+    if (!isUserScrolling && scrollViewRef.current && selectedValue !== lastValueRef.current) {
+      const index = values.indexOf(selectedValue);
+      if (index !== -1) {
+        clearSnapTimeout(); // Clear any pending snaps
+        const scrollY = index * ITEM_HEIGHT;
+        lastValueRef.current = selectedValue;
+        setCenterValue(selectedValue);
+        scrollViewRef.current.scrollTo({
+          y: scrollY,
+          animated: false,
+        });
+      }
     }
-  }, []);
+  }, [selectedValue, values, isUserScrolling, clearSnapTimeout]);
 
   // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
-      if (scrollTimeoutRef.current !== undefined) {
-        clearTimeout(scrollTimeoutRef.current);
-      }
+      clearSnapTimeout();
     };
-  }, []);
+  }, [clearSnapTimeout]);
 
   return (
-    <View style={[styles.container, { backgroundColor: cardColor, borderColor }, style]}>
-      {/* Optional: Add center position indicator */}
-      <View style={styles.centerIndicator} />
+    <View style={[styles.container, { backgroundColor: cardColor, borderColor, height: CONTAINER_HEIGHT }, style]}>
+      <View 
+        style={[
+          styles.centerHighlight, 
+          { 
+            borderColor: accentColor,
+            top: CENTER_OFFSET,
+            height: ITEM_HEIGHT
+          }
+        ]} 
+      />
       
       <ScrollView
         ref={scrollViewRef}
         showsVerticalScrollIndicator={false}
-        snapToInterval={ITEM_HEIGHT}
-        snapToAlignment="center" // This helps with centering
-        decelerationRate={Platform.OS === 'android' ? 'fast' : 'fast'}
-        onScroll={Platform.OS === 'android' ? handleScroll : undefined}
-        onMomentumScrollEnd={handleMomentumScrollEnd}
+        onScroll={handleScroll}
         onScrollBeginDrag={handleScrollBeginDrag}
-        onScrollEndDrag={handleScrollEndDrag}
-        scrollEventThrottle={Platform.OS === 'android' ? 16 : 64}
-        contentContainerStyle={styles.contentContainer}
-        nestedScrollEnabled={false}
+        onMomentumScrollEnd={handleMomentumScrollEnd}
+        scrollEventThrottle={50}
+        contentContainerStyle={[
+          styles.contentContainer, 
+          { 
+            paddingTop: CENTER_OFFSET,
+            paddingBottom: CENTER_OFFSET
+          }
+        ]}
         scrollEnabled={!disabled}
-        // Android specific props
-        {...(Platform.OS === 'android' && {
-          overScrollMode: 'never',
-          showsVerticalScrollIndicator: false,
-        })}
       >
-        {values.map((value, index) => {
+        {values.map((value) => {
           const isSelected = value === selectedValue;
-          const distance = Math.abs(index - selectedIndex);
-          const opacity = Math.max(0.3, 1 - distance * 0.3);
+          const isCentered = value === centerValue;
           
           return (
             <TouchableOpacity
@@ -177,9 +204,6 @@ export const WheelPicker: React.FC<WheelPickerProps> = ({
                 styles.item,
                 {
                   height: ITEM_HEIGHT,
-                  backgroundColor: isSelected ? accentColor : 'transparent',
-                  borderRadius: isSelected ? 8 : 0,
-                  opacity,
                 },
               ]}
               onPress={() => handlePress(value)}
@@ -190,8 +214,9 @@ export const WheelPicker: React.FC<WheelPickerProps> = ({
                 style={[
                   styles.itemText,
                   {
-                    color: isSelected ? 'white' : foregroundColor,
-                    fontWeight: isSelected ? 'bold' : 'normal',
+                    color: isSelected ? foregroundColor : isCentered ? foregroundColor : mutedColor,
+                    fontWeight: isSelected ? 'bold' : isCentered ? '600' : 'normal',
+                    fontSize: isCentered ? 18 : 16,
                   },
                 ]}
               >
@@ -205,40 +230,35 @@ export const WheelPicker: React.FC<WheelPickerProps> = ({
   );
 };
 
-// Update the styles to better center the selected item
 const styles = StyleSheet.create({
   container: {
-    height: 120,
     borderWidth: 1,
     borderRadius: 8,
     overflow: 'hidden',
-    position: 'relative', // Add this
+    position: 'relative',
+    minWidth: 100,
+    width: '100%',
   },
   contentContainer: {
-    paddingVertical: 40, // This centers the first/last items
+    alignItems: 'center',
   },
   item: {
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    marginVertical: 1,
+    paddingHorizontal: 20,
   },
   itemText: {
-    fontSize: 16,
     textAlign: 'center',
+    minWidth: 60,
   },
-  // Add a center indicator (optional visual guide)
-  centerIndicator: {
+  centerHighlight: {
     position: 'absolute',
-    top: '50%',
-    left: 8,
-    right: 8,
-    height: 40,
-    marginTop: -20,
+    left: 4,
+    right: 4,
     borderRadius: 8,
     borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.1)',
     zIndex: 1,
     pointerEvents: 'none',
+    backgroundColor: 'rgba(0, 255, 255, 0.1)',
   },
 }); 

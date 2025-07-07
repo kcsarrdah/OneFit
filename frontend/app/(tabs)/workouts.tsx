@@ -1349,18 +1349,19 @@ const styles = StyleSheet.create({
   },
   setRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
+    alignItems: 'flex-start',
+    padding: 8, // Reduce padding from 12 to 8
     borderRadius: 8,
-    gap: 12,
+    gap: 8, // Reduce gap from 12 to 8
   },
   setNumber: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 28, // Reduce from 32 to 28
+    height: 28, // Reduce from 32 to 28
+    borderRadius: 14,
     backgroundColor: 'rgba(0,0,0,0.1)',
     justifyContent: 'center',
     alignItems: 'center',
+    marginTop: 8,
   },
   setNumberText: {
     fontSize: 14,
@@ -1369,11 +1370,12 @@ const styles = StyleSheet.create({
   setInputs: {
     flex: 1,
     flexDirection: 'row',
-    gap: 12,
+    gap: 8, // Reduce gap from 12 to 8
   },
   inputGroup: {
     flex: 1,
-    minHeight: 80, // Give more space for the picker
+    minHeight: 120,
+    // Remove any width constraints
   },
   inputLabel: {
     fontSize: 12,
