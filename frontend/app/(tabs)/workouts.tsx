@@ -1,11 +1,10 @@
 import React, { useState, useCallback } from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { useNavigation } from '@/contexts/NavigationContext';
-import { useWorkoutTimer } from '@/hooks/useWorkoutTimer';
 import { useWorkoutSession } from '@/hooks/useWorkoutSession';
 import { useWeightUnit } from '@/hooks/useWeightUnit';
 import { useColorScheme } from '@/hooks/useColorScheme';
@@ -50,30 +49,10 @@ export default function WorkoutsScreen() {
     isLoading: sessionLoading 
   } = useWorkoutSession();
 
-  // Workout timer hooks - shared across components
-  const { 
-    duration, 
-    isActive, 
-    start, 
-    pause, 
-    stop, 
-    reset, 
-    formattedTime,
-    isLoading: timerLoading 
-  } = useWorkoutTimer();
+  // REMOVE: useWorkoutTimer completely
 
   // Render content based on selected sidebar option
   const renderContent = () => {
-    const timerProps = {
-      duration,
-      isActive,
-      start,
-      pause,
-      stop,
-      reset,
-      formattedTime,
-    };
-
     const sessionProps = {
       exercises,
       workoutStats,
@@ -89,9 +68,7 @@ export default function WorkoutsScreen() {
     switch (currentSidebarOption) {
       case 'workout':
         return <WorkoutScreen 
-          timer={timerProps}
           session={sessionProps}
-          timerLoading={timerLoading}
           sessionLoading={sessionLoading}
         />;
       case 'routines':
@@ -100,7 +77,7 @@ export default function WorkoutsScreen() {
             // Add all exercises from routine to workout session
             addExercisesFromRoutine(routine.exercises);
             // Start the timer
-            start();
+            // start(); // This line is removed
             // Navigate to workout screen
             setCurrentSidebarOption('workout');
           }}
@@ -111,9 +88,7 @@ export default function WorkoutsScreen() {
         return <HistoryScreen />;
       default:
         return <WorkoutScreen 
-          timer={timerProps}
           session={sessionProps}
-          timerLoading={timerLoading}
           sessionLoading={sessionLoading}
         />; // Default to workout screen
     }
@@ -129,15 +104,6 @@ export default function WorkoutsScreen() {
 
 // Main Workout Screen Component
 interface WorkoutScreenProps {
-  timer: {
-    duration: number;
-    isActive: boolean;
-    start: () => void;
-    pause: () => void;
-    stop: () => void;
-    reset: () => void;
-    formattedTime: string;
-  };
   session: {
     exercises: any[];
     workoutStats: any;
@@ -149,49 +115,28 @@ interface WorkoutScreenProps {
     updateSet: (exerciseId: string, setId: string, updates: any) => void;
     removeSet: (exerciseId: string, setId: string) => void;
   };
-  timerLoading: boolean;
   sessionLoading: boolean;
 }
 
-function WorkoutScreen({ timer, session, timerLoading, sessionLoading }: WorkoutScreenProps) {
+function WorkoutScreen({ session, sessionLoading }: WorkoutScreenProps) {
   const { saveWorkout } = useWorkoutHistory();
-  
-  const { 
-    duration, 
-    isActive, 
-    start, 
-    pause, 
-    stop, 
-    reset, 
-    formattedTime 
-  } = timer;
   
   const { 
     exercises, 
     workoutStats, 
     hasActiveWorkout,
     addExercise,
-    addExercisesFromRoutine,
     resetSession,
     addSetToExercise,
     updateSet,
     removeSet
   } = session;
 
-  console.log('WorkoutScreen Debug:', {
-    exercisesCount: exercises.length,
-    hasActiveWorkout,
-    timerLoading,
-    sessionLoading,
-    exerciseNames: exercises.map(e => e.exercise.name)
-  });
-  
   const { weightUnit, toggleWeightUnit } = useWeightUnit();
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
 
-  // Show loading state
-  if (timerLoading || sessionLoading) {
+  if (sessionLoading) {
     return (
       <View style={styles.loadingContainer}>
         <ThemedText>Loading workout...</ThemedText>
@@ -199,62 +144,43 @@ function WorkoutScreen({ timer, session, timerLoading, sessionLoading }: Workout
     );
   }
 
-  // Empty state - no active workout
   if (!hasActiveWorkout) {
     return <EmptyWorkoutState 
-      timer={{ duration, isActive, start, pause, stop, reset, formattedTime }}
       weightUnit={weightUnit}
-      onAddExercise={addExercise} // Change from onAddExercise to addExercise
+      onAddExercise={addExercise}
     />;
   }
 
-  // Active workout state
   return <ActiveWorkoutState 
     exercises={exercises}
     workoutStats={workoutStats}
-    timer={{ duration, isActive, start, pause, stop, reset, formattedTime }}
     weightUnit={weightUnit}
     onToggleWeightUnit={toggleWeightUnit}
     onAddExercise={addExercise}
     onResetSession={resetSession}
-    onAddSetToExercise={addSetToExercise} // Add this
-    onUpdateSet={updateSet} // Add this
-    onRemoveSet={removeSet} // Add this
-    onSaveWorkout={saveWorkout} // Add this
+    onAddSetToExercise={addSetToExercise}
+    onUpdateSet={updateSet}
+    onRemoveSet={removeSet}
+    onSaveWorkout={saveWorkout}
   />;
 }
 
 // Empty State Component (matches prototype's "Ready to Crush It?" design)
 interface EmptyWorkoutStateProps {
-  timer: {
-    duration: number;
-    isActive: boolean;
-    start: () => void;
-    pause: () => void;
-    stop: () => void;
-    reset: () => void;
-    formattedTime: string;
-  };
   weightUnit: string;
   onAddExercise: (exercise: Exercise) => void;
 }
 
-function EmptyWorkoutState({ timer, onAddExercise }: EmptyWorkoutStateProps) {
+function EmptyWorkoutState({ onAddExercise }: EmptyWorkoutStateProps) {
   const [showExerciseModal, setShowExerciseModal] = useState(false);
-  const { setCurrentSidebarOption } = useNavigation(); // Add this line
+  const { setCurrentSidebarOption } = useNavigation();
   const insets = useSafeAreaInsets();
   
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
 
-  // Add this function
   const handleSelectExercise = (exercise: Exercise) => {
-    console.log('Adding exercise:', exercise.name);
     onAddExercise(exercise);
-    // Force a small delay to see if it's a state update timing issue
-    setTimeout(() => {
-      console.log('Delayed check - should see Active Workout now');
-    }, 100);
   };
 
   return (
@@ -277,68 +203,10 @@ function EmptyWorkoutState({ timer, onAddExercise }: EmptyWorkoutStateProps) {
             Choose a routine or add individual exercises to begin your epic workout journey.
           </ThemedText>
 
-          {/* Timer Display */}
-          <View style={[styles.timerDisplay, { backgroundColor: colors.secondary }]}>
-            <IconSymbol 
-              name="timer" 
-              size={24} 
-              color={timer.isActive ? colors.accent : colors.mutedForeground} 
-            />
-            <ThemedText style={[styles.timerText, { color: colors.foreground }]}>
-              {timer.formattedTime}
-            </ThemedText>
-          </View>
-
-          {/* Timer Controls */}
-          <View style={styles.timerControls}>
-            {!timer.isActive ? (
-              <Button 
-                onPress={timer.start}
-                variant="default"
-                size="lg"
-                style={[styles.primaryButton, { backgroundColor: colors.accent }]}
-              >
-                <View style={styles.buttonContent}>
-                  <IconSymbol name="timer" size={20} color={colors.accentForeground} />
-                  <ThemedText style={[styles.buttonText, { color: colors.accentForeground }]}>
-                    Start Timer
-                  </ThemedText>
-                </View>
-              </Button>
-            ) : (
-              <View style={styles.activeTimerControls}>
-                <Button 
-                  onPress={timer.pause}
-                  variant="secondary"
-                  size="default"
-                  style={styles.timerButton}
-                >
-                  <IconSymbol name="timer" size={16} color={colors.foreground} />
-                </Button>
-                <Button 
-                  onPress={timer.stop}
-                  variant="destructive"
-                  size="default"
-                  style={styles.timerButton}
-                >
-                  <IconSymbol name="stop.fill" size={16} color={colors.destructiveForeground} />
-                </Button>
-                <Button 
-                  onPress={timer.reset}
-                  variant="outline"
-                  size="default"
-                  style={styles.timerButton}
-                >
-                  <IconSymbol name="house.fill" size={16} color={colors.foreground} />
-                </Button>
-              </View>
-            )}
-          </View>
-
           {/* Action Buttons */}
           <View style={styles.actionButtons}>
             <Button 
-              onPress={() => setCurrentSidebarOption('routines')} // Updated this line
+              onPress={() => setCurrentSidebarOption('routines')}
               variant="default"
               size="lg"
               style={[styles.actionButton, { backgroundColor: colors.accent }]}
@@ -349,7 +217,7 @@ function EmptyWorkoutState({ timer, onAddExercise }: EmptyWorkoutStateProps) {
             </Button>
             
             <Button 
-              onPress={() => setShowExerciseModal(true)} // Wire up the modal
+              onPress={() => setShowExerciseModal(true)}
               variant="outline"
               size="lg"
               style={styles.actionButton}
@@ -362,7 +230,6 @@ function EmptyWorkoutState({ timer, onAddExercise }: EmptyWorkoutStateProps) {
         </CardContent>
       </Card>
 
-      {/* Add the modal */}
       <ExerciseSelectionModal
         visible={showExerciseModal}
         onClose={() => setShowExerciseModal(false)}
@@ -376,61 +243,49 @@ function EmptyWorkoutState({ timer, onAddExercise }: EmptyWorkoutStateProps) {
 interface ActiveWorkoutStateProps {
   exercises: any[];
   workoutStats: any;
-  timer: any;
   weightUnit: string;
   onToggleWeightUnit: () => void;
   onAddExercise: (exercise: Exercise) => void;
   onResetSession: () => void;
-  onAddSetToExercise: (exerciseId: string, weight: number, reps: number) => void; // Add this
-  onUpdateSet: (exerciseId: string, setId: string, updates: any) => void; // Add this
-  onRemoveSet: (exerciseId: string, setId: string) => void; // Add this
-  onSaveWorkout: (exercises: WorkoutExercise[], duration: number, weightUnit: 'kg' | 'lbs', workoutName?: string) => Promise<SavedWorkout>; // Add this
+  onAddSetToExercise: (exerciseId: string, weight: number, reps: number) => void;
+  onUpdateSet: (exerciseId: string, setId: string, updates: any) => void; 
+  onRemoveSet: (exerciseId: string, setId: string) => void; 
+  onSaveWorkout: (exercises: WorkoutExercise[], duration: number, weightUnit: 'kg' | 'lbs', workoutName?: string) => Promise<SavedWorkout>;
 }
 
 function ActiveWorkoutState({ 
   exercises, 
   workoutStats, 
-  timer, 
-  weightUnit, // Add this
-  onToggleWeightUnit, // Add this
+  weightUnit,
+  onToggleWeightUnit,
   onAddExercise,
   onResetSession,
   onAddSetToExercise,
   onUpdateSet,
   onRemoveSet,
-  onSaveWorkout // Add this parameter
+  onSaveWorkout
 }: ActiveWorkoutStateProps) {
   const [showExerciseModal, setShowExerciseModal] = useState(false);
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const insets = useSafeAreaInsets();
 
-  // Update this function to use the real addExercise
   const handleSelectExercise = (exercise: Exercise) => {
-    onAddExercise(exercise); // Now this will actually add the exercise!
-    console.log('Adding another exercise:', exercise.name);
+    onAddExercise(exercise);
   };
 
   const handleCancelWorkout = () => {
-    timer.stop(); // Stop the timer
-    onResetSession(); // Clear all exercises - this will go back to "Ready to Crush It"
-    console.log('Workout cancelled');
+    onResetSession(); // Just reset, no timer.stop()
   };
 
   const handleSaveWorkout = async () => {
     try {
-      timer.stop(); // Stop the timer
+      // Save with 0 duration since we removed timer
+      const savedWorkout = await onSaveWorkout(exercises, 0, weightUnit as 'kg' | 'lbs');
       
-      // Save the workout
-      const savedWorkout = await onSaveWorkout(exercises, timer.duration, weightUnit as 'kg' | 'lbs');
-      
-      console.log('Workout saved successfully:', savedWorkout.name);
-      
-      // Reset the session
       onResetSession();
     } catch (error) {
       console.error('Failed to save workout:', error);
-      // TODO: Show error toast/alert to user
     }
   };
 
@@ -455,86 +310,70 @@ function ActiveWorkoutState({
       styles.activeWorkoutContent,
       { paddingBottom: insets.bottom + 20 }
     ]}>
-      {/* Timer Header */}
-      <Card style={[styles.timerCard, { backgroundColor: colors.card }]}>
-        <CardContent style={styles.timerCardContent}>
-          <View style={styles.timerSection}>
-            <IconSymbol 
-              name="timer" 
-              size={24} 
-              color={timer.isActive ? colors.accent : colors.mutedForeground} 
-            />
-            <ThemedText style={[styles.timerText, { color: colors.foreground }]}>
-              {timer.formattedTime}
-            </ThemedText>
-          </View>
-          
-          <View style={styles.activeWorkoutTimerControls}>
-            {!timer.isActive ? (
-              <Button onPress={timer.start} variant="default" size="sm">
-                <ThemedText style={{ color: colors.accentForeground }}>Start</ThemedText>
-              </Button>
-            ) : (
-              <View style={styles.activeTimerControls}>
-                <Button onPress={timer.pause} variant="secondary" size="sm">
-                  <ThemedText style={{ color: colors.foreground }}>Pause</ThemedText>
-                </Button>
-                <Button onPress={timer.stop} variant="destructive" size="sm">
-                  <ThemedText style={{ color: colors.destructiveForeground }}>Stop</ThemedText>
-                </Button>
-              </View>
-            )}
-          </View>
-        </CardContent>
-
-        {/* Add Workout Actions Row */}
-        <CardContent style={styles.workoutActions}>
-          <Button 
-            onPress={handleCancelWorkout} // Update this
-            variant="outline" 
-            size="sm"
-            style={styles.workoutActionButton}
-          >
-            <ThemedText style={{ color: colors.foreground }}>Cancel Workout</ThemedText>
-          </Button>
-          
-          <Button 
-            onPress={handleSaveWorkout} // Update this
-            variant="default" 
-            size="sm"
-            style={[styles.workoutActionButton, { backgroundColor: colors.accent }]}
-          >
-            <ThemedText style={{ color: colors.accentForeground }}>Save Workout</ThemedText>
-          </Button>
-        </CardContent>
-      </Card>
-
       {/* Workout Stats */}
       <Card style={[styles.statsCard, { backgroundColor: colors.card }]}>
         <CardContent style={styles.statsContent}>
-          <View style={styles.statItem}>
-            <ThemedText style={[styles.statNumber, { color: colors.foreground }]}>
-              {exercises.length}
-            </ThemedText>
-            <ThemedText style={[styles.statLabel, { color: colors.mutedForeground }]}>
-              Exercises
-            </ThemedText>
+          {/* Stats Row */}
+          <View style={styles.statsRow}>
+            <View style={styles.statItem}>
+              <ThemedText style={[styles.statNumber, { color: colors.foreground }]}>
+                {exercises.length}
+              </ThemedText>
+              <ThemedText style={[styles.statLabel, { color: colors.mutedForeground }]}>
+                Exercises
+              </ThemedText>
+            </View>
+            <View style={styles.statItem}>
+              <ThemedText style={[styles.statNumber, { color: colors.foreground }]}>
+                {workoutStats.totalSets}
+              </ThemedText>
+              <ThemedText style={[styles.statLabel, { color: colors.mutedForeground }]}>
+                Sets
+              </ThemedText>
+            </View>
+            <View style={styles.statItem}>
+              <ThemedText style={[styles.statNumber, { color: colors.foreground }]}>
+                {workoutStats.completedSets}
+              </ThemedText>
+              <ThemedText style={[styles.statLabel, { color: colors.mutedForeground }]}>
+                Completed
+              </ThemedText>
+            </View>
           </View>
-          <View style={styles.statItem}>
-            <ThemedText style={[styles.statNumber, { color: colors.foreground }]}>
-              {workoutStats.totalSets}
-            </ThemedText>
-            <ThemedText style={[styles.statLabel, { color: colors.mutedForeground }]}>
-              Sets
-            </ThemedText>
-          </View>
-          <View style={styles.statItem}>
-            <ThemedText style={[styles.statNumber, { color: colors.foreground }]}>
-              {workoutStats.completedSets}
-            </ThemedText>
-            <ThemedText style={[styles.statLabel, { color: colors.mutedForeground }]}>
-              Completed
-            </ThemedText>
+          
+          {/* Separate Actions Row */}
+          <View style={styles.workoutActionsInline}>
+            <TouchableOpacity 
+              onPress={handleCancelWorkout}
+              style={[
+                styles.inlineActionButton,
+                styles.cancelButton,
+                { 
+                  borderColor: colors.border,
+                  backgroundColor: 'transparent'
+                }
+              ]}
+            >
+              <ThemedText style={[styles.buttonText, { color: colors.foreground }]}>
+                Cancel
+              </ThemedText>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              onPress={handleSaveWorkout}
+              style={[
+                styles.inlineActionButton,
+                styles.saveButton,
+                { 
+                  backgroundColor: colors.accent,
+                  borderColor: colors.accent
+                }
+              ]}
+            >
+              <ThemedText style={[styles.buttonText, { color: colors.accentForeground }]}>
+                Save
+              </ThemedText>
+            </TouchableOpacity>
           </View>
         </CardContent>
       </Card>
@@ -588,11 +427,6 @@ function ActiveWorkoutState({
                   <View style={styles.setsList}>
                     {workoutExercise.sets.map((set: WorkoutSet, setIndex: number) => (
                       <View key={set.id} style={[styles.setRow, { backgroundColor: colors.secondary }]}>
-                        <View style={styles.setNumber}>
-                          <ThemedText style={[styles.setNumberText, { color: colors.foreground }]}>
-                            {setIndex + 1}
-                          </ThemedText>
-                        </View>
                         
                         <View style={styles.setInputs}>
                           <View style={styles.inputGroup}>
@@ -629,12 +463,12 @@ function ActiveWorkoutState({
                         <View style={styles.setActions}>
                           <Button
                             onPress={() => handleRemoveSet(workoutExercise.id, set.id)}
-                            variant="ghost"
+                            variant="destructive"
                             size="sm"
                             style={styles.removeSetButton}
                           >
-                            <ThemedText style={[styles.removeSetText, { color: colors.destructive }]}>
-                              ✕
+                            <ThemedText style={[styles.removeSetText, { color: colors.destructiveForeground }]}>
+                              Remove
                             </ThemedText>
                           </Button>
                         </View>
@@ -673,32 +507,27 @@ function RoutinesScreen({ onStartRoutine }: RoutinesScreenProps) {
   const { getAllRoutines, isLoading, duplicateRoutine, deleteCustomRoutine, createCustomRoutine } = useCustomRoutines();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
-  const [selectedDifficulty, setSelectedDifficulty] = useState<string>('All');
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const insets = useSafeAreaInsets();
 
   const categories = ['All', 'Full Body', 'Upper Body', 'Lower Body', 'Strength', 'Cardio', 'HIIT'];
-  const difficulties = ['All', 'Beginner', 'Intermediate', 'Advanced'];
 
   const allRoutines = getAllRoutines();
   
-  // Filter routines based on selected filters
+  // Filter routines based on selected category only
   const filteredRoutines = allRoutines.filter(routine => {
     const matchesCategory = selectedCategory === 'All' || routine.category === selectedCategory;
-    const matchesDifficulty = selectedDifficulty === 'All' || routine.difficulty === selectedDifficulty;
-    return matchesCategory && matchesDifficulty;
+    return matchesCategory;
   });
 
   const handleStartRoutine = useCallback((routine: WorkoutRoutine | CustomRoutine) => {
-    console.log('Starting routine:', routine.name);
     onStartRoutine(routine);
   }, [onStartRoutine]);
 
   const handleDuplicateRoutine = useCallback(async (routine: WorkoutRoutine | CustomRoutine) => {
     try {
       await duplicateRoutine(routine);
-      console.log('Routine duplicated successfully');
     } catch (error) {
       console.error('Failed to duplicate routine:', error);
     }
@@ -707,7 +536,6 @@ function RoutinesScreen({ onStartRoutine }: RoutinesScreenProps) {
   const handleDeleteRoutine = useCallback(async (routineId: string) => {
     try {
       await deleteCustomRoutine(routineId);
-      console.log('Routine deleted successfully');
     } catch (error) {
       console.error('Failed to delete routine:', error);
     }
@@ -723,7 +551,6 @@ function RoutinesScreen({ onStartRoutine }: RoutinesScreenProps) {
   ) => {
     try {
       await createCustomRoutine(name, description, exercises, estimatedDuration, difficulty, category);
-      console.log('Custom routine created successfully');
     } catch (error) {
       console.error('Failed to create custom routine:', error);
       throw error;
@@ -763,7 +590,7 @@ function RoutinesScreen({ onStartRoutine }: RoutinesScreenProps) {
         </Button>
       </View>
 
-      {/* Filters */}
+      {/* Category Filter Only */}
       <View style={styles.filtersSection}>
         <View style={styles.filterRow}>
           <ThemedText style={[styles.filterLabel, { color: colors.mutedForeground }]}>
@@ -786,33 +613,6 @@ function RoutinesScreen({ onStartRoutine }: RoutinesScreenProps) {
                   { color: selectedCategory === category ? colors.accentForeground : colors.foreground }
                 ]}>
                   {category}
-                </ThemedText>
-              </Button>
-            ))}
-          </ScrollView>
-        </View>
-
-        <View style={styles.filterRow}>
-          <ThemedText style={[styles.filterLabel, { color: colors.mutedForeground }]}>
-            Difficulty
-          </ThemedText>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScrollView}>
-            {difficulties.map(difficulty => (
-              <Button
-                key={difficulty}
-                onPress={() => setSelectedDifficulty(difficulty)}
-                variant={selectedDifficulty === difficulty ? "default" : "outline"}
-                size="sm"
-                style={[
-                  styles.filterButton,
-                  selectedDifficulty === difficulty && { backgroundColor: colors.accent }
-                ]}
-              >
-                <ThemedText style={[
-                  styles.filterButtonText,
-                  { color: selectedDifficulty === difficulty ? colors.accentForeground : colors.foreground }
-                ]}>
-                  {difficulty}
                 </ThemedText>
               </Button>
             ))}
@@ -848,6 +648,7 @@ function RoutinesScreen({ onStartRoutine }: RoutinesScreenProps) {
                   </View>
                 </View>
 
+                {/* Simplified Stats (removed difficulty) */}
                 <View style={styles.routineStats}>
                   <View style={styles.routineStatItem}>
                     <ThemedText style={[styles.routineStatNumber, { color: colors.foreground }]}>
@@ -867,10 +668,10 @@ function RoutinesScreen({ onStartRoutine }: RoutinesScreenProps) {
                   </View>
                   <View style={styles.routineStatItem}>
                     <ThemedText style={[styles.routineStatNumber, { color: colors.foreground }]}>
-                      {routine.difficulty}
+                      {routine.category}
                     </ThemedText>
                     <ThemedText style={[styles.routineStatLabel, { color: colors.mutedForeground }]}>
-                      Level
+                      Category
                     </ThemedText>
                   </View>
                 </View>
@@ -919,7 +720,6 @@ function RoutinesScreen({ onStartRoutine }: RoutinesScreenProps) {
         )}
       </View>
 
-      {/* Replace the TODO comment with the actual modal */}
       <CreateCustomRoutineModal
         visible={showCreateModal}
         onClose={() => setShowCreateModal(false)}
@@ -1143,7 +943,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 35,
+    marginTop: 20,      // Reduce from 35 since no timer
     marginBottom: 20,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
@@ -1165,50 +965,13 @@ const styles = StyleSheet.create({
   },
   
   // TIMER SECTION
-  timerDisplay: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 12,
-    marginBottom: 25,
-    gap: 8,
-  },
-  timerText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    fontFamily: 'monospace',
-  },
-  timerControls: {
-    marginBottom: 30,
-    alignItems: 'center',
-  },
-  primaryButton: {
-    borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 30, 
-    minWidth: 140,             
-    alignItems: 'center', 
-  },
-  activeTimerControls: {
-    flexDirection: 'row',
-    gap: 10,
-    justifyContent: 'center',
-  },
-  timerButton: {
-    borderRadius: 8,
-    padding: 10,
-    minWidth: 44,
-    minHeight: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  
+  // REMOVE these timer styles from StyleSheet:
+
   // ACTION BUTTONS
   actionButtons: {
-    width: '80%',             
-    gap: 12,
-    marginTop: 10,              
+    width: '100%',             
+    gap: 16,
+    marginTop: 20,              
     marginBottom: 10,                        
   },
   actionButton: {
@@ -1245,36 +1008,20 @@ const styles = StyleSheet.create({
   activeWorkoutContent: {
     padding: 16,
   },
-  timerCard: {
-    marginBottom: 16,
-    borderRadius: 16,
-  },
-  timerCardContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-  },
-  timerSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  activeWorkoutTimerControls: {
-    flexDirection: 'row',
-    gap: 8,
-  },
+
   statsCard: {
     marginBottom: 16,
     borderRadius: 16,
   },
   statsContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    padding: 16,
+    paddingTop: 20,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    gap: 8,                     // Reduce from 16 to 8
   },
   statItem: {
     alignItems: 'center',
+    flex: 1,                    // Equal spacing
   },
   statNumber: {
     fontSize: 24,
@@ -1285,19 +1032,19 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   addExerciseButton: {
-    marginBottom: 16,
+    marginBottom: 30,
     borderRadius: 12,
-    paddingVertical: 20,        // Try increasing this
-    paddingHorizontal: 24,      // Try increasing this  
-    minHeight: 60,              // Try increasing this
+    paddingVertical: 0,
+    paddingHorizontal: 20, 
+    minHeight: 60,         
     alignItems: 'center',
     justifyContent: 'center',
-    width: '100%',              // Add this to ensure full width
+    width: '100%',             
   },
   addExerciseText: {
-    fontSize: 18,               // Try increasing from 16
+    fontSize: 18,              
     fontWeight: '600',
-    textAlign: 'center',        // Add this
+    textAlign: 'center',       
   },
   exercisesList: {
     gap: 12,
@@ -1309,12 +1056,11 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   exerciseHeader: {
-    marginBottom: 12,
+    padding: 16,
   },
   exerciseName: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 4,
   },
   exerciseMuscle: {
     fontSize: 14,
@@ -1323,7 +1069,6 @@ const styles = StyleSheet.create({
     padding: 16,
     backgroundColor: 'rgba(0,0,0,0.02)',
     borderRadius: 12,
-    marginTop: 12,
   },
   setsHeader: {
     flexDirection: 'row',
@@ -1345,37 +1090,21 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   setsList: {
-    gap: 8,
+    gap: 10,
   },
   setRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    padding: 8, // Reduce padding from 12 to 8
+    flexDirection: 'column',      // Stack vertically instead of row
+    padding: 12,
     borderRadius: 8,
-    gap: 8, // Reduce gap from 12 to 8
-  },
-  setNumber: {
-    width: 28, // Reduce from 32 to 28
-    height: 28, // Reduce from 32 to 28
-    borderRadius: 14,
-    backgroundColor: 'rgba(0,0,0,0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  setNumberText: {
-    fontSize: 14,
-    fontWeight: 'bold',
+    gap: 12,
   },
   setInputs: {
-    flex: 1,
     flexDirection: 'row',
-    gap: 8, // Reduce gap from 12 to 8
+    gap: 16,                     // More space between wheels
   },
   inputGroup: {
     flex: 1,
-    minHeight: 120,
-    // Remove any width constraints
+    minHeight: 60,
   },
   inputLabel: {
     fontSize: 12,
@@ -1383,21 +1112,17 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   setActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+    alignItems: 'center', 
   },
   removeSetButton: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    padding: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
+    borderRadius: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 0,
+    minWidth: '50%',
   },
   removeSetText: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 14,  
+    fontWeight: '600',
   },
   noSetsMessage: {
     padding: 16,
@@ -1489,8 +1214,6 @@ const styles = StyleSheet.create({
   workoutStats: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 12,
-    paddingVertical: 8,
     borderTopWidth: 1,
     borderBottomWidth: 1,
     borderColor: 'rgba(0,0,0,0.1)',
@@ -1520,13 +1243,16 @@ const styles = StyleSheet.create({
   },
   // Routines Screen Styles
   routinesContent: {
-    padding: 16,
+    paddingTop: 15,
+    paddingHorizontal: 16, 
+    paddingBottom: 16,      
   },
   routinesHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 24,
+    marginTop: 0,
   },
   screenTitle: {
     fontSize: 24,
@@ -1575,7 +1301,8 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   routineHeader: {
-    marginBottom: 16,
+    marginTop: 10,
+    marginBottom: 14,
   },
   routineInfo: {
     flex: 1,
@@ -1583,7 +1310,7 @@ const styles = StyleSheet.create({
   routineName: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 4,
+    marginBottom: 5,
   },
   customBadge: {
     fontSize: 14,
@@ -1616,26 +1343,32 @@ const styles = StyleSheet.create({
   routineActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  startButton: {
-    flex: 1,
-    marginRight: 12,
-    borderRadius: 8,
-    paddingVertical: 10,
-  },
+    alignItems: 'center',  // This is correct
+},
+
+startButton: {
+  flex: 1,
+  marginRight: 12,      
+  borderRadius: 8,
+  paddingVertical: 8,    
+  minHeight: 40,         
+},
+
+secondaryButton: {
+  borderRadius: 8,
+  paddingHorizontal: 12,
+  paddingVertical: 8,   
+  minHeight: 40,         
+},
+
+routineSecondaryActions: {
+  flexDirection: 'row',
+  gap: 8,
+  alignItems: 'center',  // Add this for better alignment
+},
   startButtonText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
-  },
-  routineSecondaryActions: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  secondaryButton: {
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
   },
   secondaryButtonText: {
     fontSize: 12,
@@ -1657,5 +1390,33 @@ const styles = StyleSheet.create({
   noRoutinesText: {
     fontSize: 16,
     textAlign: 'center',
+  },
+  workoutActionsInline: {
+    flexDirection: 'row',
+    gap: 12,
+    justifyContent: 'center',
+    paddingTop: 12,             // Increase from 4 to 12 for more space
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0,0,0,0.1)',
+  },
+  inlineActionButton: {
+    flex: 1,
+    borderRadius: 8,
+    paddingVertical: 12,        
+    minHeight: 44,              
+    maxWidth: 120,
+    justifyContent: 'center',   
+    alignItems: 'center',
+    borderWidth: 1,             // Add border to both buttons for consistency
+  },
+  cancelButton: {
+    borderWidth: 1,
+  },
+  saveButton: {
+    borderWidth: 1,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
   },
 });

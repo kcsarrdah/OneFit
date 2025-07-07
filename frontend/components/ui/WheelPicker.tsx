@@ -39,10 +39,10 @@ export const WheelPicker: React.FC<WheelPickerProps> = ({
   const cardColor = useThemeColor({}, 'card');
   const borderColor = useThemeColor({}, 'border');
 
-  const ITEM_HEIGHT = 40;
+  const ITEM_HEIGHT = 24;
   const CONTAINER_HEIGHT = 3 * ITEM_HEIGHT;
   const CENTER_OFFSET = ITEM_HEIGHT;
-  const SNAP_TIMEOUT = 300; // 300ms delay before auto-snap
+  const SNAP_TIMEOUT = 300;
 
   // Generate values (memoized)
   const values = useMemo(() => {

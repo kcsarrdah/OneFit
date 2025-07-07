@@ -17,7 +17,7 @@ export function SidebarLayout({ children, sidebarWidth = 280 }: SidebarLayoutPro
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.content, { paddingTop: insets.top }]}>
+      <View style={[styles.content]}>
         {/* Vertical Sidebar */}
         <VerticalTabBar 
         />
