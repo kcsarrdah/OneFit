@@ -50,7 +50,6 @@ export function ExerciseSelectionModal({ visible, onClose, onSelectExercise }: E
     setSelectedEquipment(null);
   };
 
-  console.log('Filtered exercises:', filteredExercises.length, filteredExercises.map(e => e.name));
 
   return (
     <Dialog visible={visible} onDismiss={onClose}>
