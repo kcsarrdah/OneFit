@@ -7,6 +7,7 @@ import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import * as Haptics from 'expo-haptics';
+import { GlassmorphismColors, GlassEffectConfig } from '@/constants/Colors';
 
 const iconMap = {
   index: 'house.fill',
@@ -21,13 +22,23 @@ const iconMap = {
 export function ScrollableTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const colorScheme = useColorScheme();
   const insets = useSafeAreaInsets();
-  const backgroundColor = useThemeColor({}, 'secondary');
-  const activeTintColor = Colors[colorScheme ?? 'light'].foreground;
-  const inactiveTintColor = Colors[colorScheme ?? 'light'].tabIconDefault;
+  
+  // Use constants for cleaner code
+  const glassColors = GlassmorphismColors[colorScheme ?? 'light'];
+  const config = GlassEffectConfig;
 
   return (
     <View style={[styles.container, { bottom: insets.bottom + 10 }]}>
-      <View style={[styles.background, { backgroundColor: backgroundColor + 'F0' }]} />
+      {/* Simplified Glass Background - 2 layers instead of 4 */}
+      <View style={[styles.glassBackground, { 
+        backgroundColor: glassColors.background,
+      }]} />
+      
+      <View style={[styles.glassOverlay, {
+        backgroundColor: glassColors.overlay,
+        borderColor: glassColors.border,
+      }]} />
+      
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -61,7 +72,6 @@ export function ScrollableTabBar({ state, descriptors, navigation }: BottomTabBa
             }
           };
 
-          // Ensure we have a valid icon name, fallback if needed
           if (!iconName) {
             console.warn(`No icon found for route: ${route.name}`);
             return null;
@@ -77,21 +87,25 @@ export function ScrollableTabBar({ state, descriptors, navigation }: BottomTabBa
               style={styles.tab}
               activeOpacity={0.7}
             >
+              {/* Bullet indicator for active tab */}
+              {isFocused && (
+                <View style={[styles.bulletIndicator, { 
+                  backgroundColor: glassColors.background,
+                  borderColor: glassColors.border,
+                }]} />
+              )}
+              
               <IconSymbol
                 name={iconName}
                 size={isFocused ? 28 : 24}
-                color={isFocused ? activeTintColor : inactiveTintColor}
-                style={{
-                  textShadowColor: 'rgba(0, 0, 0, 0.5)',
-                  textShadowOffset: { width: 0, height: 1 },
-                  textShadowRadius: 2,
-                }}
+                color={isFocused ? glassColors.iconActive : glassColors.iconInactive}
+                style={styles.iconShadow}
               />
               <Text
                 style={[
                   styles.label,
                   {
-                    color: isFocused ? activeTintColor : inactiveTintColor,
+                    color: isFocused ? glassColors.iconActive : glassColors.iconInactive,
                     fontSize: Platform.OS === 'android' 
                       ? (isFocused ? 12 : 11)
                       : (isFocused ? 11 : 10),
@@ -112,21 +126,27 @@ export function ScrollableTabBar({ state, descriptors, navigation }: BottomTabBa
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    left: 40,
-    right: 40,
-    height: Platform.OS === 'android' ? 70 : 55,
-    borderRadius: Platform.OS === 'android' ? 35 : 27.5, 
-    elevation: 10,
+    left: GlassEffectConfig.dimensions.horizontal.margin,
+    right: GlassEffectConfig.dimensions.horizontal.margin,
+    height: GlassEffectConfig.dimensions.horizontal.height,
+    borderRadius: GlassEffectConfig.borderRadius.horizontal,
+    ...GlassEffectConfig.shadow,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
     zIndex: 1000,
+    borderWidth: 1,
+    borderColor: 'transparent',
+    overflow: 'hidden', // Changed back to hidden to contain the indicator
   },
-  background: {
+  glassBackground: {
     ...StyleSheet.absoluteFillObject,
-    borderRadius: Platform.OS === 'android' ? 35 : 27.5,
+    borderRadius: GlassEffectConfig.borderRadius.horizontal,
     overflow: 'hidden',
+  },
+  glassOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: GlassEffectConfig.borderRadius.horizontal,
+    overflow: 'hidden',
+    borderWidth: 0.5,
   },
   scrollView: {
     flex: 1,
@@ -144,6 +164,11 @@ const styles = StyleSheet.create({
     minWidth: Platform.OS === 'android' ? 80 : 70, 
     maxWidth: Platform.OS === 'android' ? 95 : 80, 
   },
+  iconShadow: {
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
   label: {
     marginTop: 2,
     textAlign: 'center',
@@ -151,4 +176,40 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 0.5 },
     textShadowRadius: 1,
   },
+  bulletIndicator: {
+    position: 'absolute',
+    borderWidth: 1,
+    shadowColor: '#000',
+    zIndex: 0,
+    ...Platform.select({
+      android: {
+        width: 70,
+        height: 53,
+        borderRadius: 25,
+        bottom: 7.8, 
+        left: '68%',
+        transform: [
+          { translateX: -35 },
+          { translateY: 0 }
+        ],
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.4,
+        shadowRadius: 12,
+      },
+      ios: {
+        width: 60,
+        height: 47,
+        borderRadius: 20,
+        bottom: 4,
+        left: '73%',
+        transform: [
+          { translateX: -30 },
+          { translateY: 0 } 
+        ],
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3,
+      },
+    }),
+  }
 });

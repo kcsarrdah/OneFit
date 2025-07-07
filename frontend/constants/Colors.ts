@@ -1,3 +1,5 @@
+import { Platform } from 'react-native';
+
 /**
  * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
  * Based on a comprehensive design system with semantic color naming.
@@ -111,6 +113,51 @@ export const Colors = {
     waterLight: WaterColors.light,
     waterSurface: WaterColors.surface,
     waterDrop: WaterColors.drop,
+  },
+};
+
+export const GlassmorphismColors = {
+  light: {
+    background: 'rgba(255, 255, 255, 0.70)',
+    overlay: 'rgba(0, 0, 0, 0.02)',
+    border: 'rgba(255, 255, 255, 0.08)',
+    shadow: 'rgba(0, 0, 0, 0.25)',
+    iconActive: '#1A1A1A',
+    iconInactive: '#2A2A2A',
+    iconMuted: '#404040',
+  },
+  dark: {
+    background: 'rgba(20, 20, 20, 0.70)',
+    overlay: 'rgba(255, 255, 255, 0.03)',
+    border: 'rgba(255, 255, 255, 0.08)',
+    shadow: 'rgba(0, 0, 0, 0.30)',
+    iconActive: '#FFFFFF',
+    iconInactive: '#E0E0E0',
+    iconMuted: '#C0C0C0',
+  },
+};
+
+// Shared glass effect configuration
+export const GlassEffectConfig = {
+  borderRadius: {
+    vertical: Platform.OS === 'android' ? 30 : 22.5,
+    horizontal: Platform.OS === 'android' ? 35 : 27.5,
+  },
+  shadow: {
+    elevation: Platform.OS === 'android' ? 12 : 0,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
+  },
+  dimensions: {
+    vertical: {
+      width: Platform.OS === 'android' ? 60 : 55,
+      tabHeight: Platform.OS === 'android' ? 80 : 70,
+    },
+    horizontal: {
+      height: Platform.OS === 'android' ? 70 : 55,
+      margin: 40,
+    },
   },
 };
 
