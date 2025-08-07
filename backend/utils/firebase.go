@@ -5,13 +5,19 @@ import (
 	"fmt"
 	"log"
 
+	"sync"
+
 	firebase "firebase.google.com/go/v4"
 	"firebase.google.com/go/v4/auth"
 	"google.golang.org/api/option"
 )
 
+// ... other imports
+
 var firebaseApp *firebase.App
 var authClient *auth.Client
+var initOnce sync.Once
+var initError error
 
 // InitFirebase initializes the Firebase Admin SDK
 func InitFirebase() error {

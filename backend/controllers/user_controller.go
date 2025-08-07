@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"net/http"
-	"onefit/backend/models"
 	"onefit/backend/services"
 
 	"github.com/gin-gonic/gin"
@@ -32,27 +31,22 @@ func (uc *UserController) TestFirebase(c *gin.Context) {
 
 // GetProfile returns current user profile (protected endpoint)
 func (uc *UserController) GetProfile(c *gin.Context) {
-	user, exists := c.Get("user")
-	if !exists {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "User not found in context"})
+	userModel, err := uc.getUserFromContext(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	userModel := user.(*models.User)
-	c.JSON(http.StatusOK, gin.H{
-		"user": userModel,
-	})
+	c.JSON(http.StatusOK, gin.H{"user": userModel})
 }
 
 // UpdateProfile updates user profile information (protected endpoint)
 func (uc *UserController) UpdateProfile(c *gin.Context) {
-	user, exists := c.Get("user")
-	if !exists {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "User not found in context"})
+	userModel, err := uc.getUserFromContext(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-
-	userModel := user.(*models.User)
 
 	type UpdateProfileInput struct {
 		Name   *string  `json:"name"`
@@ -90,13 +84,11 @@ func (uc *UserController) UpdateProfile(c *gin.Context) {
 
 // UpdateSettings updates user settings (protected endpoint)
 func (uc *UserController) UpdateSettings(c *gin.Context) {
-	user, exists := c.Get("user")
-	if !exists {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "User not found in context"})
+	userModel, err := uc.getUserFromContext(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-
-	userModel := user.(*models.User)
 
 	type UpdateSettingsInput struct {
 		Goals    *string `json:"goals"`
