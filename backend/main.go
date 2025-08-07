@@ -4,10 +4,10 @@ import (
 	"log"
 	"onefit/backend/models"
 	"onefit/backend/routes"
+	"onefit/backend/utils"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
@@ -27,7 +27,16 @@ func main() {
 
 	db.AutoMigrate(&models.User{}, &models.Meal{}, &models.FastSession{}, &models.WaterLog{})
 
+	// Clean up old test user without FirebaseUID
+	db.Exec("DELETE FROM users WHERE id = 1")
+
 	createTestUser(db)
+
+	// Initialize Firebase
+	if err := utils.InitFirebase(); err != nil {
+		log.Printf("Warning: Failed to initialize Firebase: %v", err)
+		log.Println("Firebase features will not be available")
+	}
 
 	// Setup Routes
 	routes.SetupAuthRoutes(r, db)
@@ -58,29 +67,20 @@ func createTestUser(db *gorm.DB) {
 	// Check if test user already exists
 	if err := db.First(&testUser, 1).Error; err != nil {
 		// User doesn't exist, create it
-		hashedPassword, err := bcrypt.GenerateFromPassword([]byte("testpassword"), bcrypt.DefaultCost)
-		if err != nil {
-			log.Printf("Error hashing test password: %v", err)
-			return
-		}
-
 		testUser = models.User{
-			Email:    "test@onefit.com",
-			Password: string(hashedPassword),
-			Name:     "Test User",
+			FirebaseUID: "test-firebase-uid-123",
+			Email:       "test@onefit.com",
+			Name:        "Test User",
 		}
-
-		// Set ID to 1 explicitly (for development only)
 		testUser.ID = 1
-
-		if result := db.Create(&testUser); result.Error != nil {
-			log.Printf("Error creating test user: %v", result.Error)
-		} else {
-			log.Println("✅ Created test user (ID: 1) for development")
-			log.Println("   Email: test@onefit.com")
-			log.Println("   Password: testpassword")
-		}
+		db.Create(&testUser)
 	} else {
+		// User exists, but update FirebaseUID if missing
+		if testUser.FirebaseUID == "" {
+			testUser.FirebaseUID = "test-firebase-uid-123"
+			db.Save(&testUser)
+			log.Println("✅ Updated test user with Firebase UID")
+		}
 		log.Println("✅ Test user already exists (ID: 1)")
 	}
 }

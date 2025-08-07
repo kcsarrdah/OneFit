@@ -13,7 +13,7 @@ func SetupFastingRoutes(router *gin.Engine, db *gorm.DB) {
 
 	// Changed from "/api/fasting" to "/api/fasts" to match frontend expectations
 	fasting := router.Group("/api/fasts")
-	fasting.Use(middleware.AuthMiddleware())
+	fasting.Use(middleware.AuthMiddleware(db))
 	{
 		// Save a completed fasting session (data comes from frontend timer)
 		fasting.POST("/", fastingController.SaveFast)
