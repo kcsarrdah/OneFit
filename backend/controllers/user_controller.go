@@ -1,7 +1,9 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
+	"onefit/backend/models"
 	"onefit/backend/services"
 
 	"github.com/gin-gonic/gin"
@@ -18,6 +20,21 @@ func NewUserController(db *gorm.DB) *UserController {
 		db:          db,
 		userService: services.NewUserService(db),
 	}
+}
+
+// getUserFromContext safely extracts user from gin context
+func (uc *UserController) getUserFromContext(c *gin.Context) (*models.User, error) {
+	user, exists := c.Get("user")
+	if !exists {
+		return nil, fmt.Errorf("user not found in context")
+	}
+
+	userModel, ok := user.(*models.User)
+	if !ok {
+		return nil, fmt.Errorf("invalid user type in context")
+	}
+
+	return userModel, nil
 }
 
 // TestFirebase tests Firebase connection (public endpoint)
