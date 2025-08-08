@@ -4,20 +4,38 @@ import (
 	"log"
 	"onefit/backend/models"
 	"onefit/backend/routes"
+	"onefit/backend/utils"
+	"os"
+	"strings"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"golang.org/x/crypto/bcrypt"
+	"github.com/joho/godotenv"
 	"gorm.io/gorm"
 )
 
 func main() {
+	// Load environment variables
+	if err := godotenv.Load(); err != nil {
+		log.Println("No .env file found, using system environment variables")
+	}
+
+	// Set Gin mode from environment
+	if mode := os.Getenv("GIN_MODE"); mode != "" {
+		gin.SetMode(mode)
+	}
+
 	// Initialize Gin
 	r := gin.Default()
 
-	// CORS Config
+	// CORS Config from environment
 	config := cors.DefaultConfig()
-	config.AllowOrigins = []string{"http://localhost:3000"}
+	corsOrigins := os.Getenv("CORS_ORIGINS")
+	if corsOrigins != "" {
+		config.AllowOrigins = strings.Split(corsOrigins, ",")
+	} else {
+		config.AllowOrigins = []string{"http://localhost:3000"} // fallback
+	}
 	config.AllowMethods = []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"}
 	config.AllowHeaders = []string{"Origin", "Authorization", "Content-Type"}
 	r.Use(cors.New(config))
@@ -25,9 +43,18 @@ func main() {
 	// Setup Database
 	db := models.SetupDB()
 
-	db.AutoMigrate(&models.User{}, &models.Meal{}, &models.FastSession{}, &models.WaterLog{})
+	// Create test user only in development
+	if os.Getenv("GIN_MODE") != "release" {
+		// Clean up old test user without FirebaseUID
+		db.Exec("DELETE FROM users WHERE id = 1")
+		createTestUser(db)
+	}
 
-	createTestUser(db)
+	// Initialize Firebase
+	if err := utils.InitFirebase(); err != nil {
+		log.Printf("Warning: Failed to initialize Firebase: %v", err)
+		log.Println("Firebase features will not be available")
+	}
 
 	// Setup Routes
 	routes.SetupAuthRoutes(r, db)
@@ -46,9 +73,13 @@ func main() {
 		})
 	})
 
-	// FIXED: Start server on port 3000 to match frontend expectations
-	log.Println("Server started on :3000")
-	r.Run(":3000")
+	// Start server on port from environment
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "3000" // fallback
+	}
+	log.Printf("Server started on :%s", port)
+	r.Run(":" + port)
 }
 
 // createTestUser creates a test user for development purposes
@@ -58,29 +89,24 @@ func createTestUser(db *gorm.DB) {
 	// Check if test user already exists
 	if err := db.First(&testUser, 1).Error; err != nil {
 		// User doesn't exist, create it
-		hashedPassword, err := bcrypt.GenerateFromPassword([]byte("testpassword"), bcrypt.DefaultCost)
-		if err != nil {
-			log.Printf("Error hashing test password: %v", err)
-			return
-		}
-
 		testUser = models.User{
-			Email:    "test@onefit.com",
-			Password: string(hashedPassword),
-			Name:     "Test User",
+			FirebaseUID: "test-firebase-uid-123",
+			Email:       "test@onefit.com",
+			Name:        "Test User",
 		}
-
-		// Set ID to 1 explicitly (for development only)
 		testUser.ID = 1
-
-		if result := db.Create(&testUser); result.Error != nil {
-			log.Printf("Error creating test user: %v", result.Error)
-		} else {
-			log.Println("✅ Created test user (ID: 1) for development")
-			log.Println("   Email: test@onefit.com")
-			log.Println("   Password: testpassword")
-		}
+		db.Create(&testUser)
 	} else {
-		log.Println("✅ Test user already exists (ID: 1)")
+		// User exists, but update FirebaseUID if missing
+		if testUser.FirebaseUID == "" {
+			testUser.FirebaseUID = "test-firebase-uid-123"
+			db.Save(&testUser)
+			if os.Getenv("GIN_MODE") != "release" {
+				log.Println("✅ Updated test user with Firebase UID")
+			}
+		}
+		if os.Getenv("GIN_MODE") != "release" {
+			log.Println("✅ Test user already exists (ID: 1)")
+		}
 	}
 }

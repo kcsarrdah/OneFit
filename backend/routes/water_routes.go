@@ -12,7 +12,7 @@ func SetupWaterRoutes(router *gin.Engine, db *gorm.DB) {
 	waterController := controllers.NewWaterController(db)
 
 	water := router.Group("/api/water")
-	water.Use(middleware.AuthMiddleware())
+	water.Use(middleware.AuthMiddleware(db))
 	{
 		// Log water intake
 		water.POST("/", waterController.LogWater)
