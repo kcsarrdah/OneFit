@@ -4,27 +4,25 @@ import (
 	"context"
 	"fmt"
 	"log"
-
-	"sync"
+	"os"
 
 	firebase "firebase.google.com/go/v4"
 	"firebase.google.com/go/v4/auth"
 	"google.golang.org/api/option"
 )
 
-// ... other imports
-
 var firebaseApp *firebase.App
 var authClient *auth.Client
-var initOnce sync.Once
-var initError error
 
 // InitFirebase initializes the Firebase Admin SDK
 func InitFirebase() error {
 	ctx := context.Background()
 
 	// Initialize Firebase Admin SDK
-	serviceAccountKey := "serviceAccountKey.json" // We'll set this up next
+	serviceAccountKey := os.Getenv("FIREBASE_CREDENTIALS_PATH")
+	if serviceAccountKey == "" {
+		serviceAccountKey = "serviceAccountKey.json" // fallback
+	}
 	opt := option.WithCredentialsFile(serviceAccountKey)
 
 	app, err := firebase.NewApp(ctx, nil, opt)
