@@ -7,6 +7,13 @@ frontend/.expo-shared/
 backend/bin/
 backend/pkg/
 
+
+# Ignore Firebase service account keys (SECURITY)
+backend/serviceAccountKey.json
+backend/ServiceAccountKey.json
+backend/.env
+
+
 # Ignore environment variables
 .env
 .env.local

@@ -10,13 +10,52 @@ All-in-one fitness tracker with comprehensive fasting management.
 
 ## Backend Setup
 
+### Environment Configuration
+
+The backend uses environment variables for configuration. Create a `.env` file in the `backend/` directory:
+
+```bash
+cd backend
+cp .env.example .env  # or create manually
+```
+
+**Environment Variables:**
+- `PORT` - Server port (default: 3000)
+- `CORS_ORIGINS` - Comma-separated allowed origins (default: http://localhost:3000)
+- `FIREBASE_CREDENTIALS_PATH` - Path to Firebase service account key (default: serviceAccountKey.json)
+- `GIN_MODE` - Gin framework mode: `debug` or `release`
+
+### Development vs Production Mode
+
+**Development Mode (default):**
+```bash
+GIN_MODE=debug
+```
+- Detailed logging and error messages
+- Test user auto-creation
+- Development-friendly features enabled
+
+**Production Mode:**
+```bash
+GIN_MODE=release
+```
+- Optimized performance
+- Minimal logging
+- No test user creation
+- Production-ready configuration
+
 1. **Start the backend server**:
    ```bash
    cd backend
    go run main.go
    ```
-   Server will start on port 8080.
+   Server will start on the configured port (default: 3000).
 
+2. **For production deployment**:
+   ```bash
+   cd backend
+   GIN_MODE=release go run main.go
+   ```
 
 
 ## Frontend Setup
