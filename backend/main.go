@@ -60,6 +60,9 @@ func main() {
 	routes.SetupAuthRoutes(r, db)
 	routes.SetupFastingRoutes(r, db)
 	routes.SetupWaterRoutes(r, db)
+	routes.SetupExerciseRoutes(r, db)
+	routes.SetupWorkoutRoutes(r, db)
+	routes.SetupTemplateRoutes(r, db)
 
 	// Basic Routes
 	r.GET("/", func(c *gin.Context) {

@@ -3,7 +3,7 @@ package models
 type Exercise struct {
 	Base
 	Name            string `json:"name" gorm:"uniqueIndex;not null"`
-	MuscleGroups    string `json:"muscle_groups" gorm:"type:jsonb"`
+	MuscleGroups    string `json:"muscle_groups" gorm:"type:text"`
 	Equipment       string `json:"equipment"`
 	Instructions    string `json:"instructions" gorm:"type:text"`
 	IsCustom        bool   `json:"is_custom" gorm:"default:false"`

@@ -8,6 +8,6 @@ type User struct {
 	Name     string
 	Height   float64
 	Weight   float64
-	Goals    string `gorm:"type:jsonb"`
-	Settings string `gorm:"type:jsonb"`
+	Goals    string `gorm:"type:text"`
+	Settings string `gorm:"type:text"`
 }

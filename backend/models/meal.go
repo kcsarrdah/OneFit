@@ -11,7 +11,7 @@ type Meal struct {
 	Protein   float64
 	Carbs     float64
 	Fats      float64
-	FoodItems string `gorm:"type:jsonb"`
+	FoodItems string `gorm:"type:text"`
 	Notes     string
 	User      User `gorm:"foreignKey:UserID"`
 }
