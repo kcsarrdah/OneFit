@@ -258,8 +258,8 @@ func (es *ExerciseService) SeedDefaultExercises() error {
 	}
 
 	// Create default exercises
-	for _, exercise := range defaultExercises {
-		err := es.db.Create(&exercise).Error
+	for i := range defaultExercises {
+		err := es.db.Create(&defaultExercises[i]).Error
 		if err != nil {
 			return err
 		}
