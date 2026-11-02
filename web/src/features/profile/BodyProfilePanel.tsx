@@ -8,6 +8,8 @@ import {
   bmiCategory,
   bodyFatBand,
   composition,
+  fatSiteThickness,
+  fatStores,
   ffmiCategory,
   formatHeight,
   formatWeight,
@@ -19,8 +21,10 @@ import {
 interface BodyProfilePanelProps {
   profile: BodyProfile
   units: Units
+  showFat: boolean
   onChange: (profile: BodyProfile) => void
   onUnitsChange: (units: Units) => void
+  onShowFatChange: (show: boolean) => void
 }
 
 const TONE_TEXT: Record<BodyFatBand['tone'], string> = {
@@ -47,10 +51,15 @@ const BAND_TRACK = BODY_FAT_BANDS.map((b, i) => {
   return `${BAND_COLORS[i]} ${start}% ${end}%`
 }).join(', ')
 
-export function BodyProfilePanel({ profile, units, onChange, onUnitsChange }: BodyProfilePanelProps) {
+/** Bars are drawn against a fixed scale so they visibly grow with body fat. */
+const SITE_SCALE_MM = 60
+
+export function BodyProfilePanel({ profile, units, showFat, onChange, onUnitsChange, onShowFatChange }: BodyProfilePanelProps) {
   const bmiValue = bmi(profile)
   const { leanKg, fatKg, ffmi } = composition(profile)
   const band = bodyFatBand(profile.bodyFatPct)
+  const stores = fatStores(profile)
+  const { sites } = fatSiteThickness(profile)
   const bandIndex = BODY_FAT_BANDS.indexOf(band)
   const nextFrom = BODY_FAT_BANDS[bandIndex + 1]?.from
   const isDefault = (Object.keys(DEFAULT_PROFILE) as (keyof BodyProfile)[]).every((k) => profile[k] === DEFAULT_PROFILE[k])
@@ -124,6 +133,55 @@ export function BodyProfilePanel({ profile, units, onChange, onUnitsChange }: Bo
         <Stat label="Lean mass" value={formatWeight(leanKg, units)} />
         <Stat label="Fat mass" value={formatWeight(fatKg, units)} />
       </dl>
+
+      <section aria-labelledby="fat-map-title" className="mt-3 rounded-lg border border-ink-700 bg-ink-950/50 p-3">
+        <div className="flex items-center justify-between gap-2">
+          <h3 id="fat-map-title" className="flex items-center gap-1.5 text-[10px] font-semibold tracking-wider text-ink-400 uppercase">
+            <span aria-hidden className="size-2.5 rounded-full bg-gradient-to-br from-[#fff0c4] to-[#f7a93a]" />
+            Fat map
+          </h3>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={showFat}
+            aria-label="Show fat layer on the model"
+            onClick={() => onShowFatChange(!showFat)}
+            className="flex items-center gap-1.5 text-[10px] font-semibold tracking-wider text-ink-300 uppercase"
+          >
+            Layer
+            <span
+              aria-hidden
+              className={`relative h-4 w-7 rounded-full transition-colors ${showFat ? 'bg-[#f7a93a]' : 'bg-ink-700'}`}
+            >
+              <span
+                className={`absolute top-0.5 size-3 rounded-full bg-ink-100 transition-transform ${showFat ? 'translate-x-3.5' : 'translate-x-0.5'}`}
+              />
+            </span>
+          </button>
+        </div>
+        <ul className="mt-2.5 space-y-1.5" aria-label="Estimated fat thickness under the skin">
+          {sites.map((site) => (
+            <li key={site.label} className="grid grid-cols-[96px_1fr_40px] items-center gap-2 text-[11px]">
+              <span className="truncate text-ink-300">{site.label}</span>
+              <span aria-hidden className="h-1.5 overflow-hidden rounded-full bg-ink-800">
+                <span
+                  className="block h-full rounded-full bg-gradient-to-r from-[#ffe9a8] to-[#f7a93a] transition-[width] duration-300"
+                  style={{ width: `${Math.min(100, (site.mm / SITE_SCALE_MM) * 100)}%` }}
+                />
+              </span>
+              <span className="text-right font-semibold text-ink-100 tabular-nums">{site.mm < 1 ? '<1' : Math.round(site.mm)} mm</span>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-2.5 text-[11px] leading-snug text-ink-400">
+          <span className="font-semibold text-ink-300">{stores.subcutaneousL.toFixed(1)} L</span> under the skin,{' '}
+          <span className="font-semibold text-ink-300">{stores.visceralL.toFixed(1)} L</span> around the organs (it pushes the
+          belly out). Muscle size comes only from lean mass, so the yellow layer is what you'd gain or lose.
+        </p>
+        <p className="mt-1.5 text-[10px] text-ink-400/80">
+          Typical male pattern: belly and waist fill first and empty last. Women store more on hips and thighs.
+        </p>
+      </section>
 
       <section aria-live="polite" className="mt-3 rounded-lg border border-ink-700 bg-ink-950/50 p-3">
         <div className="flex items-baseline justify-between gap-2">

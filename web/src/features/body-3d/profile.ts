@@ -16,7 +16,6 @@ export const PROFILE_LIMITS = {
 /** Matches the source model: a 171 cm adult of average, fairly fit build. */
 export const DEFAULT_PROFILE: BodyProfile = { heightCm: 171, weightKg: 70, age: 30, bodyFatPct: 15 }
 const MODEL_HEIGHT_CM = 171
-const MODEL_BODY_FAT = DEFAULT_PROFILE.bodyFatPct
 
 /** Body composition: what the weight is made of. */
 export function composition({ heightCm, weightKg, bodyFatPct }: BodyProfile) {
@@ -51,42 +50,97 @@ const smoothstep = (e0: number, e1: number, x: number) => {
   return t * t * (3 - 2 * t)
 }
 
+/** Essential fat (organs, nerves, marrow) in men, as a share of body weight. */
+const ESSENTIAL_FAT = 0.03
+/** Litres of adipose tissue per kg of fat (tissue is ~80% lipid, ~0.92 kg/L). */
+const ADIPOSE_L_PER_KG = 1.3
+
+/**
+ * Where the fat is: essential fat stays in the organs; the rest is stored as
+ * adipose tissue, mostly under the skin (subcutaneous) and partly around the
+ * abdominal organs (visceral). Men's visceral share grows as they gain fat.
+ */
+export function fatStores(profile: BodyProfile) {
+  const { fatKg } = composition(profile)
+  const essentialKg = Math.min(fatKg, profile.weightKg * ESSENTIAL_FAT)
+  const storedKg = fatKg - essentialKg
+  const visceralShare = 0.08 + 0.1 * smoothstep(12, 35, profile.bodyFatPct)
+  return {
+    essentialKg,
+    subcutaneousL: storedKg * (1 - visceralShare) * ADIPOSE_L_PER_KG,
+    visceralL: storedKg * visceralShare * ADIPOSE_L_PER_KG,
+  }
+}
+
+/** Body surface area in m² (Du Bois formula). */
+export function bodySurfaceArea({ heightCm, weightKg }: BodyProfile): number {
+  return 0.007184 * weightKg ** 0.425 * heightCm ** 0.725
+}
+
+export interface FatSite {
+  label: string
+  /** Thickness relative to the body's average (matches the 3D fat layer). */
+  factor: number
+}
+
+/**
+ * Typical male fat pattern, as relative thickness. These match the weights
+ * baked into the 3D fat layer (scripts/lib/fatLayer.mjs), so the numbers
+ * and the figure agree.
+ */
+export const FAT_SITES: FatSite[] = [
+  { label: 'Belly', factor: 3.2 },
+  { label: 'Love handles', factor: 2.6 },
+  { label: 'Lower back', factor: 1.95 },
+  { label: 'Thighs', factor: 1.1 },
+  { label: 'Chest', factor: 1.55 },
+  { label: 'Under the chin', factor: 1.55 },
+  { label: 'Back of the arms', factor: 1.05 },
+  { label: 'Calves & forearms', factor: 0.4 },
+]
+
+/** Estimated subcutaneous fat thickness at each site, in mm. */
+export function fatSiteThickness(profile: BodyProfile) {
+  // Litres per square metre is millimetres.
+  const meanMm = fatStores(profile).subcutaneousL / bodySurfaceArea(profile)
+  return { meanMm, sites: FAT_SITES.map((s) => ({ ...s, mm: meanMm * s.factor })) }
+}
+
 export interface BodyShape {
-  /** 0..1 how sharply muscle separations show (1 = very lean). */
-  definition: number
-  /** 0..1 how soft and matte the surface looks from fat (1 = high body fat). */
-  softness: number
   /** Vertical scale from the feet up. */
   scaleY: number
   /** Horizontal scale; taller people are a little broader, not proportionally. */
   scaleXZ: number
-  /** Metres added (or removed) along each muscle's surface normal. */
+  /** Metres added (or removed) along each muscle's surface normal (lean mass only). */
   inflate: number
-  /** Extra forward bulge around the abdomen at higher BMI, in metres. */
-  belly: number
+  /** Adipose tissue under the skin, in litres: the 3D fat layer's volume. */
+  subcutaneousL: number
+  /** Adipose tissue around the organs, in litres: pushes the belly out. */
+  visceralL: number
   /** Forward bend of the upper spine with age, in radians. */
   spineBend: number
   /** 0..1 loss of muscle colour saturation with age. */
   desaturate: number
 }
 
+/** Most a muscle surface may move along its normal, in metres. */
+const MAX_INFLATE = 0.008
+
 /** Maps a profile to how the figure should be reshaped. */
 export function bodyShape(profile: BodyProfile): BodyShape {
   const scaleY = profile.heightCm / MODEL_HEIGHT_CM
   const { ffmi } = composition(profile)
   const ageing = smoothstep(45, 88, profile.age)
+  const { subcutaneousL, visceralL } = fatStores(profile)
   return {
     scaleY,
     scaleXZ: 1 + (scaleY - 1) * 0.35,
-    // Lean mass builds muscle size; fat adds a soft layer over everything.
-    // Muscle loss with age slightly offsets both.
-    inflate:
-      clamp((ffmi - MODEL_FFMI) * 0.0016, -0.006, 0.012) +
-      clamp((profile.bodyFatPct - MODEL_BODY_FAT) * 0.00055, -0.004, 0.016) -
-      ageing * 0.0025,
-    belly: smoothstep(20, 42, profile.bodyFatPct) * 0.06,
-    definition: smoothstep(30, 6, profile.bodyFatPct),
-    softness: smoothstep(20, 40, profile.bodyFatPct),
+    // Muscle size comes from lean mass only; fat is a separate layer.
+    // Muscle loss with age slightly offsets it.
+    // Saturates softly: past ~8 mm the thin forearm and calf shells split.
+    inflate: MAX_INFLATE * Math.tanh(((ffmi - MODEL_FFMI) * 0.0016) / MAX_INFLATE) - ageing * 0.0025,
+    subcutaneousL,
+    visceralL,
     spineBend: ageing * ((11 * Math.PI) / 180),
     desaturate: ageing * 0.35,
   }

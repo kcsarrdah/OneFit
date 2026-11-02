@@ -20,6 +20,8 @@ import type { BodyView } from '../../api/anatomy'
 import {
   createBoneMaterial,
   createContextMaterial,
+  createFatMaterials,
+  createFatUniforms,
   createHeadMaterial,
   createMuscleMaterial,
   createSharedUniforms,
@@ -42,6 +44,8 @@ interface BodyModelProps {
   style: BodyStyle
   shape: BodyShape
   mode: ViewerMode
+  /** Draw the subcutaneous fat layer over the muscles. */
+  showFat: boolean
   /** Target pose; a new object (even with equal content) re-applies it. */
   pose: Pose
   onSelect: (id: string, anchor: SurfaceAnchor) => void
@@ -64,6 +68,11 @@ const CLICK_SLOP = 5
 const REVEAL_SECONDS = 1.9
 const SWEEP_SECONDS = 0.75
 const BLACK = new Color('#000000')
+/**
+ * Visceral fat sits behind the abdominal wall and around the organs, so only
+ * part of its volume shows as forward belly bulge.
+ */
+const VISCERAL_BULGE = 0.3
 
 interface Figure {
   meshes: SkinnedMesh[]
@@ -71,6 +80,10 @@ interface Figure {
   bones: SkinnedMesh[]
   context: SkinnedMesh[]
   head: SkinnedMesh[]
+  /** Fat layer envelopes (not pickable). */
+  fat: SkinnedMesh[]
+  /** Totals of the fat envelopes' baked areas (see modelNodes.ts). */
+  fatAreas: { weightedArea: number; visceralArea: number; weightMax: number }
   joints: Map<JointName | 'root', Bone>
   /** Rest-pose ankle height, for keeping the feet planted. */
   restAnkleY: number
@@ -83,6 +96,7 @@ export function BodyModel(props: BodyModelProps) {
     view,
     style,
     shape,
+    showFat,
     mode,
     pose,
     onSelect,
@@ -107,6 +121,8 @@ export function BodyModel(props: BodyModelProps) {
     const bones: SkinnedMesh[] = []
     const context: SkinnedMesh[] = []
     const head: SkinnedMesh[] = []
+    const fat: SkinnedMesh[] = []
+    const fatAreas = { weightedArea: 0, visceralArea: 0, weightMax: 1 }
     const joints = new Map<JointName | 'root', Bone>()
     scene.traverse((o: Object3D) => {
       if (o instanceof Bone && o.name.startsWith('joint-')) joints.set(o.name.slice(6) as JointName, o)
@@ -115,6 +131,15 @@ export function BodyModel(props: BodyModelProps) {
       o.frustumCulled = false
       const node = parseNodeName(o.name)
       o.userData.node = node
+      if (node.kind === 'fat') {
+        // Clicks and the leader line go straight through to the muscles.
+        o.raycast = () => {}
+        fat.push(o)
+        fatAreas.weightedArea += o.userData.weightedArea ?? 0
+        fatAreas.visceralArea += o.userData.visceralArea ?? 0
+        fatAreas.weightMax = o.userData.weightMax ?? 1
+        return
+      }
       meshes.push(o)
       if (node.kind === 'bones') bones.push(o)
       else if (node.kind === 'context') context.push(o)
@@ -123,7 +148,7 @@ export function BodyModel(props: BodyModelProps) {
     })
     scene.updateMatrixWorld(true)
     const ankle = joints.get('ankle-l')!.getWorldPosition(new Vector3())
-    return { meshes, muscles, bones, context, head, joints, restAnkleY: ankle.y }
+    return { meshes, muscles, bones, context, head, fat, fatAreas, joints, restAnkleY: ankle.y }
   }, [scene])
 
   // Materials for the chosen look.
@@ -136,6 +161,34 @@ export function BodyModel(props: BodyModelProps) {
     for (const list of figure.muscles.values()) for (const m of list) m.material = make(createMuscleMaterial(style, shared))
     return () => created.forEach((m) => m.dispose())
   }, [figure, style, shared, accent])
+
+  // Fat layer: a depth-only twin of each envelope renders first, so the
+  // translucent colour pass only shows the nearest fat surface. Both draw
+  // after everything else.
+  const fatUniforms = useMemo(() => createFatUniforms(), [])
+  const fatTwins = useRef<SkinnedMesh[]>([])
+  useEffect(() => {
+    const { depth, color } = createFatMaterials(shared, fatUniforms)
+    const twins: SkinnedMesh[] = []
+    for (const m of figure.fat) {
+      m.material = color
+      m.renderOrder = 21
+      const twin = new SkinnedMesh(m.geometry, depth)
+      twin.bind(m.skeleton, m.bindMatrix)
+      twin.renderOrder = 20
+      twin.frustumCulled = false
+      twin.raycast = () => {}
+      m.parent?.add(twin)
+      twins.push(twin)
+    }
+    fatTwins.current = twins
+    return () => {
+      twins.forEach((t) => t.removeFromParent())
+      fatTwins.current = []
+      depth.dispose()
+      color.dispose()
+    }
+  }, [figure, shared, fatUniforms])
 
   const palette = useMemo(() => paletteFor(style, accent, accentDeep), [style, accent, accentDeep])
   useEffect(() => {
@@ -236,9 +289,25 @@ export function BodyModel(props: BodyModelProps) {
       g.scale.y += (shape.scaleY - g.scale.y) * k
     }
     shared.uInflate.value += (shape.inflate - shared.uInflate.value) * k
-    shared.uBelly.value += (shape.belly - shared.uBelly.value) * k
-    shared.uDefinition.value += (shape.definition - shared.uDefinition.value) * k
-    shared.uSoftness.value += (shape.softness - shared.uSoftness.value) * k
+
+    // Fat: spread the subcutaneous volume over the envelope by its baked
+    // weights (thickness = volume × weight / weighted area), correcting for
+    // the figure's scale; the visceral share bulges the belly.
+    {
+      const { weightedArea, visceralArea, weightMax } = figure.fatAreas
+      const sy = g?.scale.y ?? 1
+      const sxz = g?.scale.x ?? 1
+      const perArea = 1 / (sy * sxz * sxz)
+      const fatScale = weightedArea > 0 ? ((shape.subcutaneousL / 1000) * weightMax * perArea) / weightedArea : 0
+      const visc = visceralArea > 0 ? ((shape.visceralL / 1000) * VISCERAL_BULGE * perArea) / visceralArea : 0
+      const f = fatUniforms
+      f.uFatScale.value += (fatScale - f.uFatScale.value) * k
+      f.uVisc.value += (visc - f.uVisc.value) * k
+      f.uFatOpacity.value += ((showFat ? 1 : 0) - f.uFatOpacity.value) * k
+      const visible = f.uFatOpacity.value > 0.01
+      for (const m of figure.fat) m.visible = visible
+      for (const t of fatTwins.current) t.visible = visible
+    }
     shared.uDesat.value += ((palette.desaturates ? shape.desaturate : 0) - shared.uDesat.value) * k
 
     // Pose: slerp joints toward their targets (age adds a forward stoop).

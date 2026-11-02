@@ -183,13 +183,12 @@ export function latissimusDorsi(radius, sign, humerusInsertion) {
  * Rectus abdominis for one side, with tendinous intersections (the
  * "six-pack" grooves) and the linea alba gap at the midline.
  */
-export function rectusAbdominis(radius, sign, filled = false) {
+export function rectusAbdominis(radius, sign) {
   const NU = 18
   const NV = 56
   const yBottom = 0.875
   const yTop = 1.175
-  const fill = []
-  const mesh = gridMesh(NU, NV, (u, v) => {
+  return gridMesh(NU, NV, (u, v) => {
     const y = lerp(yBottom, yTop, v)
     const xMedial = 0.006
     const xLateral = lerp(0.032, 0.078, Math.pow(v, 0.7))
@@ -203,19 +202,9 @@ export function rectusAbdominis(radius, sign, filled = false) {
     const belly = 0.004 + 0.005 * Math.sin(Math.PI * v)
     const fibres = 1 + 0.06 * Math.sin(u * Math.PI * 7)
     const full = (0.007 + belly) * edge * fibres
-    const thickness = 0.002 + full * (filled ? 1 : grooves)
-    // Fat fills the tendinous grooves and softens the midline (linea alba).
-    const midline = (0.007 + belly) * (1 - edge) * smooth(0.35, 0, u) * 0.6
-    fill.push(full * (1 - grooves) + midline)
+    const thickness = 0.002 + full * grooves
     return onSurface(radius, theta, y, thickness)
   })
-  if (filled) return mesh
-  // Depth of the tendinous grooves per vertex, plus the normals of the
-  // groove-free surface, so the app can fill them in as body fat rises
-  // (abs disappear under a fat layer) and shade the result smoothly.
-  mesh.fill = Float32Array.from(fill)
-  mesh.fillNormals = rectusAbdominis(radius, sign, true).normals
-  return mesh
 }
 
 /** Triangulates a (NU+1) × (NV+1) parametric grid, with outward normals. */

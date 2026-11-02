@@ -10,5 +10,7 @@ Modifications (scripts/build-body-model.mjs):
 - Added generated latissimus dorsi and rectus abdominis meshes (not present in
   BodyParts3D), shaped over the source anatomy by scripts/lib/synthesize.mjs.
 - Replaced the skull with a generated, stylised mannequin head sized from it.
+- Added a generated subcutaneous fat envelope (scripts/lib/fatLayer.mjs) built
+  around the source muscles and bones.
 - Added a skeleton rig (scripts/lib/rig.mjs) with skin weights for posing.
 - Recentred, simplified (meshoptimizer), quantized and meshopt-compressed.

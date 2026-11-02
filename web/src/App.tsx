@@ -44,6 +44,7 @@ const isProfile = (v: unknown): v is Partial<BodyProfile> => {
 }
 const isStyle = (v: unknown): v is BodyStyle => BODY_STYLES.some((s) => s.value === v)
 const isUnits = (v: unknown): v is Units => v === 'metric' || v === 'imperial'
+const isBoolean = (v: unknown): v is boolean => typeof v === 'boolean'
 
 export default function App() {
   const muscles = useMuscles()
@@ -61,6 +62,7 @@ export default function App() {
     [heightCm, weightKg, age, bodyFatPct],
   )
   const [units, setUnits] = useStoredState<Units>('units', 'metric', isUnits)
+  const [showFat, setShowFat] = useStoredState<boolean>('showFat', true, isBoolean)
   const [style, setStyle] = useStoredState<BodyStyle>('style', 'hologram', isStyle)
 
   const [themeId, setThemeId] = useStoredState<ThemeId>('theme', 'iron', isThemeId)
@@ -130,7 +132,14 @@ export default function App() {
         <main className="mt-5 grid min-h-0 flex-1 gap-4 lg:grid-cols-[250px_minmax(360px,1fr)_minmax(360px,420px)]">
           <div className="order-3 flex min-h-0 flex-col gap-4 lg:order-1 lg:-mr-1 lg:overflow-y-auto lg:pr-1">
             {use3D && (
-              <BodyProfilePanel profile={profile} units={units} onChange={setProfile} onUnitsChange={setUnits} />
+              <BodyProfilePanel
+                profile={profile}
+                units={units}
+                showFat={showFat}
+                onChange={setProfile}
+                onUnitsChange={setUnits}
+                onShowFatChange={setShowFat}
+              />
             )}
             <div className="min-h-[320px] flex-1">
               <MuscleRoster
@@ -168,6 +177,7 @@ export default function App() {
                     leaderTargetRef={detailRef}
                     style={style}
                     shape={shape}
+                    showFat={showFat}
                     mode={mode}
                     pose={pose.pose}
                     onPoseEdited={onPoseEdited}
