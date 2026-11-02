@@ -14,6 +14,7 @@ describe('parseNodeName', () => {
   it('recognises bones and context meshes', () => {
     expect(parseNodeName('bones')).toEqual({ kind: 'bones' })
     expect(parseNodeName('context')).toEqual({ kind: 'context' })
+    expect(parseNodeName('head')).toEqual({ kind: 'head' })
   })
 
   it('recognises rig joints', () => {
@@ -61,6 +62,10 @@ describe('public/models/body.glb', () => {
 
   it('only contains nodes the viewer understands', () => {
     for (const name of names) expect(parseNodeName(name).kind, name).not.toBe('unknown')
+  })
+
+  it('has a sculpted head instead of a skull', () => {
+    expect(names).toContain('head')
   })
 
   it('has a left and right mesh for every muscle the API serves', () => {

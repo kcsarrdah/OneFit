@@ -12,7 +12,8 @@ get a 2D body map instead.
   from the feet, weight (via BMI) adds bulk and a belly, age adds a slight stoop and
   duller muscle tone. Metric or imperial; remembered per browser.
 - **Looks:** Hologram (glowing x-ray skeleton), Anatomy (ivory bone), Sculpt (clean
-  single-tone figure).
+  single-tone figure). The skull is replaced by a smooth, stylised mannequin head in
+  every look.
 - **Pose mode (experimental):** drag an arm, leg or the torso to rotate that joint
   (with anatomical limits), or pick a preset (T-pose, Reach up, Flex, Squat, Lunge).
   Feet stay planted on the pedestal.

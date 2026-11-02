@@ -255,3 +255,87 @@ function vertexNormals(p, idx) {
   }
   return n
 }
+
+/** Skull bones replaced by a sculpted head shell (see headShell). */
+export const SKULL_SLUGS =
+  /^(occiput|frontal-bone|parietal-bone|temporal-bone|sphenoid-bone|ethmoid|zygomatic-bone|maxilla|mandible|nasal-bone|lacrimal-bone|palatine-bone|vomer|inferior-nasal-concha|hyoid-bone)$/
+
+/**
+ * A smooth, egg-shaped "art mannequin" head that stands in for the skull.
+ * It's sized and placed from the skull's bounds (plus soft tissue), with a
+ * gentle chin taper and a hint of a nose so the facing direction reads.
+ */
+export function headShell(positionArrays) {
+  const lo = [Infinity, Infinity, Infinity]
+  const hi = [-Infinity, -Infinity, -Infinity]
+  for (const a of positionArrays)
+    for (let i = 0; i < a.length; i += 3)
+      for (let k = 0; k < 3; k++) {
+        lo[k] = Math.min(lo[k], a[i + k])
+        hi[k] = Math.max(hi[k], a[i + k])
+      }
+  const tissue = 0.006
+  const c = [(lo[0] + hi[0]) / 2, (lo[1] + hi[1]) / 2 + 0.004, (lo[2] + hi[2]) / 2 - 0.012]
+  const rx = (hi[0] - lo[0]) / 2 + tissue - 0.006
+  const ry = (hi[1] - lo[1]) / 2 + tissue
+  const rz = (hi[2] - lo[2]) / 2 + tissue - 0.012
+  const tilt = 0.1 // radians; the chin sits slightly forward of the crown
+  const cos = Math.cos(tilt)
+  const sin = Math.sin(tilt)
+
+  return gridMeshClosed(72, 48, (u, v) => {
+    const az = u * 2 * Math.PI - Math.PI
+    const pol = v * Math.PI
+    const d = [Math.sin(pol) * Math.sin(az), Math.cos(pol), Math.sin(pol) * Math.cos(az)]
+    // Egg: full cranium, narrowing toward the jaw and chin.
+    const lower = smooth(0.1, -0.95, d[1])
+    const narrow = 1 - 0.3 * lower
+    let x = d[0] * rx * narrow
+    let y = d[1] * ry
+    let z = d[2] * rz * (1 - 0.22 * lower)
+    // Soft nose and brow on the front.
+    const front = smooth(0.75, 0.98, d[2])
+    z += 0.014 * front * Math.exp(-(((d[0] / 0.16) ** 2) + ((d[1] + 0.05) / 0.22) ** 2))
+    z += 0.004 * front * Math.exp(-(((d[1] - 0.3) / 0.12) ** 2))
+    // Tilt so the chin comes forward.
+    const ty = y * cos - z * sin
+    const tz = y * sin + z * cos
+    y = ty
+    z = tz
+    return [c[0] + x, c[1] + y, c[2] + z]
+  })
+}
+
+/** Like gridMesh, but wraps around in u (a closed tube/sphere). */
+function gridMeshClosed(NU, NV, fn) {
+  const positions = new Float32Array((NU + 1) * (NV + 1) * 3)
+  for (let j = 0; j <= NV; j++)
+    for (let i = 0; i <= NU; i++) positions.set(fn((i % NU) / NU, j / NV), (j * (NU + 1) + i) * 3)
+  const indices = []
+  for (let j = 0; j < NV; j++)
+    for (let i = 0; i < NU; i++) {
+      const a = j * (NU + 1) + i
+      const b = a + 1
+      const c = a + NU + 1
+      const d = c + 1
+      indices.push(a, d, b, a, c, d)
+    }
+  let normals = vertexNormals(positions, indices)
+  // Orient outward: compare a mid-height normal with its direction from the centre.
+  const mid = ((NV / 2) | 0) * (NU + 1)
+  let cx = 0
+  let cy = 0
+  let cz = 0
+  const n = positions.length / 3
+  for (let i = 0; i < n; i++) {
+    cx += positions[i * 3] / n
+    cy += positions[i * 3 + 1] / n
+    cz += positions[i * 3 + 2] / n
+  }
+  const out = [positions[mid * 3] - cx, positions[mid * 3 + 1] - cy, positions[mid * 3 + 2] - cz]
+  if (normals[mid * 3] * out[0] + normals[mid * 3 + 1] * out[1] + normals[mid * 3 + 2] * out[2] < 0) {
+    for (let t = 0; t < indices.length; t += 3) [indices[t + 1], indices[t + 2]] = [indices[t + 2], indices[t + 1]]
+    normals = normals.map((x) => -x)
+  }
+  return { positions, normals, indices: new Uint32Array(indices) }
+}

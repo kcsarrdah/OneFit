@@ -9,4 +9,6 @@ Modifications (scripts/build-body-model.mjs):
 - Grouped muscles into OneFit muscle groups, one mesh per group and side.
 - Added generated latissimus dorsi and rectus abdominis meshes (not present in
   BodyParts3D), shaped over the source anatomy by scripts/lib/synthesize.mjs.
+- Replaced the skull with a generated, stylised mannequin head sized from it.
+- Added a skeleton rig (scripts/lib/rig.mjs) with skin weights for posing.
 - Recentred, simplified (meshoptimizer), quantized and meshopt-compressed.

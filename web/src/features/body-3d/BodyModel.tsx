@@ -20,6 +20,7 @@ import type { BodyView } from '../../api/anatomy'
 import {
   createBoneMaterial,
   createContextMaterial,
+  createHeadMaterial,
   createMuscleMaterial,
   createSharedUniforms,
   paletteFor,
@@ -69,6 +70,7 @@ interface Figure {
   muscles: Map<string, SkinnedMesh[]>
   bones: SkinnedMesh[]
   context: SkinnedMesh[]
+  head: SkinnedMesh[]
   joints: Map<JointName | 'root', Bone>
   /** Rest-pose ankle height, for keeping the feet planted. */
   restAnkleY: number
@@ -104,6 +106,7 @@ export function BodyModel(props: BodyModelProps) {
     const muscles = new Map<string, SkinnedMesh[]>()
     const bones: SkinnedMesh[] = []
     const context: SkinnedMesh[] = []
+    const head: SkinnedMesh[] = []
     const joints = new Map<JointName | 'root', Bone>()
     scene.traverse((o: Object3D) => {
       if (o instanceof Bone && o.name.startsWith('joint-')) joints.set(o.name.slice(6) as JointName, o)
@@ -115,11 +118,12 @@ export function BodyModel(props: BodyModelProps) {
       meshes.push(o)
       if (node.kind === 'bones') bones.push(o)
       else if (node.kind === 'context') context.push(o)
+      else if (node.kind === 'head') head.push(o)
       else if (node.kind === 'muscle') muscles.set(node.muscleId, [...(muscles.get(node.muscleId) ?? []), o])
     })
     scene.updateMatrixWorld(true)
     const ankle = joints.get('ankle-l')!.getWorldPosition(new Vector3())
-    return { meshes, muscles, bones, context, joints, restAnkleY: ankle.y }
+    return { meshes, muscles, bones, context, head, joints, restAnkleY: ankle.y }
   }, [scene])
 
   // Materials for the chosen look.
@@ -128,6 +132,7 @@ export function BodyModel(props: BodyModelProps) {
     const make = <T extends FigureMaterial>(m: T) => (created.push(m), m)
     for (const m of figure.bones) m.material = make(createBoneMaterial(style, shared, accent))
     for (const m of figure.context) m.material = make(createContextMaterial(style, shared))
+    for (const m of figure.head) m.material = make(createHeadMaterial(style, shared, accent))
     for (const list of figure.muscles.values()) for (const m of list) m.material = make(createMuscleMaterial(style, shared))
     return () => created.forEach((m) => m.dispose())
   }, [figure, style, shared, accent])
