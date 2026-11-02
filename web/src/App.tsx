@@ -35,10 +35,12 @@ const MODE_OPTIONS: { value: Mode; label: string }[] = [
   { value: 'pose', label: 'Pose' },
 ]
 
-const isProfile = (v: unknown): v is BodyProfile => {
+// Older saved profiles may lack newer fields (e.g. body fat); clampProfile
+// fills those in from the defaults.
+const isProfile = (v: unknown): v is Partial<BodyProfile> => {
   if (typeof v !== 'object' || v === null) return false
   const p = v as Record<string, unknown>
-  return (Object.keys(PROFILE_LIMITS) as (keyof BodyProfile)[]).every((k) => typeof p[k] === 'number')
+  return (Object.keys(PROFILE_LIMITS) as (keyof BodyProfile)[]).every((k) => p[k] === undefined || typeof p[k] === 'number')
 }
 const isStyle = (v: unknown): v is BodyStyle => BODY_STYLES.some((s) => s.value === v)
 const isUnits = (v: unknown): v is Units => v === 'metric' || v === 'imperial'
@@ -51,10 +53,13 @@ export default function App() {
   const detailRef = useRef<HTMLDivElement>(null)
   const [use3D] = useState(supportsWebGL)
 
-  const [storedProfile, setProfile] = useStoredState('profile', DEFAULT_PROFILE, isProfile)
+  const [storedProfile, setProfile] = useStoredState<Partial<BodyProfile>>('profile', DEFAULT_PROFILE, isProfile)
   const profile = clampProfile(storedProfile)
-  const { heightCm, weightKg, age } = profile
-  const shape = useMemo(() => bodyShape({ heightCm, weightKg, age }), [heightCm, weightKg, age])
+  const { heightCm, weightKg, age, bodyFatPct } = profile
+  const shape = useMemo(
+    () => bodyShape({ heightCm, weightKg, age, bodyFatPct }),
+    [heightCm, weightKg, age, bodyFatPct],
+  )
   const [units, setUnits] = useStoredState<Units>('units', 'metric', isUnits)
   const [style, setStyle] = useStoredState<BodyStyle>('style', 'hologram', isStyle)
 
@@ -123,11 +128,11 @@ export default function App() {
         </Panel>
       ) : (
         <main className="mt-5 grid min-h-0 flex-1 gap-4 lg:grid-cols-[250px_minmax(360px,1fr)_minmax(360px,420px)]">
-          <div className="order-3 flex min-h-0 flex-col gap-4 lg:order-1">
+          <div className="order-3 flex min-h-0 flex-col gap-4 lg:order-1 lg:-mr-1 lg:overflow-y-auto lg:pr-1">
             {use3D && (
               <BodyProfilePanel profile={profile} units={units} onChange={setProfile} onUnitsChange={setUnits} />
             )}
-            <div className="min-h-0 flex-1">
+            <div className="min-h-[320px] flex-1">
               <MuscleRoster
                 muscles={muscles.data ?? []}
                 selectedId={selectedId}

@@ -57,7 +57,8 @@ export function buildRadiusField(positionArrays) {
   // Dilate first so smoothing can't pull the surface below bony peaks.
   for (let iy = 0; iy < NY; iy++) fillRow(field, iy)
   for (let pass = 0; pass < 3; pass++) dilate(field)
-  for (let pass = 0; pass < 4; pass++) blur(field)
+  // Enough smoothing to remove the terraces dilation leaves between rows.
+  for (let pass = 0; pass < 10; pass++) blur(field)
 
   return (theta, y) => {
     const fy = Math.min(NY - 1, Math.max(0, (y - Y0) / DY))
@@ -182,12 +183,13 @@ export function latissimusDorsi(radius, sign, humerusInsertion) {
  * Rectus abdominis for one side, with tendinous intersections (the
  * "six-pack" grooves) and the linea alba gap at the midline.
  */
-export function rectusAbdominis(radius, sign) {
+export function rectusAbdominis(radius, sign, filled = false) {
   const NU = 18
   const NV = 56
   const yBottom = 0.875
   const yTop = 1.175
-  return gridMesh(NU, NV, (u, v) => {
+  const fill = []
+  const mesh = gridMesh(NU, NV, (u, v) => {
     const y = lerp(yBottom, yTop, v)
     const xMedial = 0.006
     const xLateral = lerp(0.032, 0.078, Math.pow(v, 0.7))
@@ -200,9 +202,20 @@ export function rectusAbdominis(radius, sign) {
     const edge = Math.pow(Math.sin(Math.PI * u), 0.45) * Math.pow(Math.sin(Math.PI * Math.min(1, v * 1.05)), 0.3)
     const belly = 0.004 + 0.005 * Math.sin(Math.PI * v)
     const fibres = 1 + 0.06 * Math.sin(u * Math.PI * 7)
-    const thickness = 0.002 + (0.007 + belly) * edge * grooves * fibres
+    const full = (0.007 + belly) * edge * fibres
+    const thickness = 0.002 + full * (filled ? 1 : grooves)
+    // Fat fills the tendinous grooves and softens the midline (linea alba).
+    const midline = (0.007 + belly) * (1 - edge) * smooth(0.35, 0, u) * 0.6
+    fill.push(full * (1 - grooves) + midline)
     return onSurface(radius, theta, y, thickness)
   })
+  if (filled) return mesh
+  // Depth of the tendinous grooves per vertex, plus the normals of the
+  // groove-free surface, so the app can fill them in as body fat rises
+  // (abs disappear under a fat layer) and shade the result smoothly.
+  mesh.fill = Float32Array.from(fill)
+  mesh.fillNormals = rectusAbdominis(radius, sign, true).normals
+  return mesh
 }
 
 /** Triangulates a (NU+1) × (NV+1) parametric grid, with outward normals. */

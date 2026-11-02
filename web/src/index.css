@@ -208,6 +208,19 @@
   outline: none;
 }
 
+/* Track split into coloured ranges (body fat bands), dimmed past the thumb. */
+.range-bands::-webkit-slider-runnable-track {
+  background:
+    linear-gradient(to right, transparent var(--fill), #00000088 var(--fill)),
+    linear-gradient(to right, var(--bands));
+}
+
+.range-bands::-moz-range-track {
+  background:
+    linear-gradient(to right, transparent var(--fill), #00000088 var(--fill)),
+    linear-gradient(to right, var(--bands));
+}
+
 /* Info panel content slides in when the selection changes. */
 @keyframes panel-enter {
   from {

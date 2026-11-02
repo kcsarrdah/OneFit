@@ -1,12 +1,17 @@
 import { useId, type CSSProperties } from 'react'
 import { Panel } from '../../components/ui'
 import {
+  BODY_FAT_BANDS,
   DEFAULT_PROFILE,
   PROFILE_LIMITS,
   bmi,
   bmiCategory,
+  bodyFatBand,
+  composition,
+  ffmiCategory,
   formatHeight,
   formatWeight,
+  type BodyFatBand,
   type BodyProfile,
   type Units,
 } from '../body-3d/profile'
@@ -18,20 +23,37 @@ interface BodyProfilePanelProps {
   onUnitsChange: (units: Units) => void
 }
 
-const CATEGORY_TONE = {
+const TONE_TEXT: Record<BodyFatBand['tone'], string> = {
+  warn: 'text-warm',
+  caution: 'text-amber-300',
+  good: 'text-accent',
+  ok: 'text-ink-100',
+}
+
+const BMI_TONE = {
   Underweight: 'text-sky-300',
   'Healthy range': 'text-accent',
   Overweight: 'text-amber-300',
   Obese: 'text-warm',
 } as const
 
+// Body-fat slider track: one colour stop per band, so the ranges are visible.
+const BAND_COLORS = ['#ff5a5a', '#ffb23d', '#c8ff2e', '#2ee6a0', '#8fa3c0', '#ffb23d', '#ff5a5a']
+const FAT = PROFILE_LIMITS.bodyFatPct
+const pctOf = (v: number) => ((v - FAT.min) / (FAT.max - FAT.min)) * 100
+const BAND_TRACK = BODY_FAT_BANDS.map((b, i) => {
+  const start = Math.max(0, pctOf(b.from))
+  const end = i + 1 < BODY_FAT_BANDS.length ? pctOf(BODY_FAT_BANDS[i + 1].from) : 100
+  return `${BAND_COLORS[i]} ${start}% ${end}%`
+}).join(', ')
+
 export function BodyProfilePanel({ profile, units, onChange, onUnitsChange }: BodyProfilePanelProps) {
-  const value = bmi(profile)
-  const category = bmiCategory(value)
-  const isDefault =
-    profile.heightCm === DEFAULT_PROFILE.heightCm &&
-    profile.weightKg === DEFAULT_PROFILE.weightKg &&
-    profile.age === DEFAULT_PROFILE.age
+  const bmiValue = bmi(profile)
+  const { leanKg, fatKg, ffmi } = composition(profile)
+  const band = bodyFatBand(profile.bodyFatPct)
+  const bandIndex = BODY_FAT_BANDS.indexOf(band)
+  const nextFrom = BODY_FAT_BANDS[bandIndex + 1]?.from
+  const isDefault = (Object.keys(DEFAULT_PROFILE) as (keyof BodyProfile)[]).every((k) => profile[k] === DEFAULT_PROFILE[k])
 
   return (
     <Panel className="p-4">
@@ -45,7 +67,7 @@ export function BodyProfilePanel({ profile, units, onChange, onUnitsChange }: Bo
               role="radio"
               aria-checked={units === u}
               onClick={() => onUnitsChange(u)}
-              className={`rounded px-1.5 py-0.5 uppercase tracking-wider transition-colors ${
+              className={`rounded px-1.5 py-0.5 tracking-wider uppercase transition-colors ${
                 units === u ? 'bg-ink-700 text-ink-100' : 'text-ink-400 hover:text-ink-300'
               }`}
             >
@@ -73,6 +95,15 @@ export function BodyProfilePanel({ profile, units, onChange, onUnitsChange }: Bo
           onChange={(weightKg) => onChange({ ...profile, weightKg })}
         />
         <Slider
+          label="Body fat"
+          value={profile.bodyFatPct}
+          display={`${profile.bodyFatPct}%`}
+          {...PROFILE_LIMITS.bodyFatPct}
+          mark={DEFAULT_PROFILE.bodyFatPct}
+          track={BAND_TRACK}
+          onChange={(bodyFatPct) => onChange({ ...profile, bodyFatPct })}
+        />
+        <Slider
           label="Age"
           value={profile.age}
           display={`${profile.age} yrs`}
@@ -82,15 +113,37 @@ export function BodyProfilePanel({ profile, units, onChange, onUnitsChange }: Bo
         />
       </div>
 
-      <div className="mt-4 flex items-center justify-between rounded-lg border border-ink-700 bg-ink-950/50 px-3 py-2">
-        <div>
-          <p className="text-[10px] font-semibold tracking-wider text-ink-400 uppercase">BMI</p>
-          <p className="font-display text-xl leading-none font-bold tabular-nums">{value.toFixed(1)}</p>
+      <dl className="mt-4 grid grid-cols-2 gap-2">
+        <Stat label="BMI" value={bmiValue.toFixed(1)} sub={bmiCategory(bmiValue)} subClass={BMI_TONE[bmiCategory(bmiValue)]} />
+        <Stat
+          label="FFMI"
+          value={ffmi.toFixed(1)}
+          sub={ffmiCategory(ffmi)}
+          title="Fat-free mass index: muscle relative to height. ~25 is about the natural limit."
+        />
+        <Stat label="Lean mass" value={formatWeight(leanKg, units)} />
+        <Stat label="Fat mass" value={formatWeight(fatKg, units)} />
+      </dl>
+
+      <section aria-live="polite" className="mt-3 rounded-lg border border-ink-700 bg-ink-950/50 p-3">
+        <div className="flex items-baseline justify-between gap-2">
+          <p className={`font-display text-base font-bold tracking-wide uppercase ${TONE_TEXT[band.tone]}`}>{band.label}</p>
+          <p className="text-[11px] text-ink-400 tabular-nums">
+            {band.from === 0 ? `< ${nextFrom}%` : nextFrom ? `${band.from}–${nextFrom - 1}%` : `${band.from}%+`}
+          </p>
         </div>
-        <p className={`text-right text-xs font-semibold ${CATEGORY_TONE[category]}`} aria-live="polite">
-          {category}
-        </p>
-      </div>
+        <ul className="mt-2 space-y-1 text-xs text-ink-300">
+          {band.looks.map((l) => (
+            <li key={l} className="flex gap-1.5">
+              <span aria-hidden className="mt-1.5 size-1 shrink-0 rounded-full bg-accent" />
+              {l}
+            </li>
+          ))}
+        </ul>
+        <p className="mt-2 text-[11px] leading-snug text-ink-400">{band.note}</p>
+        <p className="mt-1.5 text-[10px] text-ink-400/80">Ranges are for men; women's are roughly 8–10 points higher.</p>
+      </section>
+
       {!isDefault && (
         <button
           type="button"
@@ -104,6 +157,28 @@ export function BodyProfilePanel({ profile, units, onChange, onUnitsChange }: Bo
   )
 }
 
+function Stat({
+  label,
+  value,
+  sub,
+  subClass = 'text-ink-400',
+  title,
+}: {
+  label: string
+  value: string
+  sub?: string
+  subClass?: string
+  title?: string
+}) {
+  return (
+    <div className="rounded-lg border border-ink-700 bg-ink-950/50 px-2.5 py-2" title={title}>
+      <dt className="text-[10px] font-semibold tracking-wider text-ink-400 uppercase">{label}</dt>
+      <dd className="font-display text-lg leading-tight font-bold tabular-nums">{value}</dd>
+      {sub && <dd className={`text-[10px] font-semibold ${subClass}`}>{sub}</dd>}
+    </div>
+  )
+}
+
 function Slider({
   label,
   value,
@@ -111,6 +186,7 @@ function Slider({
   min,
   max,
   mark,
+  track,
   onChange,
 }: {
   label: string
@@ -119,11 +195,14 @@ function Slider({
   min: number
   max: number
   mark: number
+  /** Optional custom track gradient stops (replaces the accent fill). */
+  track?: string
   onChange: (v: number) => void
 }) {
   const id = useId()
   const pct = ((value - min) / (max - min)) * 100
   const markPct = ((mark - min) / (max - min)) * 100
+  const style = { '--fill': `${pct}%`, '--mark': `${markPct}%`, ...(track ? { '--bands': track } : {}) } as CSSProperties
   return (
     <div>
       <div className="flex items-baseline justify-between">
@@ -142,8 +221,8 @@ function Slider({
           value={value}
           aria-valuetext={display}
           onChange={(e) => onChange(Number(e.target.value))}
-          className="range"
-          style={{ '--fill': `${pct}%`, '--mark': `${markPct}%` } as CSSProperties}
+          className={track ? 'range range-bands' : 'range'}
+          style={style}
         />
       </div>
     </div>
