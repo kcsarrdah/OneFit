@@ -1,11 +1,15 @@
-import { useMemo, useState } from 'react'
+import { lazy, Suspense, useCallback, useMemo, useRef, useState, type ReactNode } from 'react'
 import type { BodyView } from './api/anatomy'
 import { useMuscles } from './api/queries'
 import { Panel, SegmentedControl } from './components/ui'
+import { viewForMuscle } from './features/body-3d/camera'
+import { supportsWebGL } from './features/body-3d/webgl'
 import { BodyMap } from './features/body-map/BodyMap'
-import { musclesOnView } from './features/body-map/bodyPaths'
 import { MuscleDetail } from './features/muscle-detail/MuscleDetail'
 import { MuscleRoster } from './features/roster/MuscleRoster'
+
+// three.js is large, so the 3D viewer loads in its own chunk.
+const BodyViewer = lazy(() => import('./features/body-3d/BodyViewer'))
 
 const VIEW_OPTIONS: { value: BodyView; label: string }[] = [
   { value: 'front', label: 'Front' },
@@ -17,30 +21,35 @@ export default function App() {
   const [view, setView] = useState<BodyView>('front')
   const [selectedId, setSelectedId] = useState<string | null>('chest')
   const [hoveredId, setHoveredId] = useState<string | null>(null)
+  const detailRef = useRef<HTMLDivElement>(null)
+  const [use3D] = useState(supportsWebGL)
 
-  const names = useMemo(
-    () => Object.fromEntries((muscles.data ?? []).map((m) => [m.id, m.name])),
-    [muscles.data],
-  )
+  const byId = useMemo(() => new Map((muscles.data ?? []).map((m) => [m.id, m])), [muscles.data])
+  const names = useMemo(() => Object.fromEntries([...byId].map(([id, m]) => [id, m.name])), [byId])
 
-  // Selecting a muscle that isn't drawn on the current side turns the figure.
-  const select = (id: string) => {
-    setSelectedId(id)
-    if (!musclesOnView(view).has(id)) {
-      changeView(view === 'front' ? 'back' : 'front')
-    }
-  }
-
-  const changeView = (next: BodyView) => {
-    // The hovered muscle unmounts with the old figure without a pointerleave.
+  const changeView = useCallback((next: BodyView) => {
+    // A hovered muscle can vanish behind the figure without a pointerleave.
     setHoveredId(null)
     setView(next)
-  }
+  }, [])
+
+  // Selecting a muscle that isn't visible from the current side turns the figure.
+  const select = useCallback(
+    (id: string) => {
+      setSelectedId(id)
+      const muscle = byId.get(id)
+      if (muscle) {
+        const next = viewForMuscle(muscle.views, view)
+        if (next !== view) changeView(next)
+      }
+    },
+    [byId, view, changeView],
+  )
 
   const focusName = hoveredId ? names[hoveredId] : selectedId ? names[selectedId] : undefined
 
   return (
-    <div className="mx-auto flex min-h-dvh max-w-[1440px] flex-col px-4 py-5 lg:h-dvh lg:px-6">
+    <div className="mx-auto flex min-h-dvh max-w-[1520px] flex-col px-4 py-5 lg:h-dvh lg:px-6">
       <header className="flex items-end justify-between gap-4">
         <div>
           <p className="font-display text-xs font-bold tracking-[0.3em] text-accent uppercase">OneFit</p>
@@ -60,7 +69,7 @@ export default function App() {
           </p>
         </Panel>
       ) : (
-        <main className="mt-5 grid min-h-0 flex-1 gap-4 lg:grid-cols-[240px_minmax(320px,1fr)_minmax(360px,440px)]">
+        <main className="mt-5 grid min-h-0 flex-1 gap-4 lg:grid-cols-[220px_minmax(360px,1fr)_minmax(360px,420px)]">
           <div className="order-3 min-h-0 lg:order-1">
             <MuscleRoster
               muscles={muscles.data ?? []}
@@ -71,40 +80,67 @@ export default function App() {
             />
           </div>
 
-          <Panel className="relative order-1 flex min-h-[560px] flex-col items-center overflow-hidden p-4 lg:order-2 lg:min-h-0">
-            <div className="flex w-full items-center justify-between gap-3">
+          <Panel className="relative order-1 flex h-[70dvh] min-h-[480px] flex-col overflow-hidden lg:order-2 lg:h-auto lg:min-h-0">
+            <div className="absolute inset-x-0 top-0 z-10 flex items-center justify-between gap-3 p-4">
               <SegmentedControl label="Body side" value={view} options={VIEW_OPTIONS} onChange={changeView} />
-              <p className="truncate font-display text-lg font-semibold tracking-wider text-ink-100 uppercase" aria-live="polite">
+              <p
+                className="truncate font-display text-lg font-semibold tracking-wider text-ink-100 uppercase drop-shadow"
+                aria-live="polite"
+              >
                 {focusName ?? '—'}
               </p>
             </div>
 
-            <div className="relative mt-2 flex min-h-0 w-full flex-1 items-center justify-center">
-              <div
-                aria-hidden
-                className="platform-ring pointer-events-none absolute bottom-[2%] h-40 w-72 rounded-full border border-accent/30 shadow-[0_0_60px_-10px_var(--color-accent)]"
-              >
-                <div className="absolute inset-6 rounded-full border border-dashed border-accent/20" />
-              </div>
-              <div key={view} className="figure-turn relative h-full max-h-[760px] w-full">
-                <BodyMap
-                  view={view}
-                  selectedId={selectedId}
-                  hoveredId={hoveredId}
-                  names={names}
-                  onSelect={select}
-                  onHover={setHoveredId}
-                />
-              </div>
+            <div className="relative min-h-0 flex-1">
+              {use3D ? (
+                <Suspense fallback={<StageMessage>Loading 3D viewer…</StageMessage>}>
+                  <BodyViewer
+                    muscles={muscles.data ?? []}
+                    selectedId={selectedId}
+                    hoveredId={hoveredId}
+                    view={view}
+                    onSelect={setSelectedId}
+                    onHover={setHoveredId}
+                    onViewChange={changeView}
+                    leaderTargetRef={detailRef}
+                  />
+                </Suspense>
+              ) : (
+                <div className="flex h-full items-center justify-center p-4 pt-16">
+                  <BodyMap
+                    view={view}
+                    selectedId={selectedId}
+                    hoveredId={hoveredId}
+                    names={names}
+                    onSelect={select}
+                    onHover={setHoveredId}
+                  />
+                </div>
+              )}
             </div>
-            <p className="text-xs text-ink-400">Click a muscle · switch sides to see the back</p>
+
+            <p className="pointer-events-none absolute inset-x-0 bottom-3 text-center text-xs text-ink-400">
+              {use3D ? 'Drag to rotate · pinch or scroll to zoom · tap a muscle' : 'Click a muscle · switch sides to see the back'}
+            </p>
           </Panel>
 
-          <div className="order-2 min-h-0 lg:order-3">
+          <div ref={detailRef} className="order-2 min-h-0 lg:order-3">
             <MuscleDetail muscleId={selectedId} />
           </div>
         </main>
       )}
+
+      <footer className="mt-3 text-center text-[11px] text-ink-400">
+        3D anatomy: BodyParts3D, © The Database Center for Life Science, licensed under{' '}
+        <a className="underline hover:text-ink-300" href="https://creativecommons.org/licenses/by/4.0/">
+          CC BY 4.0
+        </a>
+        , simplified for the web.
+      </footer>
     </div>
   )
+}
+
+function StageMessage({ children }: { children: ReactNode }) {
+  return <div className="flex h-full items-center justify-center text-sm text-ink-400">{children}</div>
 }

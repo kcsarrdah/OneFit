@@ -68,36 +68,49 @@
   stroke-width: 1;
 }
 
-/* Rotating platform under the figure. */
-@keyframes platform-spin {
-  to {
-    transform: rotateX(70deg) rotateZ(360deg);
-  }
-}
-
-.platform-ring {
-  transform: rotateX(70deg);
-  animation: platform-spin 18s linear infinite;
-}
-
-@keyframes figure-turn {
+/* Info panel content slides in when the selection changes. */
+@keyframes panel-enter {
   from {
     opacity: 0;
-    transform: perspective(800px) rotateY(-70deg) scale(0.96);
+    transform: translateX(12px);
   }
   to {
     opacity: 1;
-    transform: perspective(800px) rotateY(0) scale(1);
+    transform: none;
   }
 }
 
-.figure-turn {
-  animation: figure-turn 420ms cubic-bezier(0.2, 0.8, 0.2, 1);
+.panel-enter {
+  animation: panel-enter 320ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.panel-enter > * {
+  animation: panel-enter 380ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.panel-enter > :nth-child(2) {
+  animation-delay: 60ms;
+}
+
+/* Pulsing anchor dot at the body end of the leader line. */
+@keyframes leader-pulse {
+  0%,
+  100% {
+    r: 4;
+  }
+  50% {
+    r: 6;
+  }
+}
+
+.leader-dot {
+  animation: leader-pulse 1.6s ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .platform-ring,
-  .figure-turn {
+  .leader-dot,
+  .panel-enter,
+  .panel-enter > * {
     animation: none;
   }
 }

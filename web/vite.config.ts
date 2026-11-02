@@ -16,6 +16,11 @@ export default defineConfig({
       '/api': { target: API_TARGET, changeOrigin: true },
     },
   },
+  build: {
+    // The lazily loaded 3D viewer chunk (three.js + drei + postprocessing)
+    // is ~335 kB gzipped; it never blocks first paint.
+    chunkSizeWarningLimit: 1400,
+  },
   test: {
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],

@@ -59,7 +59,7 @@ function MuscleDetailContent({ muscle }: { muscle: Muscle }) {
   const [tab, setTab] = useState<Tab>('overview')
 
   return (
-    <Panel className="flex min-h-0 flex-col lg:h-full">
+    <Panel className="panel-enter flex min-h-0 flex-col lg:h-full">
       <header className="border-b border-ink-700/80 p-5">
         <div className="flex flex-wrap items-center gap-2">
           <Badge tone="accent">{muscle.region}</Badge>

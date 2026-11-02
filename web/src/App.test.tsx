@@ -88,6 +88,21 @@ describe('App', () => {
     expect(await screen.findByRole('heading', { level: 2, name: 'Glutes' })).toBeInTheDocument()
   })
 
+  it('falls back to the 2D body map when WebGL is unavailable', async () => {
+    renderApp()
+    expect(await screen.findByRole('group', { name: 'Body diagram, front view' })).toBeInTheDocument()
+    expect(screen.getByText(/switch sides to see the back/)).toBeInTheDocument()
+  })
+
+  it('credits the 3D anatomy source', () => {
+    renderApp()
+    expect(screen.getByText(/BodyParts3D/)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'CC BY 4.0' })).toHaveAttribute(
+      'href',
+      'https://creativecommons.org/licenses/by/4.0/',
+    )
+  })
+
   it('shows an error when the API is unreachable', async () => {
     vi.spyOn(globalThis, 'fetch').mockRejectedValue(new TypeError('Failed to fetch'))
     renderApp()
