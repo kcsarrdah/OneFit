@@ -1,5 +1,4 @@
 import {
-  Bvh,
   CameraControls,
   ContactShadows,
   Environment,
@@ -11,9 +10,10 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Bloom, EffectComposer, Vignette } from '@react-three/postprocessing'
 import { Suspense, useCallback, useEffect, useRef, useState, type RefObject } from 'react'
 import { createPortal } from 'react-dom'
-import { Vector3, type Group } from 'three'
+import { Raycaster, Vector3, type Group } from 'three'
 import type { BodyView, MuscleSummary } from '../../api/anatomy'
-import { BodyModel, type Anchor } from './BodyModel'
+import type { BodyStyle } from './bodyMaterials'
+import { BodyModel, type ViewerMode } from './BodyModel'
 import {
   BODY_CENTER_Y,
   DISTANCE,
@@ -23,7 +23,11 @@ import {
   viewForAzimuth,
 } from './camera'
 import { leaderPoints, toSvgPoints } from './leader'
+import type { SurfaceAnchor } from './picking'
 import { Platform } from './Platform'
+import type { Pose } from './pose'
+import type { BodyShape } from './profile'
+import type { Theme } from '../../theme/themes'
 
 export interface BodyViewerProps {
   muscles: MuscleSummary[]
@@ -36,6 +40,12 @@ export interface BodyViewerProps {
   onViewChange: (view: BodyView) => void
   /** The element the leader line runs to (the info panel). */
   leaderTargetRef: RefObject<HTMLElement | null>
+  style: BodyStyle
+  shape: BodyShape
+  mode: ViewerMode
+  pose: Pose
+  onPoseEdited: () => void
+  theme: Theme
 }
 
 const POLAR = Math.PI / 2 - 0.06
@@ -46,6 +56,7 @@ export default function BodyViewer(props: BodyViewerProps) {
   const visible = useOnScreen(container)
   // Step quality down on slow devices: drop post-processing, then resolution.
   const [quality, setQuality] = useState<'high' | 'low'>('high')
+  const [ready, setReady] = useState(false)
 
   return (
     <div ref={container} className="relative h-full w-full">
@@ -58,7 +69,7 @@ export default function BodyViewer(props: BodyViewerProps) {
       >
         <PerformanceMonitor onDecline={() => setQuality('low')} flipflops={2} />
         <Suspense fallback={null}>
-          <Scene {...props} leader={leader} />
+          <Scene {...props} leader={leader} onReady={() => setReady(true)} />
           {quality === 'high' && (
             <EffectComposer multisampling={2}>
               <Bloom mipmapBlur luminanceThreshold={0.75} luminanceSmoothing={0.2} intensity={0.9} />
@@ -67,7 +78,7 @@ export default function BodyViewer(props: BodyViewerProps) {
           )}
         </Suspense>
       </Canvas>
-      <LoadingOverlay />
+      <LoadingOverlay ready={ready} />
       <LeaderOverlay leader={leader} />
     </div>
   )
@@ -102,21 +113,29 @@ function Scene({
   onViewChange,
   leaderTargetRef,
   leader,
-}: BodyViewerProps & { leader: RefObject<LeaderElements> }) {
+  style,
+  shape,
+  mode,
+  pose,
+  onPoseEdited,
+  onReady,
+  theme,
+}: BodyViewerProps & { leader: RefObject<LeaderElements>; onReady: () => void }) {
   const controls = useRef<CameraControls>(null)
-  const anchor = useRef<Anchor | null>(null)
+  const anchor = useRef<SurfaceAnchor | null>(null)
   const lastView = useRef<BodyView>(view)
 
   // Re-aim at the selected muscle: turn to its side if asked and shift the
   // look-at height toward it, keeping the user's zoom level.
+  const scaleY = shape.scaleY
   const focus = useCallback((y: number, azimuth?: number) => {
     const c = controls.current
     if (!c) return
     const az = shortestAzimuth(c.azimuthAngle, azimuth ?? c.azimuthAngle)
-    const ty = focusTargetY(y)
+    const ty = focusTargetY(y / scaleY) * scaleY
     const pos = new Vector3().setFromSphericalCoords(c.distance, c.polarAngle, az).add(new Vector3(0, ty, 0))
     void c.setLookAt(pos.x, pos.y, pos.z, 0, ty, 0, true)
-  }, [])
+  }, [scaleY])
 
   // Turn the figure when the requested side differs from what the camera shows.
   useEffect(() => {
@@ -126,23 +145,40 @@ function Scene({
     void c.rotateTo(shortestAzimuth(c.azimuthAngle, VIEW_AZIMUTH[view]), POLAR, true)
   }, [view])
 
+  // Keep the figure framed as its height changes.
+  useEffect(() => {
+    const c = controls.current
+    if (!c) return
+    const target = c.getTarget(new Vector3())
+    void c.setTarget(target.x, BODY_CENTER_Y * shape.scaleY, target.z, true)
+    // Back off for taller figures so head and feet stay in frame.
+    const needed = DISTANCE.overview * Math.max(1, shape.scaleY)
+    if (c.distance < needed) void c.dollyTo(needed, true)
+  }, [shape.scaleY])
+
+  const anchorY = (a: SurfaceAnchor) => {
+    const p = new Vector3()
+    a.read(p, new Vector3())
+    return p.y
+  }
+
   const handleSelect = useCallback(
-    (id: string, a: Anchor) => {
+    (id: string, a: SurfaceAnchor) => {
       anchor.current = a
       onSelect(id)
-      focus(a.point.y)
+      focus(anchorY(a))
     },
     [onSelect, focus],
   )
 
   const handleAutoAnchor = useCallback(
-    (a: Anchor) => {
+    (a: SurfaceAnchor) => {
       // The default selection on load keeps the intro framing.
       const initial = anchor.current === null
       anchor.current = a
       if (initial) return
       const m = muscles.find((x) => x.id === a.muscleId)
-      focus(a.point.y, m && !m.views.includes(view) ? VIEW_AZIMUTH[m.views[0]] : VIEW_AZIMUTH[view])
+      focus(anchorY(a), m && !m.views.includes(view) ? VIEW_AZIMUTH[m.views[0]] : VIEW_AZIMUTH[view])
     },
     [focus, muscles, view],
   )
@@ -152,8 +188,8 @@ function Scene({
 
   return (
     <>
-      <color attach="background" args={['#070a12']} />
-      <fog attach="fog" args={['#070a12', 6, 11]} />
+      <color attach="background" args={[theme.sceneBg]} />
+      <fog attach="fog" args={[theme.sceneBg, 6, 11]} />
 
       <CameraControls
         ref={controls}
@@ -190,18 +226,25 @@ function Scene({
         <Lightformer form="rect" intensity={1} color="#ffd2b8" position={[4, 1, 1]} scale={[2, 4, 1]} />
       </Environment>
 
-      <Bvh firstHitOnly>
-        <BodyModel
-          selectedId={selectedId}
-          hoveredId={hoveredId}
-          view={view}
-          onSelect={handleSelect}
-          onHover={onHover}
-          onAutoAnchor={handleAutoAnchor}
-          anchorRef={anchor}
-        />
-      </Bvh>
-      <Platform />
+      <BodyModel
+        selectedId={selectedId}
+        hoveredId={hoveredId}
+        view={view}
+        style={style}
+        shape={shape}
+        mode={mode}
+        pose={pose}
+        onSelect={handleSelect}
+        onHover={onHover}
+        onAutoAnchor={handleAutoAnchor}
+        onPoseEdited={onPoseEdited}
+        onReady={onReady}
+        accent={theme.accent}
+        accentDeep={theme.accentDeep}
+        anchorRef={anchor}
+        controls={controls}
+      />
+      <Platform accent={theme.accent} />
       <ContactShadows position={[0, 0.004, 0]} scale={1.4} blur={2.4} far={1.2} opacity={0.7} resolution={512} frames={1} />
     </>
   )
@@ -289,7 +332,11 @@ function InitialFraming({ controls }: { controls: RefObject<CameraControls | nul
 
 const LINE_DRAW_SECONDS = 0.45
 const projected = new Vector3()
-const toCamera = new Vector3()
+const anchorPoint = new Vector3()
+const anchorNormal = new Vector3()
+const occlusion = new Raycaster()
+/** Re-check whether the anchor is hidden behind the body every N frames. */
+const OCCLUSION_EVERY = 3
 
 /**
  * Projects the anchor into screen space every frame and writes the leader
@@ -297,13 +344,13 @@ const toCamera = new Vector3()
  * (.oxlintrc.json allows these per-frame mutations in this folder.)
  */
 function useLeaderLine(
-  anchor: RefObject<Anchor | null>,
+  anchor: RefObject<SurfaceAnchor | null>,
   selectedId: string | null,
   leader: RefObject<LeaderElements>,
   target: RefObject<HTMLElement | null>,
 ) {
-  const { camera, gl } = useThree()
-  const state = useRef({ opacity: 0, drawn: 0, id: null as string | null })
+  const { camera, gl, scene } = useThree()
+  const state = useRef({ opacity: 0, drawn: 0, id: null as string | null, frame: 0, facing: true })
 
   useFrame((_, delta) => {
     const { line, dot, end } = leader.current
@@ -317,11 +364,19 @@ function useLeaderLine(
     }
 
     let points: ReturnType<typeof leaderPoints> = null
-    let facing = false
     if (a && selectedId && a.muscleId === selectedId && target.current) {
-      toCamera.copy(camera.position).sub(a.point).normalize()
-      facing = a.normal.dot(toCamera) > -0.05
-      projected.copy(a.point).project(camera)
+      a.read(anchorPoint, anchorNormal)
+      // Hide the line when something is in front of the anchor (e.g. it's
+      // round the back of the body, or behind a posed arm).
+      if (s.frame++ % OCCLUSION_EVERY === 0) {
+        const dist = camera.position.distanceTo(anchorPoint)
+        occlusion.set(camera.position, anchorPoint.clone().sub(camera.position).normalize())
+        occlusion.far = dist + 0.05
+        occlusion.firstHitOnly = true
+        const hit = occlusion.intersectObject(scene, true).find((h) => h.object.type === 'SkinnedMesh')
+        s.facing = !hit || hit.distance > dist - 0.03 || hit.object === a.mesh
+      }
+      projected.copy(anchorPoint).project(camera)
       const canvas = gl.domElement.getBoundingClientRect()
       const x = canvas.left + ((projected.x + 1) / 2) * canvas.width
       const y = canvas.top + ((1 - projected.y) / 2) * canvas.height
@@ -329,7 +384,7 @@ function useLeaderLine(
       if (inView) points = leaderPoints({ x, y }, target.current.getBoundingClientRect())
     }
 
-    const visible = points !== null && facing
+    const visible = points !== null && s.facing
     s.opacity += ((visible ? 1 : 0) - s.opacity) * (1 - Math.exp(-delta * 10))
     if (visible) s.drawn = Math.min(1, s.drawn + delta / LINE_DRAW_SECONDS)
 
@@ -391,14 +446,16 @@ function LeaderOverlay({ leader }: { leader: RefObject<LeaderElements> }) {
   )
 }
 
-function LoadingOverlay() {
+function LoadingOverlay({ ready }: { ready: boolean }) {
   const { active, progress } = useProgress()
-  if (!active) return null
+  if (ready && !active) return null
+  // Downloading counts for most of the bar; the rest is preparing the figure.
+  const pct = active ? progress * 0.85 : 92
   return (
     <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-3" role="status">
       <p className="font-display text-sm font-semibold tracking-[0.3em] text-ink-300 uppercase">Loading anatomy</p>
       <div className="h-1 w-48 overflow-hidden rounded-full bg-ink-800">
-        <div className="h-full bg-accent transition-[width] duration-200" style={{ width: `${progress}%` }} />
+        <div className="h-full bg-accent transition-[width] duration-300" style={{ width: `${pct}%` }} />
       </div>
     </div>
   )

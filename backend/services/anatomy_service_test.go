@@ -3,6 +3,7 @@ package services
 import (
 	"errors"
 	"onefit/backend/models"
+	"strings"
 	"testing"
 )
 
@@ -77,6 +78,57 @@ func TestListMusclesFilters(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestTutorialLinks(t *testing.T) {
+	as, err := newAnatomyServiceFrom([]models.Muscle{{
+		ID: "chest",
+		Strength: []models.StrengthExercise{
+			{Name: "Push-ups"},
+			{Name: "Bench Press", VideoURL: "https://www.youtube.com/watch?v=curated"},
+		},
+		Flexibility: []models.FlexibilityExercise{
+			{Name: "Doorway Pec Stretch"},
+			{Name: "Thread the Needle"},
+		},
+	}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	m, _ := as.GetMuscle("chest")
+
+	if got, want := m.Strength[0].VideoURL, youtubeSearch+"Push-ups+exercise+proper+form"; got != want {
+		t.Errorf("default strength link = %q, want %q", got, want)
+	}
+	if got := m.Strength[1].VideoURL; got != "https://www.youtube.com/watch?v=curated" {
+		t.Errorf("curated link overwritten: %q", got)
+	}
+	if got, want := m.Flexibility[0].VideoURL, youtubeSearch+"how+to+do+Doorway+Pec+Stretch"; got != want {
+		t.Errorf("stretch link = %q, want %q", got, want)
+	}
+	if got, want := m.Flexibility[1].VideoURL, youtubeSearch+"how+to+do+Thread+the+Needle+stretch"; got != want {
+		t.Errorf("stretch link = %q, want %q", got, want)
+	}
+}
+
+func TestEmbeddedContentHasTutorialLinks(t *testing.T) {
+	as, err := NewAnatomyService()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, s := range as.ListMuscles(MuscleFilter{}) {
+		m, _ := as.GetMuscle(s.ID)
+		for _, e := range m.Strength {
+			if !strings.HasPrefix(e.VideoURL, "https://") {
+				t.Errorf("%s / %s: missing video link", m.ID, e.Name)
+			}
+		}
+		for _, e := range m.Flexibility {
+			if !strings.HasPrefix(e.VideoURL, "https://") {
+				t.Errorf("%s / %s: missing video link", m.ID, e.Name)
+			}
+		}
 	}
 }
 

@@ -162,6 +162,7 @@ function StrengthList({ exercises }: { exercises: StrengthExercise[] }) {
               }
               dose={e.prescription}
               cues={e.cues}
+              videoUrl={e.video_url}
             />
           </li>
         ))}
@@ -182,6 +183,7 @@ function FlexibilityList({ exercises }: { exercises: FlexibilityExercise[] }) {
             meta={<Badge tone={FLEX_TONE[e.type]}>{e.type}</Badge>}
             dose={e.duration}
             cues={e.cues}
+            videoUrl={e.video_url}
           />
         </li>
       ))}
@@ -194,11 +196,13 @@ function ExerciseCard({
   meta,
   dose,
   cues,
+  videoUrl,
 }: {
   title: string
   meta: ReactNode
   dose: string
   cues: string[]
+  videoUrl?: string
 }) {
   return (
     <article className="rounded-xl border border-ink-700 bg-ink-800/50 p-4 transition-colors hover:border-ink-600">
@@ -215,6 +219,18 @@ function ExerciseCard({
           </li>
         ))}
       </ol>
+      {videoUrl && (
+        <a
+          href={videoUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={`Watch tutorial for ${title} (opens YouTube in a new tab)`}
+          className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-ink-600 bg-ink-950/50 px-2.5 py-1.5 text-xs font-medium text-ink-300 transition-colors hover:border-warm/60 hover:text-ink-100"
+        >
+          <PlayIcon />
+          Watch tutorial
+        </a>
+      )}
     </article>
   )
 }
@@ -232,5 +248,14 @@ function DifficultyMeter({ level }: { level: Difficulty }) {
       </span>
       {level}
     </span>
+  )
+}
+
+function PlayIcon() {
+  return (
+    <svg viewBox="0 0 20 14" className="h-3 w-4" aria-hidden>
+      <rect width="20" height="14" rx="4" fill="#ff3d3d" />
+      <path d="M8 4l5 3-5 3z" fill="white" />
+    </svg>
   )
 }
