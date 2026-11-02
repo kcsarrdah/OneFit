@@ -237,6 +237,8 @@ export function BodyModel(props: BodyModelProps) {
     }
     shared.uInflate.value += (shape.inflate - shared.uInflate.value) * k
     shared.uBelly.value += (shape.belly - shared.uBelly.value) * k
+    shared.uDefinition.value += (shape.definition - shared.uDefinition.value) * k
+    shared.uSoftness.value += (shape.softness - shared.uSoftness.value) * k
     shared.uDesat.value += ((palette.desaturates ? shape.desaturate : 0) - shared.uDesat.value) * k
 
     // Pose: slerp joints toward their targets (age adds a forward stoop).

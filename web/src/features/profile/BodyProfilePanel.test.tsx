@@ -26,6 +26,21 @@ describe('BodyProfilePanel', () => {
     expect(screen.getByText('64 yrs')).toBeInTheDocument()
   })
 
+  it('explains the current body fat range and composition', () => {
+    render(<Harness />)
+    expect(screen.getByText('Fit')).toBeInTheDocument()
+
+    fireEvent.change(screen.getByLabelText('Body fat'), { target: { value: '8' } })
+    expect(screen.getByText('8%')).toBeInTheDocument()
+    expect(screen.getByText('Shredded')).toBeInTheDocument()
+    expect(screen.getByText('Full six-pack and obliques')).toBeInTheDocument()
+    expect(screen.getByText('64 kg')).toBeInTheDocument() // lean mass at 70 kg, 8%
+    expect(screen.getByText('6 kg')).toBeInTheDocument() // fat mass
+
+    fireEvent.change(screen.getByLabelText('Body fat'), { target: { value: '35' } })
+    expect(screen.getByText('High')).toBeInTheDocument()
+  })
+
   it('switches units without changing the body', async () => {
     render(<Harness />)
     await userEvent.click(screen.getByRole('radio', { name: 'ft·lb' }))

@@ -26,6 +26,7 @@ import { readFileSync, mkdirSync, statSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { MeshoptEncoder, MeshoptSimplifier } from 'meshoptimizer'
+import { bakeAmbientOcclusion } from './lib/ao.mjs'
 import { JOINTS, boneJoint, computeJoints, contextHint, muscleHint, skinAttributes } from './lib/rig.mjs'
 import {
   SKULL_SLUGS,
@@ -178,13 +179,34 @@ if (process.env.PROBE) {
     .filter(([slug]) => WRAP_SLUGS.some((re) => re.test(slug)))
     .flatMap(([, prims]) => prims.map((p) => p.getAttribute('POSITION').getArray()))
   const radius = buildRadiusField(wrap)
-  const toPrim = ({ positions, normals, indices }) =>
-    out
+  const toPrim = ({ positions, normals, indices, fill, fillNormals }) => {
+    const prim = out
       .createPrimitive()
       .setAttribute('POSITION', out.createAccessor().setType('VEC3').setArray(positions))
       .setAttribute('NORMAL', out.createAccessor().setType('VEC3').setArray(normals))
       .setIndices(out.createAccessor().setType('SCALAR').setArray(indices))
       .setMaterial(material)
+    // Abs groove depth in cm, as normalized bytes (see synthesize.mjs).
+    if (fill)
+      prim.setAttribute(
+        '_FILL',
+        out
+          .createAccessor()
+          .setType('SCALAR')
+          .setArray(Uint8Array.from(fill, (m) => Math.min(255, Math.round(m * 100 * 255))))
+          .setNormalized(true),
+      )
+    if (fillNormals)
+      prim.setAttribute(
+        '_FNORMAL',
+        out
+          .createAccessor()
+          .setType('VEC3')
+          .setArray(Int8Array.from(fillNormals, (n) => Math.round(n * 127)))
+          .setNormalized(true),
+      )
+    return prim
+  }
   const HUMERUS_INSERTION = [0.163, 1.258, 0.082]
   for (const [sign, side] of [[1, 'l'], [-1, 'r']]) {
     addTo(groups, `muscle-lats-${side}`, toPrim(latissimusDorsi(radius, sign, HUMERUS_INSERTION)))
@@ -270,6 +292,27 @@ for (const node of scene.listChildren()) {
   total += prim.getIndices().getCount() / 3
 }
 console.log('triangles:', Math.round(total))
+
+// Crevice occlusion per vertex (lib/ao.mjs), stored as the custom _AO
+// attribute; the app deepens it at low body fat to show definition.
+{
+  const nodes = scene.listChildren().filter((n) => n.getMesh())
+  const prims = nodes.map((n) => n.getMesh().listPrimitives()[0])
+  const t0 = Date.now()
+  const ao = bakeAmbientOcclusion(
+    prims.map((p) => ({
+      positions: p.getAttribute('POSITION').getArray(),
+      normals: p.getAttribute('NORMAL').getArray(),
+      indices: p.getIndices().getArray(),
+    })),
+  )
+  // One normalized byte per vertex is plenty for a shading term.
+  const toBytes = (a) => Uint8Array.from(a, (v) => Math.round(v * 255))
+  prims.forEach((p, i) =>
+    p.setAttribute('_AO', out.createAccessor().setType('SCALAR').setArray(toBytes(ao[i])).setNormalized(true)),
+  )
+  console.log(`ambient occlusion baked in ${((Date.now() - t0) / 1000).toFixed(1)} s`)
+}
 
 // Rig: joint nodes in a hierarchy (skin weights were set before joining).
 for (const [name, p] of Object.entries(jointPos)) if (name !== 'root') jointPos[name] = p.map((v, k) => v + offset[k])

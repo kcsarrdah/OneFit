@@ -22,6 +22,10 @@ export interface SharedUniforms {
   uBelly: IUniform<number>
   /** 0..1 desaturation of muscle colour (age). */
   uDesat: IUniform<number>
+  /** 0..1 depth of muscle separations (low body fat). */
+  uDefinition: IUniform<number>
+  /** 0..1 soft, matte fat layer (high body fat). */
+  uSoftness: IUniform<number>
 }
 
 /** Per-material uniforms driven by selection and hover. */
@@ -35,6 +39,8 @@ export interface MaterialUniforms {
   uRimColor: IUniform<Color>
   /** How much uInflate/uBelly apply to this material (0 for bones). */
   uShape: IUniform<number>
+  /** How much body-fat definition/softness applies (0 for bones). */
+  uComposition: IUniform<number>
 }
 
 export function createSharedUniforms(): SharedUniforms {
@@ -44,6 +50,8 @@ export function createSharedUniforms(): SharedUniforms {
     uInflate: { value: 0 },
     uBelly: { value: 0 },
     uDesat: { value: 0 },
+    uDefinition: { value: 0 },
+    uSoftness: { value: 0 },
   }
 }
 
@@ -51,7 +59,14 @@ const VERTEX_HEAD = /* glsl */ `
 uniform float uInflate;
 uniform float uBelly;
 uniform float uShape;
+uniform float uSoftness;
+attribute float _ao;
+attribute float _fill;
+attribute vec3 _fnormal;
 varying vec3 vBodyPos;
+varying float vOpen;
+varying float vFilled;
+varying vec3 vFilledNormal;
 `
 
 // After skinning, `transformed` is in metres in the figure's space and
@@ -61,8 +76,19 @@ const VERTEX_SHAPE = /* glsl */ `
 {
   vec3 d = (transformed - vec3(0.0, 1.0, 0.03)) / vec3(0.17, 0.15, 0.16);
   float belly = uBelly * exp(-dot(d, d)) * smoothstep(-0.06, 0.06, transformed.z);
-  transformed += normalize(objectNormal) * (uInflate + belly) * uShape;
+  // Fat fills the six-pack grooves (_fill: groove depth, in cm) first.
+  float fat = smoothstep(0.0, 0.6, uSoftness);
+  float fill = _fill * 0.01 * fat;
+  vFilled = clamp(_fill * 12.0, 0.0, 1.0) * fat;
+  // Normal of the groove-free surface (only present on the abs).
+  vec3 fn = _fnormal;
+  #ifdef USE_SKINNING
+    fn = (skinMatrix * vec4(fn, 0.0)).xyz;
+  #endif
+  vFilledNormal = dot(fn, fn) > 1e-6 ? normalize(normalMatrix * fn) : vec3(0.0, 0.0, 1.0);
+  transformed += normalize(objectNormal) * (uInflate + belly + fill) * uShape;
   vBodyPos = (modelMatrix * vec4(transformed, 1.0)).xyz;
+  vOpen = _ao;
 }
 `
 
@@ -75,7 +101,13 @@ uniform float uSweepAmount;
 uniform vec3 uSweepColor;
 uniform float uRim;
 uniform vec3 uRimColor;
+uniform float uDefinition;
+uniform float uSoftness;
+uniform float uComposition;
 varying vec3 vBodyPos;
+varying float vOpen;
+varying float vFilled;
+varying vec3 vFilledNormal;
 `
 
 const FRAGMENT_REVEAL = /* glsl */ `
@@ -83,9 +115,33 @@ const FRAGMENT_REVEAL = /* glsl */ `
 if (vBodyPos.y > uReveal) discard;
 `
 
+// Body composition: _AO (baked crevice openness, 1 = open) darkens the
+// grooves between muscles. Lean bodies get deep, sharp separations; fat
+// fills them in and the surface turns softer and lighter.
 const FRAGMENT_COLOR = /* glsl */ `
 #include <color_fragment>
 diffuseColor.rgb = mix(diffuseColor.rgb, vec3(dot(diffuseColor.rgb, vec3(0.299, 0.587, 0.114))), uDesat);
+{
+  float groove = smoothstep(0.12, 0.8, 1.0 - vOpen);
+  float depth = mix(0.3, 0.88, uDefinition) * (1.0 - 0.75 * uSoftness);
+  diffuseColor.rgb *= 1.0 - groove * depth * uComposition;
+  diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * 1.12 + 0.02, uSoftness * 0.35 * uComposition);
+}
+`
+
+// Where fat has filled a groove, shade with the groove-free surface's
+// normal (baked into the abs) instead of the groove's own.
+const FRAGMENT_NORMAL = /* glsl */ `
+#include <normal_fragment_maps>
+if (vFilled > 0.001) {
+  vec3 fn = normalize(vFilledNormal) * (gl_FrontFacing ? 1.0 : -1.0);
+  normal = normalize(mix(normal, fn, vFilled));
+}
+`
+
+const FRAGMENT_ROUGHNESS = /* glsl */ `
+#include <roughnessmap_fragment>
+roughnessFactor = clamp(roughnessFactor - 0.14 * uDefinition * uComposition + 0.25 * uSoftness * uComposition, 0.05, 1.0);
 `
 
 const FRAGMENT_GLOW = /* glsl */ `
@@ -109,6 +165,7 @@ function patch<M extends MeshStandardMaterial>(material: M, shared: SharedUnifor
     uRim: { value: 0 },
     uRimColor: { value: new Color('#ff8a7a') },
     uShape: { value: shape },
+    uComposition: { value: shape > 0 ? 1 : 0 },
   }
   material.userData.u = own
   material.onBeforeCompile = (shader: WebGLProgramParametersWithUniforms) => {
@@ -119,6 +176,8 @@ function patch<M extends MeshStandardMaterial>(material: M, shared: SharedUnifor
       shader.fragmentShader
         .replace('#include <clipping_planes_fragment>', FRAGMENT_REVEAL)
         .replace('#include <color_fragment>', FRAGMENT_COLOR)
+        .replace('#include <roughnessmap_fragment>', FRAGMENT_ROUGHNESS)
+        .replace('#include <normal_fragment_maps>', FRAGMENT_NORMAL)
         .replace('#include <emissivemap_fragment>', FRAGMENT_GLOW)
   }
   // All figure materials share one program per material type.

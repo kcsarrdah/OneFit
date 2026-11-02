@@ -8,9 +8,12 @@ get a 2D body map instead.
 
 ### Features
 
-- **Your body:** height, weight and age sliders reshape the figure: height scales it
-  from the feet, weight (via BMI) adds bulk and a belly, age adds a slight stoop and
-  duller muscle tone. Metric or imperial; remembered per browser.
+- **Your body:** height, weight, body fat and age sliders reshape the figure. Weight
+  splits into lean and fat mass: lean mass (FFMI) sets muscle size; body fat sets
+  definition, from deep, chiseled separations when lean to a smooth, soft figure
+  with a belly when high (the abs fill in). A guide card explains each body fat
+  range. Height scales from the feet; age adds a slight stoop and duller tone.
+  Metric or imperial; remembered per browser.
 - **Looks:** Hologram (glowing x-ray skeleton), Anatomy (ivory bone), Sculpt (clean
   single-tone figure). The skull is replaced by a smooth, stylised mannequin head in
   every look.
@@ -91,7 +94,8 @@ npm run build:model -- /path/to/package/public
 (`MUSCLE_GROUPS`), one node per side named `muscle-<id>-<l|r>`, joins the skeleton into
 one `bones` mesh, rigs it (`scripts/lib/rig.mjs`: spine, shoulders, elbows, wrists, hips,
 knees, ankles; bones bind rigidly to one joint, muscles blend across the joints they
-cross), and simplifies and compresses everything. BodyParts3D has no
+cross), bakes per-vertex crevice occlusion (`scripts/lib/ao.mjs`, used for muscle
+definition), and simplifies and compresses everything. BodyParts3D has no
 latissimus dorsi or rectus abdominis, so `scripts/lib/synthesize.mjs` generates them by
 shrink-wrapping a parametric sheet over the surrounding ribs, spine and obliques.
 
