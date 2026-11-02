@@ -6,7 +6,13 @@ All-in-one fitness tracker with comprehensive fasting management.
 - Android Studio installed (Android)
 - Node.js and npm installed
 - Java 17+ for Android builds
-- Go 1.16+ for backend
+- Go 1.23+ for backend
+
+## Project layout
+
+- `backend/` — Go (Gin) API shared by every client
+- `frontend/` — Expo / React Native mobile app
+- `web/` — React + TypeScript web app (Muscle Explorer). See [web/README.md](web/README.md)
 
 ## Backend Setup
 
