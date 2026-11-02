@@ -3,7 +3,23 @@
 An interactive 3D anatomy viewer: orbit a realistic muscular figure 360°, click
 any muscle, and a leader line ties it to an info panel showing what it does,
 gym and bodyweight exercises that strengthen it, and stretches / mobility work
-that keep it flexible. Browsers without WebGL get a 2D body map instead.
+that keep it flexible, each with a "Watch tutorial" link. Browsers without WebGL
+get a 2D body map instead.
+
+### Features
+
+- **Your body:** height, weight and age sliders reshape the figure: height scales it
+  from the feet, weight (via BMI) adds bulk and a belly, age adds a slight stoop and
+  duller muscle tone. Metric or imperial; remembered per browser.
+- **Looks:** Hologram (glowing x-ray skeleton), Anatomy (ivory bone), Sculpt (clean
+  single-tone figure).
+- **Pose mode (experimental):** drag an arm, leg or the torso to rotate that joint
+  (with anatomical limits), or pick a preset (T-pose, Reach up, Flex, Squat, Lunge).
+  Feet stay planted on the pedestal.
+- **Themes:** dark, gym-inspired Iron, Volt and Steel, plus Hologram, with a daily
+  motivation line.
+- **Animation:** scan-line reveal on load, light sweep over the selected muscle, hover
+  rim glow, eased camera turns, idle camera sway.
 
 ## Stack
 
@@ -72,7 +88,9 @@ npm run build:model -- /path/to/package/public
 
 `scripts/build-body-model.mjs` groups the source meshes into the app's muscle ids
 (`MUSCLE_GROUPS`), one node per side named `muscle-<id>-<l|r>`, joins the skeleton into
-one `bones` mesh, and simplifies and compresses everything. BodyParts3D has no
+one `bones` mesh, rigs it (`scripts/lib/rig.mjs`: spine, shoulders, elbows, wrists, hips,
+knees, ankles; bones bind rigidly to one joint, muscles blend across the joints they
+cross), and simplifies and compresses everything. BodyParts3D has no
 latissimus dorsi or rectus abdominis, so `scripts/lib/synthesize.mjs` generates them by
 shrink-wrapping a parametric sheet over the surrounding ribs, spine and obliques.
 

@@ -20,6 +20,8 @@ export interface StrengthExercise {
   difficulty: Difficulty
   prescription: string
   cues: string[]
+  /** How-to video: a curated video or a YouTube search for tutorials. */
+  video_url: string
 }
 
 export interface FlexibilityExercise {
@@ -27,6 +29,7 @@ export interface FlexibilityExercise {
   type: FlexibilityType
   duration: string
   cues: string[]
+  video_url: string
 }
 
 export interface Muscle extends MuscleSummary {

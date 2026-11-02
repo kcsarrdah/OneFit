@@ -6,7 +6,8 @@
 // The pack ships ~33 MB of regional GLBs with one node per source mesh. This
 // script keeps only what the explorer renders, groups the muscle meshes into
 // the app's muscle ids (one node per id and side), joins all bones into one
-// mesh, recentres the figure on the origin, then simplifies and compresses.
+// mesh, recentres the figure on the origin, rigs it with a light skeleton
+// (lib/rig.mjs) for posing, then simplifies and compresses.
 
 import { Document, NodeIO } from '@gltf-transform/core'
 import { EXTMeshoptCompression, KHRMeshQuantization } from '@gltf-transform/extensions'
@@ -25,6 +26,7 @@ import { readFileSync, mkdirSync, statSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { MeshoptEncoder, MeshoptSimplifier } from 'meshoptimizer'
+import { JOINTS, boneJoint, computeJoints, contextHint, muscleHint, skinAttributes } from './lib/rig.mjs'
 import { WRAP_SLUGS, buildRadiusField, latissimusDorsi, rectusAbdominis } from './lib/synthesize.mjs'
 
 // BodyParts3D structure slug → explorer muscle id (backend/data/muscles.json).
@@ -190,6 +192,31 @@ if (process.env.PROBE) {
   if (sx <= 0) throw new Error('expected left-side muscles on +X')
 }
 
+// Rig: joint landmarks from the source bones, then skin weights on every
+// primitive while we still know what each one is. Bones bind rigidly to a
+// single joint; muscles blend smoothly across the joints they cross.
+const jointPos = computeJoints(bySlug)
+const sideOf = (p) => (p[0] >= 0 ? 'l' : 'r')
+const skinPrim = (prim, hint, rigid) => {
+  const { joints, weights } = skinAttributes(prim.getAttribute('POSITION').getArray(), hint, jointPos, rigid)
+  prim
+    .setAttribute('JOINTS_0', out.createAccessor().setType('VEC4').setArray(joints))
+    .setAttribute('WEIGHTS_0', out.createAccessor().setType('VEC4').setArray(weights))
+}
+for (const [slug, prims] of bySlug) {
+  const type = typeBySlug.get(slug)
+  for (const prim of prims) {
+    if (type === 'bone') skinPrim(prim, null, (p) => boneJoint(slug, sideOf(p)))
+    else if (MUSCLE_GROUPS[slug]) skinPrim(prim, muscleHint(MUSCLE_GROUPS[slug]))
+    else skinPrim(prim, contextHint(slug))
+  }
+}
+for (const [key, prims] of groups) {
+  // Generated muscles (lats, abs) aren't in bySlug.
+  const id = key.replace(/^muscle-|-[lrc]$/g, '')
+  for (const prim of prims) if (!prim.getAttribute('JOINTS_0')) skinPrim(prim, muscleHint(id))
+}
+
 // One node + mesh per group, with its primitives joined into one draw call.
 for (const [key, prims] of groups) {
   const mesh = out.createMesh(key).addPrimitive(joinPrimitives(prims))
@@ -231,6 +258,35 @@ for (const node of scene.listChildren()) {
   total += prim.getIndices().getCount() / 3
 }
 console.log('triangles:', Math.round(total))
+
+// Rig: joint nodes in a hierarchy (skin weights were set before joining).
+for (const [name, p] of Object.entries(jointPos)) if (name !== 'root') jointPos[name] = p.map((v, k) => v + offset[k])
+const jointNodes = new Map()
+for (const { name, parent } of JOINTS) {
+  const world = jointPos[name]
+  const parentWorld = parent ? jointPos[parent] : [0, 0, 0]
+  const node = out.createNode(`joint-${name}`).setTranslation(world.map((v, k) => v - parentWorld[k]))
+  if (parent) jointNodes.get(parent).addChild(node)
+  else scene.addChild(node)
+  jointNodes.set(name, node)
+}
+const ibm = new Float32Array(JOINTS.length * 16)
+JOINTS.forEach(({ name }, i) => {
+  // Joints carry no rotation in the bind pose, so the inverse bind matrix is
+  // just the negated world translation (column-major).
+  ibm.set([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, ...jointPos[name].map((v) => -v), 1], i * 16)
+})
+const skin = out
+  .createSkin('body')
+  .setSkeleton(jointNodes.get('root'))
+  .setInverseBindMatrices(out.createAccessor().setType('MAT4').setArray(ibm))
+for (const { name } of JOINTS) skin.addJoint(jointNodes.get(name))
+
+for (const node of scene.listChildren()) if (node.getMesh()) node.setSkin(skin)
+console.log('joints:', Object.fromEntries(Object.entries(jointPos).map(([k, v]) => [k, v.map((x) => +x.toFixed(3))])))
+
+// Quantizing positions of skinned meshes is folded into the inverse bind
+// matrices, so skinned output (and the shaders) still work in metres.
 await out.transform(prune(), quantize())
 out.createExtension(EXTMeshoptCompression).setRequired(true).setEncoderOptions({
   method: EXTMeshoptCompression.EncoderMethod.FILTER,

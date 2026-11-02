@@ -14,14 +14,83 @@
   --color-ink-100: #e4e9f6;
 
   --color-accent: #2ee6c5;
-  --color-accent-soft: #2ee6c533;
+  --color-accent-soft: color-mix(in oklab, var(--color-accent) 20%, transparent);
   --color-warm: #ff8a5c;
 
   --color-body-skin: #1f2a44;
   --color-body-detail: #0b1020;
   --color-muscle: #8c3a4a;
   --color-muscle-hover: #c85466;
-  --color-muscle-selected: #2ee6c5;
+  --color-muscle-selected: var(--color-accent);
+}
+
+/*
+ * Themes (dark only). Each overrides the palette tokens above; Tailwind
+ * utilities read the variables, so the whole page re-skins instantly.
+ * The 3D scene reads matching values from src/theme/themes.ts.
+ */
+:root,
+[data-theme='hologram'] {
+  --glow-top: #16224a;
+  --glow-bottom: #0d2a2a;
+  --texture: transparent;
+}
+
+[data-theme='iron'] {
+  --font-display: 'Oswald', 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --color-ink-950: #0b0908;
+  --color-ink-900: #14110f;
+  --color-ink-800: #1d1916;
+  --color-ink-700: #2a241f;
+  --color-ink-600: #3a322b;
+  --color-ink-400: #8a7f74;
+  --color-ink-300: #b8ada2;
+  --color-ink-100: #f3ece4;
+  --color-accent: #ff6a1f;
+  --color-warm: #ffc23d;
+  --color-body-skin: #2a2420;
+  --color-body-detail: #0b0908;
+  --glow-top: #3a1606;
+  --glow-bottom: #1d0f08;
+  --texture: #ffffff06;
+}
+
+[data-theme='volt'] {
+  --font-display: 'Oswald', 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --color-ink-950: #070807;
+  --color-ink-900: #0e100d;
+  --color-ink-800: #161915;
+  --color-ink-700: #22261f;
+  --color-ink-600: #31372c;
+  --color-ink-400: #7f8a76;
+  --color-ink-300: #adb8a3;
+  --color-ink-100: #eef5e6;
+  --color-accent: #c8ff2e;
+  --color-warm: #ff4d6d;
+  --color-body-skin: #20251d;
+  --color-body-detail: #070807;
+  --glow-top: #1c2a05;
+  --glow-bottom: #0b1405;
+  --texture: #ffffff05;
+}
+
+[data-theme='steel'] {
+  --font-display: 'Oswald', 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --color-ink-950: #080a10;
+  --color-ink-900: #0f121a;
+  --color-ink-800: #171b26;
+  --color-ink-700: #232938;
+  --color-ink-600: #323a4e;
+  --color-ink-400: #7c8499;
+  --color-ink-300: #aab1c4;
+  --color-ink-100: #eef0f6;
+  --color-accent: #ff3d4a;
+  --color-warm: #ffb020;
+  --color-body-skin: #1f2433;
+  --color-body-detail: #080a10;
+  --glow-top: #2a0a12;
+  --glow-bottom: #0e1424;
+  --texture: #ffffff05;
 }
 
 @layer base {
@@ -31,15 +100,26 @@
 
   body {
     @apply bg-ink-950 font-sans text-ink-100 antialiased;
+    /* Ambient glow plus a faint diagonal "knurling" texture, like a bar grip. */
     background-image:
-      radial-gradient(ellipse 80% 60% at 50% 0%, #16224a 0%, transparent 60%),
-      radial-gradient(ellipse 60% 40% at 50% 100%, #0d2a2a 0%, transparent 70%);
+      radial-gradient(ellipse 80% 60% at 50% 0%, var(--glow-top) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 50% 100%, var(--glow-bottom) 0%, transparent 70%),
+      repeating-linear-gradient(45deg, var(--texture) 0 1px, transparent 1px 7px),
+      repeating-linear-gradient(-45deg, var(--texture) 0 1px, transparent 1px 7px);
     background-attachment: fixed;
     min-height: 100dvh;
+    transition: background-color 400ms ease;
   }
 }
 
 @layer components {
+  /* Hazard-stripe accent bar under the header. */
+  .stripe-bar {
+    background:
+      repeating-linear-gradient(-45deg, transparent 0 8px, #00000055 8px 14px),
+      linear-gradient(90deg, var(--color-accent), color-mix(in oklab, var(--color-accent) 40%, var(--color-warm)), transparent);
+  }
+
   .section-title {
     @apply font-display text-xs font-bold tracking-[0.2em] text-ink-400 uppercase;
   }
@@ -66,6 +146,66 @@
 .muscle:focus-visible path {
   stroke: var(--color-ink-100);
   stroke-width: 1;
+}
+
+/* Character-creator style range slider. --fill is the filled percentage,
+   --mark the position of the default-value tick. */
+.range {
+  --track: 6px;
+  appearance: none;
+  width: 100%;
+  height: 22px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.range::-webkit-slider-runnable-track {
+  height: var(--track);
+  border-radius: 999px;
+  background:
+    linear-gradient(to right, transparent calc(var(--mark) - 1px), #ffffff40 calc(var(--mark) - 1px), #ffffff40 calc(var(--mark) + 1px), transparent calc(var(--mark) + 1px)),
+    linear-gradient(to right, color-mix(in oklab, var(--color-accent) 55%, black), var(--color-accent) var(--fill), var(--color-ink-700) var(--fill));
+}
+
+.range::-moz-range-track {
+  height: var(--track);
+  border-radius: 999px;
+  background:
+    linear-gradient(to right, transparent calc(var(--mark) - 1px), #ffffff40 calc(var(--mark) - 1px), #ffffff40 calc(var(--mark) + 1px), transparent calc(var(--mark) + 1px)),
+    linear-gradient(to right, color-mix(in oklab, var(--color-accent) 55%, black), var(--color-accent) var(--fill), var(--color-ink-700) var(--fill));
+}
+
+.range::-webkit-slider-thumb {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  margin-top: calc((var(--track) - 18px) / 2);
+  border-radius: 50%;
+  background: var(--color-ink-100);
+  border: 3px solid var(--color-accent);
+  box-shadow: 0 0 0 4px var(--color-accent-soft), 0 0 14px -2px var(--color-accent);
+  transition:
+    transform 120ms ease,
+    box-shadow 120ms ease;
+}
+
+.range::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--color-ink-100);
+  border: 3px solid var(--color-accent);
+  box-shadow: 0 0 0 4px var(--color-accent-soft), 0 0 14px -2px var(--color-accent);
+}
+
+.range:hover::-webkit-slider-thumb,
+.range:focus-visible::-webkit-slider-thumb {
+  transform: scale(1.15);
+  box-shadow: 0 0 0 6px var(--color-accent-soft), 0 0 18px 0 var(--color-accent);
+}
+
+.range:focus-visible {
+  outline: none;
 }
 
 /* Info panel content slides in when the selection changes. */

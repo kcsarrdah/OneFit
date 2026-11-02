@@ -60,6 +60,9 @@ type StrengthExercise struct {
 	Difficulty   string   `json:"difficulty"` // beginner | intermediate | advanced
 	Prescription string   `json:"prescription"`
 	Cues         []string `json:"cues"`
+	// VideoURL links to a how-to video. Set it in muscles.json to pick a
+	// specific video; otherwise the service fills in a YouTube search.
+	VideoURL string `json:"video_url"`
 }
 
 type FlexibilityExercise struct {
@@ -67,4 +70,5 @@ type FlexibilityExercise struct {
 	Type     string   `json:"type"` // static | dynamic | mobility
 	Duration string   `json:"duration"`
 	Cues     []string `json:"cues"`
+	VideoURL string   `json:"video_url"` // see StrengthExercise.VideoURL
 }
