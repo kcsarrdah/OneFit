@@ -1,0 +1,12 @@
+body.glb is derived from BodyParts3D, © The Database Center for Life Science,
+licensed under Creative Commons Attribution 4.0 International.
+https://creativecommons.org/licenses/by/4.0/
+Source: https://dbarchive.biosciencedbc.jp/en/bodyparts3d/download.html
+Obtained via the @somakine/bodyparts3d-musculoskeletal 0.2.0 data pack (CC BY 4.0).
+
+Modifications (scripts/build-body-model.mjs):
+- Kept bone and muscle meshes; dropped ligaments, joints and tendons.
+- Grouped muscles into OneFit muscle groups, one mesh per group and side.
+- Added generated latissimus dorsi and rectus abdominis meshes (not present in
+  BodyParts3D), shaped over the source anatomy by scripts/lib/synthesize.mjs.
+- Recentred, simplified (meshoptimizer), quantized and meshopt-compressed.

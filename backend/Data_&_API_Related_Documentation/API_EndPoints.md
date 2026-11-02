@@ -240,3 +240,35 @@ All successful responses follow this general format:
 - **📋 Templates:** 8 endpoints (template CRUD + exercise management)
 
 **Total: 23 endpoints** providing comprehensive fitness tracking functionality!
+
+---
+
+## 🫀 **Anatomy Endpoints** (`/api/anatomy`)
+
+Public, read-only reference content for the web Muscle Explorer. **No auth required.**
+Content is embedded from `backend/data/muscles.json`.
+
+| Method | Endpoint | Purpose | Query Parameters |
+|--------|----------|---------|------------------|
+| `GET` | `/api/anatomy/muscles` | List muscle summaries | `region` (`upper`\|`core`\|`lower`), `view` (`front`\|`back`), `search` (matches names and exercise names) |
+| `GET` | `/api/anatomy/muscles/:id` | Full muscle detail with strength exercises and stretches | - |
+
+#### Muscle Detail Response:
+```json
+{
+  "muscle": {
+    "id": "glutes",
+    "name": "Glutes",
+    "scientific_names": ["Gluteus maximus", "Gluteus medius", "Gluteus minimus"],
+    "region": "lower",
+    "views": ["back"],
+    "summary": "...",
+    "functions": ["..."],
+    "tips": ["..."],
+    "strength": [{ "name": "Barbell Hip Thrust", "equipment": "barbell", "difficulty": "intermediate", "prescription": "4 × 8–12", "cues": ["..."] }],
+    "flexibility": [{ "name": "Figure-4 Stretch", "type": "static", "duration": "30–45 s each side", "cues": ["..."] }]
+  }
+}
+```
+
+Invalid `region`/`view` returns `400`; unknown `:id` returns `404`.

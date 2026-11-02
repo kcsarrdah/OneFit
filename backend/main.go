@@ -63,6 +63,7 @@ func main() {
 	routes.SetupExerciseRoutes(r, db)
 	routes.SetupWorkoutRoutes(r, db)
 	routes.SetupTemplateRoutes(r, db)
+	routes.SetupAnatomyRoutes(r)
 
 	// Basic Routes
 	r.GET("/", func(c *gin.Context) {

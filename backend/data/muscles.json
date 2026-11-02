@@ -1,0 +1,371 @@
+[
+  {
+    "id": "neck",
+    "name": "Neck",
+    "scientific_names": ["Sternocleidomastoid", "Scalenes"],
+    "region": "upper",
+    "views": ["front"],
+    "summary": "The rope-like muscles on the sides of your neck that turn and tilt the head and help stabilise it under load.",
+    "functions": ["Rotate the head to the opposite side", "Flex the neck (chin to chest)", "Assist breathing by lifting the ribcage"],
+    "tips": ["Train the neck gently and progressively — light resistance and slow reps go a long way.", "Long hours looking at screens shorten the front of the neck; chin tucks help counter it."],
+    "strength": [
+      {"name": "Chin Tucks", "equipment": "bodyweight", "difficulty": "beginner", "prescription": "3 × 10, 3 s hold", "cues": ["Sit or stand tall", "Glide your chin straight back, making a double chin", "Keep your eyes level — don't nod"]},
+      {"name": "Manual-Resistance Neck Flexion", "equipment": "bodyweight", "difficulty": "beginner", "prescription": "2 × 10 each direction", "cues": ["Place your palm on your forehead", "Push your head forward into your hand at ~50% effort", "Repeat to each side and the back"]},
+      {"name": "Lying Neck Curls", "equipment": "plate", "difficulty": "intermediate", "prescription": "3 × 12–15", "cues": ["Lie on a bench with your head off the end", "Hold a light plate on a folded towel on your forehead", "Curl chin to chest slowly, lower under control"]}
+    ],
+    "flexibility": [
+      {"name": "Lateral Neck Stretch", "type": "static", "duration": "30 s each side", "cues": ["Drop your ear toward your shoulder", "Reach the opposite hand toward the floor", "Breathe slowly; don't pull hard on the head"]},
+      {"name": "Neck Rotations", "type": "mobility", "duration": "10 slow reps each way", "cues": ["Turn to look over one shoulder", "Pause, then turn to the other side", "Keep the shoulders relaxed and still"]}
+    ]
+  },
+  {
+    "id": "traps",
+    "name": "Trapezius",
+    "scientific_names": ["Trapezius (upper, middle, lower)"],
+    "region": "upper",
+    "views": ["front", "back"],
+    "summary": "A large diamond-shaped muscle from the base of the skull to the mid-back that moves and stabilises the shoulder blades.",
+    "functions": ["Shrug the shoulders (upper fibres)", "Pull the shoulder blades together (middle fibres)", "Draw the shoulder blades down and rotate them upward for overhead reaching (lower fibres)"],
+    "tips": ["Most people overwork the upper traps and neglect the lower fibres — balance shrugs with Y-raises and face pulls.", "Tight upper traps often show up as neck and shoulder tension."],
+    "strength": [
+      {"name": "Barbell Shrugs", "equipment": "barbell", "difficulty": "beginner", "prescription": "3 × 10–15", "cues": ["Hold the bar at arm's length", "Lift shoulders straight up toward your ears", "Pause one second at the top; no rolling"]},
+      {"name": "Face Pulls", "equipment": "cable", "difficulty": "beginner", "prescription": "3 × 12–15", "cues": ["Rope at upper-chest height", "Pull toward your face, elbows high and wide", "Finish with thumbs pointing behind you"]},
+      {"name": "Prone Y-Raises", "equipment": "dumbbell", "difficulty": "intermediate", "prescription": "3 × 10–12", "cues": ["Lie chest-down on an incline bench", "Raise light dumbbells into a Y shape, thumbs up", "Lead with the shoulder blades moving down and back"]},
+      {"name": "Farmer's Carry", "equipment": "dumbbell", "difficulty": "beginner", "prescription": "3 × 30–40 m", "cues": ["Hold heavy weights at your sides", "Stand tall with shoulders packed down", "Walk with short, controlled steps"]}
+    ],
+    "flexibility": [
+      {"name": "Upper Trap Stretch", "type": "static", "duration": "30 s each side", "cues": ["Sit on one hand to anchor that shoulder", "Tilt your head away and slightly forward", "Gently assist with the other hand"]},
+      {"name": "Shoulder Rolls", "type": "dynamic", "duration": "10 forward, 10 back", "cues": ["Make big slow circles with the shoulders", "Squeeze the blades together at the back of each circle"]}
+    ]
+  },
+  {
+    "id": "delts",
+    "name": "Shoulders",
+    "scientific_names": ["Deltoid (anterior, lateral, posterior)"],
+    "region": "upper",
+    "views": ["front", "back"],
+    "summary": "The rounded cap of the shoulder with three heads that lift the arm forward, out to the side and back.",
+    "functions": ["Raise the arm forward (front head)", "Raise the arm out to the side (side head)", "Pull the arm backward (rear head)"],
+    "tips": ["Pressing hits the front delts a lot already — give side and rear delts their own work.", "Warm up the rotator cuff before heavy overhead pressing."],
+    "strength": [
+      {"name": "Overhead Press", "equipment": "barbell", "difficulty": "intermediate", "prescription": "4 × 5–8", "cues": ["Bar on the front of the shoulders, grip just outside them", "Brace the core and squeeze the glutes", "Press straight up, moving your head back then through"]},
+      {"name": "Dumbbell Lateral Raise", "equipment": "dumbbell", "difficulty": "beginner", "prescription": "3 × 12–20", "cues": ["Slight bend in the elbows", "Raise out to the sides to shoulder height", "Lead with the elbows; lower slowly"]},
+      {"name": "Reverse Pec Deck", "equipment": "machine", "difficulty": "beginner", "prescription": "3 × 12–15", "cues": ["Chest against the pad, arms straight ahead", "Sweep the arms back in a wide arc", "Don't shrug — keep the neck long"]},
+      {"name": "Pike Push-ups", "equipment": "bodyweight", "difficulty": "intermediate", "prescription": "3 × 6–12", "cues": ["Hips high in an inverted V", "Lower the top of your head toward the floor between your hands", "Press back up through the shoulders"]}
+    ],
+    "flexibility": [
+      {"name": "Cross-Body Shoulder Stretch", "type": "static", "duration": "30 s each side", "cues": ["Bring one arm across your chest", "Hug it in with the other forearm above the elbow", "Keep the stretched shoulder down"]},
+      {"name": "Band Pull-Aparts", "type": "dynamic", "duration": "2 × 15", "cues": ["Hold a light band at shoulder height", "Pull it apart until it touches your chest", "Control the return"]},
+      {"name": "Arm Circles", "type": "mobility", "duration": "20 s each direction", "cues": ["Arms straight out to the sides", "Start with small circles and make them bigger"]}
+    ]
+  },
+  {
+    "id": "chest",
+    "name": "Chest",
+    "scientific_names": ["Pectoralis major", "Pectoralis minor"],
+    "region": "upper",
+    "views": ["front"],
+    "summary": "The fan-shaped muscles across the front of the ribcage that push the arms forward and bring them across the body.",
+    "functions": ["Push the arms forward (horizontal pressing)", "Bring the arms across the body", "Rotate the upper arm inward"],
+    "tips": ["Vary the bench angle: incline biases the upper chest, flat and decline hit the middle and lower fibres.", "A tight chest pulls the shoulders forward — pair chest work with upper-back work."],
+    "strength": [
+      {"name": "Barbell Bench Press", "equipment": "barbell", "difficulty": "intermediate", "prescription": "4 × 5–8", "cues": ["Shoulder blades squeezed back and down", "Lower the bar to mid-chest, elbows ~45°", "Drive your feet into the floor as you press"]},
+      {"name": "Incline Dumbbell Press", "equipment": "dumbbell", "difficulty": "beginner", "prescription": "3 × 8–12", "cues": ["Bench at 30–45°", "Lower the dumbbells to the sides of your upper chest", "Press up and slightly in"]},
+      {"name": "Push-ups", "equipment": "bodyweight", "difficulty": "beginner", "prescription": "3 × as many as possible", "cues": ["Hands just wider than shoulders", "Body in one straight line", "Chest touches the floor; elbows tuck slightly"]},
+      {"name": "Cable Fly", "equipment": "cable", "difficulty": "beginner", "prescription": "3 × 12–15", "cues": ["Step forward with a slight lean", "Soft bend in the elbows throughout", "Hug the handles together in front of your chest"]}
+    ],
+    "flexibility": [
+      {"name": "Doorway Pec Stretch", "type": "static", "duration": "30 s each side", "cues": ["Forearm on the doorframe, elbow at shoulder height", "Step through gently until you feel the chest open", "Keep your ribs down"]},
+      {"name": "Arm Swings", "type": "dynamic", "duration": "15 reps", "cues": ["Swing the arms open wide, then cross them in front", "Gradually increase the range"]}
+    ]
+  },
+  {
+    "id": "biceps",
+    "name": "Biceps",
+    "scientific_names": ["Biceps brachii", "Brachialis"],
+    "region": "upper",
+    "views": ["front"],
+    "summary": "The muscles at the front of the upper arm that bend the elbow and turn the palm up.",
+    "functions": ["Bend the elbow", "Rotate the forearm palm-up (supination)", "Assist raising the arm forward"],
+    "tips": ["Rows and pull-ups train the biceps too — direct curls add the finishing work.", "Hammer curls hit the brachialis and forearms, which adds arm thickness."],
+    "strength": [
+      {"name": "Barbell Curl", "equipment": "barbell", "difficulty": "beginner", "prescription": "3 × 8–12", "cues": ["Elbows pinned to your sides", "Curl without swinging the torso", "Lower slowly over 2–3 seconds"]},
+      {"name": "Hammer Curl", "equipment": "dumbbell", "difficulty": "beginner", "prescription": "3 × 10–12", "cues": ["Palms face each other throughout", "Curl to the shoulder", "Keep your wrists neutral"]},
+      {"name": "Incline Dumbbell Curl", "equipment": "dumbbell", "difficulty": "intermediate", "prescription": "3 × 10–12", "cues": ["Lie back on a 45–60° bench, arms hanging", "Curl without letting the elbows drift forward", "Get a full stretch at the bottom"]},
+      {"name": "Chin-ups", "equipment": "pull-up bar", "difficulty": "intermediate", "prescription": "3 × 5–10", "cues": ["Palms facing you, shoulder-width grip", "Pull your chest toward the bar", "Lower all the way to straight arms"]}
+    ],
+    "flexibility": [
+      {"name": "Wall Biceps Stretch", "type": "static", "duration": "30 s each side", "cues": ["Palm flat on a wall behind you at shoulder height, thumb up", "Slowly turn your body away from the wall", "Keep the elbow straight but not locked"]},
+      {"name": "Elbow Extensions", "type": "mobility", "duration": "15 reps", "cues": ["Fully straighten the arm and turn the palm down", "Then bend and turn the palm up"]}
+    ]
+  },
+  {
+    "id": "triceps",
+    "name": "Triceps",
+    "scientific_names": ["Triceps brachii (long, lateral, medial heads)"],
+    "region": "upper",
+    "views": ["back"],
+    "summary": "The three-headed muscle at the back of the upper arm — about two-thirds of your upper-arm size — that straightens the elbow.",
+    "functions": ["Straighten the elbow", "Pull the arm down and back (long head)", "Stabilise the elbow during pressing"],
+    "tips": ["Overhead extensions stretch the long head and are worth including.", "Close-grip pressing lets you load the triceps heavily."],
+    "strength": [
+      {"name": "Close-Grip Bench Press", "equipment": "barbell", "difficulty": "intermediate", "prescription": "4 × 6–10", "cues": ["Hands about shoulder-width apart", "Elbows tucked close to your sides", "Touch the lower chest, press to lockout"]},
+      {"name": "Cable Pushdown", "equipment": "cable", "difficulty": "beginner", "prescription": "3 × 10–15", "cues": ["Elbows pinned to your sides", "Push down until the arms are fully straight", "Only the forearms move"]},
+      {"name": "Overhead Dumbbell Extension", "equipment": "dumbbell", "difficulty": "beginner", "prescription": "3 × 10–12", "cues": ["Hold one dumbbell overhead with both hands", "Lower it behind your head, elbows pointing up", "Extend back up without flaring the elbows"]},
+      {"name": "Bench Dips", "equipment": "bodyweight", "difficulty": "beginner", "prescription": "3 × 10–15", "cues": ["Hands on a bench behind you", "Lower until the elbows reach about 90°", "Keep your hips close to the bench"]}
+    ],
+    "flexibility": [
+      {"name": "Overhead Triceps Stretch", "type": "static", "duration": "30 s each side", "cues": ["Reach one arm overhead and bend the elbow", "Use the other hand to ease the elbow back", "Keep the ribs down"]},
+      {"name": "Towel Behind-Back Stretch", "type": "static", "duration": "30 s each side", "cues": ["Hold a towel behind your back, one hand high, one low", "Walk the hands toward each other"]}
+    ]
+  },
+  {
+    "id": "forearms",
+    "name": "Forearms",
+    "scientific_names": ["Wrist flexors", "Wrist extensors", "Brachioradialis"],
+    "region": "upper",
+    "views": ["front", "back"],
+    "summary": "A group of muscles between the elbow and wrist that control your grip, wrist and finger movement.",
+    "functions": ["Grip and squeeze", "Bend and extend the wrist", "Help bend the elbow (brachioradialis)"],
+    "tips": ["Grip strength often limits pulling exercises — direct grip work pays off.", "Desk and phone work keeps the forearm flexors short; stretch them daily."],
+    "strength": [
+      {"name": "Dead Hang", "equipment": "pull-up bar", "difficulty": "beginner", "prescription": "3 × 20–60 s", "cues": ["Hang from a bar with a full grip", "Keep the shoulders gently engaged", "Breathe and hold"]},
+      {"name": "Wrist Curls", "equipment": "dumbbell", "difficulty": "beginner", "prescription": "3 × 15–20", "cues": ["Forearms on your thighs, palms up", "Curl the wrist up through its full range", "Let the dumbbell roll to the fingertips at the bottom"]},
+      {"name": "Reverse Curls", "equipment": "barbell", "difficulty": "beginner", "prescription": "3 × 10–15", "cues": ["Overhand grip, shoulder width", "Curl with your wrists kept straight", "Lower slowly"]},
+      {"name": "Plate Pinch Hold", "equipment": "plate", "difficulty": "intermediate", "prescription": "3 × 20–30 s", "cues": ["Pinch two smooth plates together with your fingertips", "Hold at your side without letting them slip"]}
+    ],
+    "flexibility": [
+      {"name": "Wrist Flexor Stretch", "type": "static", "duration": "30 s each side", "cues": ["Arm straight ahead, palm up", "Gently pull the fingers down and back"]},
+      {"name": "Wrist Extensor Stretch", "type": "static", "duration": "30 s each side", "cues": ["Arm straight ahead, palm down", "Gently pull the back of the hand toward you"]},
+      {"name": "Wrist Circles", "type": "mobility", "duration": "10 each direction", "cues": ["Interlace your fingers", "Roll the wrists in smooth circles"]}
+    ]
+  },
+  {
+    "id": "abs",
+    "name": "Abs",
+    "scientific_names": ["Rectus abdominis", "Transverse abdominis"],
+    "region": "core",
+    "views": ["front"],
+    "summary": "The 'six-pack' muscle running down the front of the abdomen, plus the deep corset muscle beneath it that braces the spine.",
+    "functions": ["Flex the trunk (curl the ribs toward the pelvis)", "Brace the spine against load", "Increase pressure in the abdomen when breathing out hard"],
+    "tips": ["Visible abs depend mostly on body-fat level, not ab exercises.", "Anti-extension work (planks, rollouts) builds a core that transfers to lifting."],
+    "strength": [
+      {"name": "Plank", "equipment": "bodyweight", "difficulty": "beginner", "prescription": "3 × 30–60 s", "cues": ["Forearms under the shoulders", "Squeeze the glutes and tuck the pelvis slightly", "Don't let the hips sag"]},
+      {"name": "Hanging Knee Raise", "equipment": "pull-up bar", "difficulty": "intermediate", "prescription": "3 × 10–15", "cues": ["Hang with straight arms", "Curl the pelvis up and bring the knees toward the chest", "Lower without swinging"]},
+      {"name": "Ab Wheel Rollout", "equipment": "ab wheel", "difficulty": "advanced", "prescription": "3 × 6–12", "cues": ["Start kneeling, wheel under the shoulders", "Roll out while keeping the lower back flat", "Pull back with the abs, not the hips"]},
+      {"name": "Cable Crunch", "equipment": "cable", "difficulty": "beginner", "prescription": "3 × 12–15", "cues": ["Kneel facing the stack, rope by your head", "Crunch the ribs toward the pelvis", "Hips stay still"]},
+      {"name": "Dead Bug", "equipment": "bodyweight", "difficulty": "beginner", "prescription": "3 × 8 each side", "cues": ["Lie on your back, arms up, knees at 90°", "Extend the opposite arm and leg slowly", "Keep the lower back pressed into the floor"]}
+    ],
+    "flexibility": [
+      {"name": "Cobra Stretch", "type": "static", "duration": "20–30 s", "cues": ["Lie face down, hands under the shoulders", "Press the chest up, keeping the hips down", "Only go as high as is comfortable for the lower back"]},
+      {"name": "Standing Side-to-Side Reach", "type": "dynamic", "duration": "10 each side", "cues": ["Reach both arms overhead", "Lean gently to each side and slightly back"]}
+    ]
+  },
+  {
+    "id": "obliques",
+    "name": "Obliques",
+    "scientific_names": ["External oblique", "Internal oblique", "Serratus anterior"],
+    "region": "core",
+    "views": ["front"],
+    "summary": "The muscles along the sides of the waist that twist and bend the trunk and resist rotation.",
+    "functions": ["Rotate the torso", "Bend sideways", "Resist twisting and side-bending under load"],
+    "tips": ["Anti-rotation exercises (Pallof press, suitcase carry) are especially useful for sport and back health.", "The serratus anterior sits on the ribs and keeps the shoulder blades against the ribcage."],
+    "strength": [
+      {"name": "Side Plank", "equipment": "bodyweight", "difficulty": "beginner", "prescription": "3 × 20–45 s each side", "cues": ["Elbow under the shoulder", "Body in one straight line from head to feet", "Push the floor away and lift the hips"]},
+      {"name": "Pallof Press", "equipment": "cable", "difficulty": "beginner", "prescription": "3 × 10 each side", "cues": ["Stand side-on to the cable, handle at your chest", "Press straight out and resist being twisted", "Hold for 2 s, return"]},
+      {"name": "Cable Woodchop", "equipment": "cable", "difficulty": "intermediate", "prescription": "3 × 10 each side", "cues": ["Pull diagonally from high to low across your body", "Rotate through the torso, pivot the back foot", "Arms stay mostly straight"]},
+      {"name": "Suitcase Carry", "equipment": "dumbbell", "difficulty": "beginner", "prescription": "3 × 30 m each side", "cues": ["Heavy weight in one hand only", "Stay perfectly upright — don't lean", "Walk slowly"]}
+    ],
+    "flexibility": [
+      {"name": "Standing Side Bend", "type": "static", "duration": "30 s each side", "cues": ["Reach one arm overhead", "Lean to the opposite side", "Keep the hips stacked over the feet"]},
+      {"name": "Supine Spinal Twist", "type": "static", "duration": "30–45 s each side", "cues": ["Lie on your back and drop both knees to one side", "Keep both shoulders on the floor", "Breathe into the side of the ribs"]},
+      {"name": "Seated Torso Rotations", "type": "dynamic", "duration": "10 each side", "cues": ["Sit tall, arms crossed", "Rotate slowly from the mid-back"]}
+    ]
+  },
+  {
+    "id": "lats",
+    "name": "Lats",
+    "scientific_names": ["Latissimus dorsi", "Teres major"],
+    "region": "upper",
+    "views": ["back"],
+    "summary": "The widest muscles of the back, running from the lower spine and pelvis up into the upper arm. They create the V-taper.",
+    "functions": ["Pull the arms down and toward the body", "Pull the arms backward", "Help stabilise the spine during heavy lifts"],
+    "tips": ["Think 'elbows to hips' to feel the lats during pulldowns and rows.", "Tight lats can limit how far you can raise your arms overhead."],
+    "strength": [
+      {"name": "Pull-ups", "equipment": "pull-up bar", "difficulty": "intermediate", "prescription": "4 × 5–10", "cues": ["Overhand grip, slightly wider than the shoulders", "Pull the elbows down to your sides", "Chin over the bar, lower to a full hang"]},
+      {"name": "Lat Pulldown", "equipment": "cable", "difficulty": "beginner", "prescription": "3 × 8–12", "cues": ["Lean back slightly, chest up", "Pull the bar to your upper chest", "Control it back to straight arms"]},
+      {"name": "Single-Arm Dumbbell Row", "equipment": "dumbbell", "difficulty": "beginner", "prescription": "3 × 10 each side", "cues": ["One hand and knee on a bench, back flat", "Row the dumbbell toward your hip", "Let the shoulder blade stretch at the bottom"]},
+      {"name": "Straight-Arm Pulldown", "equipment": "cable", "difficulty": "beginner", "prescription": "3 × 12–15", "cues": ["Arms straight, slight hinge at the hips", "Sweep the bar down to your thighs", "Keep the elbows locked softly"]}
+    ],
+    "flexibility": [
+      {"name": "Child's Pose with Side Reach", "type": "static", "duration": "30 s each side", "cues": ["Kneel and sit back toward your heels", "Walk both hands over to one side", "Breathe into the side of the ribs"]},
+      {"name": "Overhead Lat Stretch", "type": "static", "duration": "30 s each side", "cues": ["Hold a post or doorframe at head height", "Sink the hips back and away", "Let the arm and side lengthen"]}
+    ]
+  },
+  {
+    "id": "upper-back",
+    "name": "Upper Back",
+    "scientific_names": ["Rhomboids", "Infraspinatus", "Teres minor"],
+    "region": "upper",
+    "views": ["back"],
+    "summary": "The muscles around and between the shoulder blades, including part of the rotator cuff. Key for posture and healthy shoulders.",
+    "functions": ["Squeeze the shoulder blades together", "Rotate the upper arm outward (rotator cuff)", "Hold the shoulder joint in place during movement"],
+    "tips": ["Aim for at least as much pulling as pressing each week.", "External-rotation work is cheap insurance for the shoulder."],
+    "strength": [
+      {"name": "Chest-Supported Row", "equipment": "dumbbell", "difficulty": "beginner", "prescription": "3 × 10–12", "cues": ["Lie chest-down on an incline bench", "Row the dumbbells with the elbows out at ~45°", "Squeeze the shoulder blades at the top"]},
+      {"name": "Seated Cable Row", "equipment": "cable", "difficulty": "beginner", "prescription": "3 × 10–12", "cues": ["Sit tall, slight bend in the knees", "Pull the handle to your stomach", "Shoulders down, not shrugged"]},
+      {"name": "Band External Rotation", "equipment": "band", "difficulty": "beginner", "prescription": "3 × 15 each side", "cues": ["Elbow at your side, bent to 90°", "Rotate the forearm outward against the band", "Keep the elbow tucked in"]},
+      {"name": "Barbell Bent-Over Row", "equipment": "barbell", "difficulty": "intermediate", "prescription": "4 × 6–10", "cues": ["Hinge to about 45° with a flat back", "Row the bar to the lower ribs", "No jerking with the hips"]}
+    ],
+    "flexibility": [
+      {"name": "Thread the Needle", "type": "mobility", "duration": "8 each side", "cues": ["Start on all fours", "Slide one arm under your body, letting the shoulder drop", "Then rotate and reach it to the ceiling"]},
+      {"name": "Upper Back Hug Stretch", "type": "static", "duration": "30 s", "cues": ["Wrap your arms around yourself", "Round the upper back and spread the shoulder blades", "Breathe into the back of the ribs"]},
+      {"name": "Foam Roller Thoracic Extension", "type": "mobility", "duration": "1–2 min", "cues": ["Roller under the upper back, hands behind your head", "Gently extend over it", "Move the roller up a few centimetres and repeat"]}
+    ]
+  },
+  {
+    "id": "lower-back",
+    "name": "Lower Back",
+    "scientific_names": ["Erector spinae", "Multifidus", "Quadratus lumborum"],
+    "region": "core",
+    "views": ["back"],
+    "summary": "The columns of muscle running up either side of the spine that keep you upright and protect the spine when you bend and lift.",
+    "functions": ["Extend the spine (stand up from bending)", "Hold the spine neutral under load", "Bend the trunk sideways"],
+    "tips": ["Train it to resist movement first (bird dogs, carries) before loading it heavily.", "Persistent or sharp back pain should be checked by a professional before training through it."],
+    "strength": [
+      {"name": "Bird Dog", "equipment": "bodyweight", "difficulty": "beginner", "prescription": "3 × 8 each side", "cues": ["Start on all fours, spine neutral", "Extend the opposite arm and leg", "Don't let the hips rotate"]},
+      {"name": "Back Extension", "equipment": "machine", "difficulty": "beginner", "prescription": "3 × 12–15", "cues": ["Hips on the pad, ankles locked in", "Lower with a flat back, hinging at the hips", "Rise until the body is in a straight line — no over-arching"]},
+      {"name": "Romanian Deadlift", "equipment": "barbell", "difficulty": "intermediate", "prescription": "3 × 8–10", "cues": ["Soft knees, push the hips back", "Bar slides down the thighs", "Keep the back flat; stand up by driving the hips forward"]},
+      {"name": "Deadlift", "equipment": "barbell", "difficulty": "advanced", "prescription": "3–5 × 3–5", "cues": ["Bar over mid-foot, shins close", "Brace hard and pull the slack out of the bar", "Push the floor away and lock out with the glutes"]}
+    ],
+    "flexibility": [
+      {"name": "Cat–Cow", "type": "mobility", "duration": "10 slow reps", "cues": ["On all fours", "Alternate rounding and arching the spine", "Move with your breath"]},
+      {"name": "Knees-to-Chest", "type": "static", "duration": "30–45 s", "cues": ["Lie on your back", "Hug both knees toward your chest", "Let the lower back relax into the floor"]},
+      {"name": "Child's Pose", "type": "static", "duration": "45–60 s", "cues": ["Kneel, sit back toward your heels", "Reach the arms forward and rest your forehead down"]}
+    ]
+  },
+  {
+    "id": "glutes",
+    "name": "Glutes",
+    "scientific_names": ["Gluteus maximus", "Gluteus medius", "Gluteus minimus"],
+    "region": "lower",
+    "views": ["back"],
+    "summary": "The largest and most powerful muscles in the body. They extend the hip for running, jumping and lifting, and stabilise the pelvis.",
+    "functions": ["Extend the hip (drive it forward)", "Move the leg out to the side (glute medius)", "Stabilise the pelvis when standing on one leg"],
+    "tips": ["Weak glute medius often shows as knees caving in during squats.", "Long periods of sitting can make the glutes switch off — activation drills help."],
+    "strength": [
+      {"name": "Barbell Hip Thrust", "equipment": "barbell", "difficulty": "intermediate", "prescription": "4 × 8–12", "cues": ["Upper back on a bench, bar over the hips", "Drive through the heels to lift the hips", "Chin tucked; squeeze hard at the top"]},
+      {"name": "Glute Bridge", "equipment": "bodyweight", "difficulty": "beginner", "prescription": "3 × 15", "cues": ["Lie on your back, knees bent", "Push through the heels and lift the hips", "Don't arch the lower back"]},
+      {"name": "Bulgarian Split Squat", "equipment": "dumbbell", "difficulty": "intermediate", "prescription": "3 × 8–10 each leg", "cues": ["Rear foot up on a bench", "Lean the torso slightly forward", "Lower until the back knee nearly touches the floor"]},
+      {"name": "Banded Lateral Walk", "equipment": "band", "difficulty": "beginner", "prescription": "3 × 12 steps each way", "cues": ["Band around the knees or ankles", "Half-squat position", "Step sideways and keep tension on the band"]}
+    ],
+    "flexibility": [
+      {"name": "Figure-4 Stretch", "type": "static", "duration": "30–45 s each side", "cues": ["Lie on your back, cross one ankle over the opposite knee", "Pull the bottom leg toward you", "Keep the crossed knee opening outward"]},
+      {"name": "Pigeon Pose", "type": "static", "duration": "45–60 s each side", "cues": ["Front shin across the mat, back leg straight behind", "Keep the hips square", "Fold forward for a deeper stretch"]},
+      {"name": "Leg Swings (side to side)", "type": "dynamic", "duration": "10 each leg", "cues": ["Hold a wall for balance", "Swing the leg across your body and out to the side"]}
+    ]
+  },
+  {
+    "id": "adductors",
+    "name": "Adductors",
+    "scientific_names": ["Adductor magnus", "Adductor longus", "Gracilis"],
+    "region": "lower",
+    "views": ["front"],
+    "summary": "The inner-thigh muscles that pull the legs together and help stabilise the hips in squats and changes of direction.",
+    "functions": ["Pull the legs toward the midline", "Assist hip extension (adductor magnus)", "Stabilise the pelvis while walking and running"],
+    "tips": ["Groin strains are common in sports with sprinting and cutting — the Copenhagen plank is a well-researched preventive exercise.", "Wide-stance squats load the adductors heavily."],
+    "strength": [
+      {"name": "Copenhagen Plank", "equipment": "bench", "difficulty": "advanced", "prescription": "3 × 15–30 s each side", "cues": ["Side plank with your top leg resting on a bench", "Lift the hips and the bottom leg off the floor", "Start with the knee on the bench to make it easier"]},
+      {"name": "Sumo Squat", "equipment": "dumbbell", "difficulty": "beginner", "prescription": "3 × 10–12", "cues": ["Wide stance, toes turned out", "Hold a dumbbell between your legs", "Push the knees out as you squat"]},
+      {"name": "Hip Adduction Machine", "equipment": "machine", "difficulty": "beginner", "prescription": "3 × 12–15", "cues": ["Pads on the inner knees", "Squeeze the legs together slowly", "Control the return"]},
+      {"name": "Cossack Squat", "equipment": "bodyweight", "difficulty": "intermediate", "prescription": "3 × 6 each side", "cues": ["Very wide stance", "Shift your weight to one side and squat deep on that leg", "The other leg stays straight with toes up"]}
+    ],
+    "flexibility": [
+      {"name": "Butterfly Stretch", "type": "static", "duration": "30–60 s", "cues": ["Sit with the soles of your feet together", "Let the knees drop toward the floor", "Hinge forward from the hips with a long spine"]},
+      {"name": "Frog Stretch", "type": "static", "duration": "45–60 s", "cues": ["On all fours, slide the knees wide", "Ankles in line with the knees", "Rock the hips back gently"]},
+      {"name": "Lateral Lunge Rocks", "type": "dynamic", "duration": "8 each side", "cues": ["Wide stance", "Shift side to side, sitting into the bent leg"]}
+    ]
+  },
+  {
+    "id": "quads",
+    "name": "Quadriceps",
+    "scientific_names": ["Rectus femoris", "Vastus lateralis", "Vastus medialis", "Vastus intermedius"],
+    "region": "lower",
+    "views": ["front"],
+    "summary": "Four muscles at the front of the thigh that straighten the knee — essential for squatting, climbing stairs, jumping and running.",
+    "functions": ["Straighten the knee", "Lift the thigh forward (rectus femoris)", "Absorb force when landing and going downhill"],
+    "tips": ["Letting the knees travel forward over the toes in a squat is normal and loads the quads more.", "Strong quads support healthy knees."],
+    "strength": [
+      {"name": "Back Squat", "equipment": "barbell", "difficulty": "intermediate", "prescription": "4 × 5–8", "cues": ["Bar on the upper back, feet shoulder-width", "Brace, then sit down between your hips", "Knees track over the toes; stand up driving through the mid-foot"]},
+      {"name": "Goblet Squat", "equipment": "dumbbell", "difficulty": "beginner", "prescription": "3 × 10–12", "cues": ["Hold a dumbbell against your chest", "Squat deep with the elbows inside the knees", "Chest stays up"]},
+      {"name": "Leg Press", "equipment": "machine", "difficulty": "beginner", "prescription": "3 × 10–15", "cues": ["Feet hip-width in the middle of the platform", "Lower until the knees reach ~90° or deeper", "Don't let the lower back lift off the pad"]},
+      {"name": "Walking Lunges", "equipment": "dumbbell", "difficulty": "beginner", "prescription": "3 × 10 each leg", "cues": ["Take a long step forward", "Drop the back knee toward the floor", "Push through the front foot into the next step"]},
+      {"name": "Leg Extension", "equipment": "machine", "difficulty": "beginner", "prescription": "3 × 12–15", "cues": ["Knee lined up with the machine's pivot", "Straighten fully and pause", "Lower slowly"]}
+    ],
+    "flexibility": [
+      {"name": "Standing Quad Stretch", "type": "static", "duration": "30 s each side", "cues": ["Hold your ankle behind you", "Keep the knees together", "Tuck the pelvis to feel it at the front of the hip"]},
+      {"name": "Couch Stretch", "type": "static", "duration": "45–60 s each side", "cues": ["Back knee on the floor against a wall, shin up the wall", "Front foot forward in a lunge", "Squeeze the glute and stay upright"]},
+      {"name": "Walking Knee-to-Butt", "type": "dynamic", "duration": "10 each leg", "cues": ["Walk forward, pulling the heel to your glute each step"]}
+    ]
+  },
+  {
+    "id": "hamstrings",
+    "name": "Hamstrings",
+    "scientific_names": ["Biceps femoris", "Semitendinosus", "Semimembranosus"],
+    "region": "lower",
+    "views": ["back"],
+    "summary": "Three muscles at the back of the thigh that bend the knee and extend the hip. They are frequently strained in sprinting.",
+    "functions": ["Bend the knee", "Extend the hip with the glutes", "Slow the leg down during sprinting"],
+    "tips": ["Train both jobs: hip hinges (RDLs) and knee flexion (curls).", "Nordic curls are strongly linked to fewer hamstring strains in research on athletes."],
+    "strength": [
+      {"name": "Romanian Deadlift", "equipment": "barbell", "difficulty": "intermediate", "prescription": "4 × 8–10", "cues": ["Soft knees, hips push straight back", "Bar stays close to the legs", "Stop when you feel a strong stretch, then drive the hips forward"]},
+      {"name": "Lying Leg Curl", "equipment": "machine", "difficulty": "beginner", "prescription": "3 × 10–15", "cues": ["Hips pressed into the pad", "Curl the heels toward your glutes", "Lower over 3 seconds"]},
+      {"name": "Nordic Hamstring Curl", "equipment": "bodyweight", "difficulty": "advanced", "prescription": "3 × 3–6", "cues": ["Kneel with your ankles anchored", "Lower your body forward as slowly as possible", "Catch yourself with your hands and push back up"]},
+      {"name": "Single-Leg Dumbbell RDL", "equipment": "dumbbell", "difficulty": "intermediate", "prescription": "3 × 8 each leg", "cues": ["Hinge on one leg as the other reaches back", "Keep the hips level", "Feel the stretch in the standing leg"]}
+    ],
+    "flexibility": [
+      {"name": "Standing Hamstring Stretch", "type": "static", "duration": "30 s each side", "cues": ["Heel on a low step, toes up", "Hinge forward with a flat back", "Keep a slight bend in the knee"]},
+      {"name": "Supine Strap Stretch", "type": "static", "duration": "45 s each side", "cues": ["Lie on your back, strap around one foot", "Raise the straight leg until you feel the stretch", "Keep the other leg flat"]},
+      {"name": "Leg Swings (front to back)", "type": "dynamic", "duration": "10 each leg", "cues": ["Hold a wall for balance", "Swing the leg forward and back, gradually higher"]}
+    ]
+  },
+  {
+    "id": "calves",
+    "name": "Calves",
+    "scientific_names": ["Gastrocnemius", "Soleus"],
+    "region": "lower",
+    "views": ["front", "back"],
+    "summary": "The muscles at the back of the lower leg that point the foot and propel you when walking, running and jumping.",
+    "functions": ["Point the foot (plantar flexion)", "Push off the ground", "Assist knee bending (gastrocnemius)"],
+    "tips": ["Straight-knee raises target the gastrocnemius; bent-knee raises target the soleus.", "Calves respond well to a full range of motion and slow negatives."],
+    "strength": [
+      {"name": "Standing Calf Raise", "equipment": "machine", "difficulty": "beginner", "prescription": "4 × 10–15", "cues": ["Balls of the feet on the edge of a step", "Drop the heels into a deep stretch", "Rise as high as you can and pause"]},
+      {"name": "Seated Calf Raise", "equipment": "machine", "difficulty": "beginner", "prescription": "3 × 12–20", "cues": ["Knees bent at 90° under the pad", "Full range: stretch to peak contraction"]},
+      {"name": "Single-Leg Calf Raise", "equipment": "bodyweight", "difficulty": "beginner", "prescription": "3 × 12–20 each", "cues": ["Stand on one foot on a step", "Hold a wall lightly for balance", "Slow, full reps"]},
+      {"name": "Jump Rope", "equipment": "jump rope", "difficulty": "beginner", "prescription": "5 × 1 min", "cues": ["Stay on the balls of your feet", "Small, quick bounces"]}
+    ],
+    "flexibility": [
+      {"name": "Wall Calf Stretch", "type": "static", "duration": "30 s each side", "cues": ["Hands on a wall, one leg back with a straight knee", "Press the back heel into the floor", "Bend that knee slightly to shift the stretch to the soleus"]},
+      {"name": "Downward Dog Pedal", "type": "dynamic", "duration": "10 each side", "cues": ["In a downward dog position", "Alternately press each heel toward the floor"]}
+    ]
+  },
+  {
+    "id": "shins",
+    "name": "Shins",
+    "scientific_names": ["Tibialis anterior"],
+    "region": "lower",
+    "views": ["front"],
+    "summary": "The muscle along the front of the shin that lifts the toes and controls the foot as it lands.",
+    "functions": ["Lift the foot and toes (dorsiflexion)", "Control the foot coming down when walking", "Support the arch"],
+    "tips": ["Often overlooked, but strengthening it can help with shin splints and knee-over-toe positions.", "Tibialis raises need no equipment beyond a wall."],
+    "strength": [
+      {"name": "Tibialis Wall Raise", "equipment": "bodyweight", "difficulty": "beginner", "prescription": "3 × 15–25", "cues": ["Lean your back against a wall, heels about 30 cm out", "Lift the toes as high as possible", "Lower slowly"]},
+      {"name": "Heel Walks", "equipment": "bodyweight", "difficulty": "beginner", "prescription": "3 × 20 m", "cues": ["Walk on your heels with the toes pulled up", "Stand tall"]},
+      {"name": "Banded Dorsiflexion", "equipment": "band", "difficulty": "beginner", "prescription": "3 × 15 each", "cues": ["Sit with your leg straight, band around the top of the foot and anchored ahead", "Pull the toes back toward you"]}
+    ],
+    "flexibility": [
+      {"name": "Kneeling Shin Stretch", "type": "static", "duration": "30 s", "cues": ["Kneel with the tops of your feet flat on the floor", "Sit back gently toward your heels"]},
+      {"name": "Ankle Circles", "type": "mobility", "duration": "10 each direction", "cues": ["Lift one foot", "Draw slow, large circles with your toes"]}
+    ]
+  }
+]
