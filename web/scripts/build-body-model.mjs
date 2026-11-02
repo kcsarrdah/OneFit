@@ -27,7 +27,14 @@ import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { MeshoptEncoder, MeshoptSimplifier } from 'meshoptimizer'
 import { JOINTS, boneJoint, computeJoints, contextHint, muscleHint, skinAttributes } from './lib/rig.mjs'
-import { WRAP_SLUGS, buildRadiusField, latissimusDorsi, rectusAbdominis } from './lib/synthesize.mjs'
+import {
+  SKULL_SLUGS,
+  WRAP_SLUGS,
+  buildRadiusField,
+  headShell,
+  latissimusDorsi,
+  rectusAbdominis,
+} from './lib/synthesize.mjs'
 
 // BodyParts3D structure slug → explorer muscle id (backend/data/muscles.json).
 // Muscles not listed here are rendered as non-selectable context.
@@ -125,7 +132,8 @@ for (const asset of pack.assets) {
     const type = typeBySlug.get(slug)
 
     let key
-    if (type === 'bone') key = 'bones'
+    // The skull is replaced by a sculpted head (see headShell below).
+    if (type === 'bone') key = SKULL_SLUGS.test(slug) ? null : 'bones'
     else if (type === 'muscle') {
       const group = MUSCLE_GROUPS[slug]
       const side = sideBySelector.get(name) ?? (name.endsWith('M') ? 'left' : 'right')
@@ -137,7 +145,7 @@ for (const asset of pack.assets) {
     clearNodeTransform(baked)
     for (const prim of baked.getMesh().listPrimitives()) {
       prim.setMaterial(material)
-      addTo(groups, key, prim)
+      if (key) addTo(groups, key, prim)
       addTo(bySlug, slug, prim)
     }
   }
@@ -182,6 +190,10 @@ if (process.env.PROBE) {
     addTo(groups, `muscle-lats-${side}`, toPrim(latissimusDorsi(radius, sign, HUMERUS_INSERTION)))
     addTo(groups, `muscle-abs-${side}`, toPrim(rectusAbdominis(radius, sign)))
   }
+  const skull = [...bySlug]
+    .filter(([slug]) => SKULL_SLUGS.test(slug))
+    .flatMap(([, prims]) => prims.map((p) => p.getAttribute('POSITION').getArray()))
+  addTo(groups, 'head', toPrim(headShell(skull)))
 }
 
 // Sanity check the side convention the app relies on: body's left is +X.
@@ -244,7 +256,7 @@ console.log('bounds (m):', min.map((v, i) => +(max[i] - v).toFixed(3)))
 
 // Triangle budgets per node. Bones and the dense abdominal/forearm meshes
 // dominate the source; selectable muscles keep the most detail.
-const BUDGET = { bones: 70_000, context: 9_000, default: 7_000 }
+const BUDGET = { bones: 60_000, context: 9_000, default: 7_000 }
 const budgetFor = (name) =>
   name === 'bones' ? BUDGET.bones : name === 'context' ? BUDGET.context : BUDGET.default
 

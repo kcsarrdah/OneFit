@@ -235,3 +235,31 @@ export function createBoneMaterial(style: BodyStyle, shared: SharedUniforms, acc
   }
   return patch(new MeshStandardMaterial({ color: '#e9dcc3', roughness: 0.62 }), shared, 0)
 }
+
+/**
+ * The sculpted head that stands in for the skull: a sleek dark shell with a
+ * glowing rim (hologram), a muscle-toned sculpture (anatomy), or the same
+ * clay as the rest of the figure (sculpt).
+ */
+export function createHeadMaterial(style: BodyStyle, shared: SharedUniforms, accent: string): FigureMaterial {
+  if (style === 'hologram') {
+    const m = patch(
+      new MeshPhysicalMaterial({ color: '#2a2226', roughness: 0.5, clearcoat: 0.4, clearcoatRoughness: 0.4 }),
+      shared,
+      0.5,
+    )
+    m.userData.u.uRim.value = 0.55
+    m.userData.u.uRimColor.value.set(accent)
+    return m
+  }
+  if (style === 'sculpt') {
+    return patch(new MeshPhysicalMaterial({ color: '#b9c0cf', roughness: 0.55, clearcoat: 0.1 }), shared, 0.5)
+  }
+  const m = patch(
+    new MeshPhysicalMaterial({ color: '#6b2c32', roughness: 0.45, clearcoat: 0.3, clearcoatRoughness: 0.4 }),
+    shared,
+    0.5,
+  )
+  m.userData.u.uRim.value = 0.25
+  return m
+}
