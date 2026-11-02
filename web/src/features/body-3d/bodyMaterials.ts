@@ -16,16 +16,10 @@ export interface SharedUniforms {
   /** World Y above which the figure is not drawn yet (intro reveal). */
   uReveal: IUniform<number>
   uEdgeColor: IUniform<Color>
-  /** Metres to push muscle surfaces out along their normals (weight). */
+  /** Metres to push muscle surfaces out along their normals (lean mass). */
   uInflate: IUniform<number>
-  /** Forward abdominal bulge in metres (high BMI). */
-  uBelly: IUniform<number>
   /** 0..1 desaturation of muscle colour (age). */
   uDesat: IUniform<number>
-  /** 0..1 depth of muscle separations (low body fat). */
-  uDefinition: IUniform<number>
-  /** 0..1 soft, matte fat layer (high body fat). */
-  uSoftness: IUniform<number>
 }
 
 /** Per-material uniforms driven by selection and hover. */
@@ -37,9 +31,9 @@ export interface MaterialUniforms {
   /** Fresnel rim glow strength. */
   uRim: IUniform<number>
   uRimColor: IUniform<Color>
-  /** How much uInflate/uBelly apply to this material (0 for bones). */
+  /** How much uInflate applies to this material (0 for bones). */
   uShape: IUniform<number>
-  /** How much body-fat definition/softness applies (0 for bones). */
+  /** How much crevice shading applies (0 for bones). */
   uComposition: IUniform<number>
 }
 
@@ -48,25 +42,16 @@ export function createSharedUniforms(): SharedUniforms {
     uReveal: { value: -1 },
     uEdgeColor: { value: new Color('#2ee6c5') },
     uInflate: { value: 0 },
-    uBelly: { value: 0 },
     uDesat: { value: 0 },
-    uDefinition: { value: 0 },
-    uSoftness: { value: 0 },
   }
 }
 
 const VERTEX_HEAD = /* glsl */ `
 uniform float uInflate;
-uniform float uBelly;
 uniform float uShape;
-uniform float uSoftness;
 attribute float _ao;
-attribute float _fill;
-attribute vec3 _fnormal;
 varying vec3 vBodyPos;
 varying float vOpen;
-varying float vFilled;
-varying vec3 vFilledNormal;
 `
 
 // After skinning, `transformed` is in metres in the figure's space and
@@ -74,19 +59,7 @@ varying vec3 vFilledNormal;
 const VERTEX_SHAPE = /* glsl */ `
 #include <skinning_vertex>
 {
-  vec3 d = (transformed - vec3(0.0, 1.0, 0.03)) / vec3(0.17, 0.15, 0.16);
-  float belly = uBelly * exp(-dot(d, d)) * smoothstep(-0.06, 0.06, transformed.z);
-  // Fat fills the six-pack grooves (_fill: groove depth, in cm) first.
-  float fat = smoothstep(0.0, 0.6, uSoftness);
-  float fill = _fill * 0.01 * fat;
-  vFilled = clamp(_fill * 12.0, 0.0, 1.0) * fat;
-  // Normal of the groove-free surface (only present on the abs).
-  vec3 fn = _fnormal;
-  #ifdef USE_SKINNING
-    fn = (skinMatrix * vec4(fn, 0.0)).xyz;
-  #endif
-  vFilledNormal = dot(fn, fn) > 1e-6 ? normalize(normalMatrix * fn) : vec3(0.0, 0.0, 1.0);
-  transformed += normalize(objectNormal) * (uInflate + belly + fill) * uShape;
+  transformed += normalize(objectNormal) * uInflate * uShape;
   vBodyPos = (modelMatrix * vec4(transformed, 1.0)).xyz;
   vOpen = _ao;
 }
@@ -101,13 +74,9 @@ uniform float uSweepAmount;
 uniform vec3 uSweepColor;
 uniform float uRim;
 uniform vec3 uRimColor;
-uniform float uDefinition;
-uniform float uSoftness;
 uniform float uComposition;
 varying vec3 vBodyPos;
 varying float vOpen;
-varying float vFilled;
-varying vec3 vFilledNormal;
 `
 
 const FRAGMENT_REVEAL = /* glsl */ `
@@ -115,33 +84,16 @@ const FRAGMENT_REVEAL = /* glsl */ `
 if (vBodyPos.y > uReveal) discard;
 `
 
-// Body composition: _AO (baked crevice openness, 1 = open) darkens the
-// grooves between muscles. Lean bodies get deep, sharp separations; fat
-// fills them in and the surface turns softer and lighter.
+// _AO (baked crevice openness, 1 = open) darkens the grooves between
+// muscles, so each one reads as a separate shape. Fat is drawn as its own
+// layer on top (createFatMaterials), never baked into the muscles.
 const FRAGMENT_COLOR = /* glsl */ `
 #include <color_fragment>
 diffuseColor.rgb = mix(diffuseColor.rgb, vec3(dot(diffuseColor.rgb, vec3(0.299, 0.587, 0.114))), uDesat);
 {
   float groove = smoothstep(0.12, 0.8, 1.0 - vOpen);
-  float depth = mix(0.3, 0.88, uDefinition) * (1.0 - 0.75 * uSoftness);
-  diffuseColor.rgb *= 1.0 - groove * depth * uComposition;
-  diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * 1.12 + 0.02, uSoftness * 0.35 * uComposition);
+  diffuseColor.rgb *= 1.0 - groove * 0.7 * uComposition;
 }
-`
-
-// Where fat has filled a groove, shade with the groove-free surface's
-// normal (baked into the abs) instead of the groove's own.
-const FRAGMENT_NORMAL = /* glsl */ `
-#include <normal_fragment_maps>
-if (vFilled > 0.001) {
-  vec3 fn = normalize(vFilledNormal) * (gl_FrontFacing ? 1.0 : -1.0);
-  normal = normalize(mix(normal, fn, vFilled));
-}
-`
-
-const FRAGMENT_ROUGHNESS = /* glsl */ `
-#include <roughnessmap_fragment>
-roughnessFactor = clamp(roughnessFactor - 0.14 * uDefinition * uComposition + 0.25 * uSoftness * uComposition, 0.05, 1.0);
 `
 
 const FRAGMENT_GLOW = /* glsl */ `
@@ -176,8 +128,6 @@ function patch<M extends MeshStandardMaterial>(material: M, shared: SharedUnifor
       shader.fragmentShader
         .replace('#include <clipping_planes_fragment>', FRAGMENT_REVEAL)
         .replace('#include <color_fragment>', FRAGMENT_COLOR)
-        .replace('#include <roughnessmap_fragment>', FRAGMENT_ROUGHNESS)
-        .replace('#include <normal_fragment_maps>', FRAGMENT_NORMAL)
         .replace('#include <emissivemap_fragment>', FRAGMENT_GLOW)
   }
   // All figure materials share one program per material type.
@@ -321,4 +271,105 @@ export function createHeadMaterial(style: BodyStyle, shared: SharedUniforms, acc
   )
   m.userData.u.uRim.value = 0.25
   return m
+}
+
+/** Per-frame values for the fat layer. */
+export interface FatUniforms {
+  /** Metres of fat per unit of the baked _FATW weight. */
+  uFatScale: IUniform<number>
+  /** Metres of visceral belly bulge per unit of _VISC. */
+  uVisc: IUniform<number>
+  /** 0..1 overall visibility (toggle fade). */
+  uFatOpacity: IUniform<number>
+}
+
+export function createFatUniforms(): FatUniforms {
+  return { uFatScale: { value: 0 }, uVisc: { value: 0 }, uFatOpacity: { value: 1 } }
+}
+
+const FAT_VERTEX_HEAD = /* glsl */ `
+uniform float uInflate;
+uniform float uFatScale;
+uniform float uVisc;
+attribute float _fatw;
+attribute float _visc;
+varying vec3 vBodyPos;
+varying float vThick;
+`
+
+// The envelope sits just outside the muscles; it follows their lean-mass
+// size (uInflate) and then grows by the local fat thickness.
+const FAT_VERTEX = /* glsl */ `
+#include <skinning_vertex>
+{
+  float thick = uFatScale * _fatw + uVisc * _visc;
+  vThick = thick;
+  transformed += normalize(objectNormal) * (uInflate + thick);
+  vBodyPos = (modelMatrix * vec4(transformed, 1.0)).xyz;
+}
+`
+
+const FAT_FRAGMENT_HEAD = /* glsl */ `
+uniform float uReveal;
+uniform float uFatOpacity;
+varying vec3 vBodyPos;
+varying float vThick;
+`
+
+// Thin fat is a pale, see-through film; thick deposits turn a deeper,
+// more opaque yellow, so where the fat sits is readable at a glance.
+const FAT_COLOR = /* glsl */ `
+#include <color_fragment>
+float fatT = smoothstep(0.002, 0.035, vThick);
+diffuseColor.rgb = mix(vec3(1.0, 0.9, 0.62), vec3(0.98, 0.68, 0.2), fatT);
+`
+
+const FAT_ALPHA = /* glsl */ `
+{
+  float rim = pow(1.0 - abs(dot(normalize(normal), normalize(vViewPosition))), 2.0);
+  // Under ~2 mm the layer is invisible: lean bodies show their muscles.
+  float present = smoothstep(0.002, 0.007, vThick);
+  float alpha = mix(0.1, 0.72, fatT) + rim * 0.22;
+  diffuseColor.a = clamp(alpha, 0.0, 0.85) * present * uFatOpacity;
+}
+#include <opaque_fragment>
+`
+
+/**
+ * Two materials for the fat layer: a depth-only pass, then a translucent
+ * colour pass that only draws the nearest fat surface. That keeps the
+ * overlapping parts (shoulders, hips) from doubling up in opacity, while
+ * the muscles stay visible underneath.
+ */
+export function createFatMaterials(shared: SharedUniforms, fat: FatUniforms) {
+  const compile = (shader: WebGLProgramParametersWithUniforms) => {
+    Object.assign(shader.uniforms, shared, fat)
+    shader.vertexShader = FAT_VERTEX_HEAD + shader.vertexShader.replace('#include <skinning_vertex>', FAT_VERTEX)
+    shader.fragmentShader =
+      FAT_FRAGMENT_HEAD +
+      shader.fragmentShader
+        .replace('#include <clipping_planes_fragment>', FRAGMENT_REVEAL)
+        .replace('#include <color_fragment>', FAT_COLOR)
+        .replace('#include <opaque_fragment>', FAT_ALPHA)
+  }
+  // Pushed back a touch so the colour pass (same surface, separate program)
+  // never loses the depth test to it and speckles.
+  const depth = new MeshStandardMaterial({
+    colorWrite: false,
+    transparent: true,
+    polygonOffset: true,
+    polygonOffsetFactor: 1,
+    polygonOffsetUnits: 1,
+  })
+  depth.onBeforeCompile = compile
+  depth.customProgramCacheKey = () => 'onefit-fat-depth'
+  const color = new MeshStandardMaterial({
+    transparent: true,
+    depthWrite: false,
+    roughness: 0.55,
+    emissive: new Color('#3a2408'),
+  })
+  color.onBeforeCompile = compile
+  color.customProgramCacheKey = () => 'onefit-fat'
+  return { depth, color }
 }

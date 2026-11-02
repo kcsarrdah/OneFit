@@ -42,6 +42,8 @@ export interface BodyViewerProps {
   leaderTargetRef: RefObject<HTMLElement | null>
   style: BodyStyle
   shape: BodyShape
+  /** Show the fat layer over the muscles. */
+  showFat: boolean
   mode: ViewerMode
   pose: Pose
   onPoseEdited: () => void
@@ -115,6 +117,7 @@ function Scene({
   leader,
   style,
   shape,
+  showFat,
   mode,
   pose,
   onPoseEdited,
@@ -232,6 +235,7 @@ function Scene({
         view={view}
         style={style}
         shape={shape}
+        showFat={showFat}
         mode={mode}
         pose={pose}
         onSelect={handleSelect}

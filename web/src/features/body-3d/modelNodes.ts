@@ -6,6 +6,8 @@
  *   context                    other muscles, rendered but not selectable
  *   bones                      the skeleton (minus the skull), joined into one mesh
  *   head                       a sculpted, faceless head shaped on the skull
+ *   fat-<part>                 subcutaneous fat envelope per part (trunk,
+ *                              arm-l/r, leg-l/r); extras hold its areas
  *   joint-<name>               rig joints (scripts/lib/rig.mjs), driving the skin
  *
  * Names avoid ':' '.' '/' and brackets, which three's GLTFLoader strips.
@@ -20,6 +22,7 @@ export type ModelNode =
   | { kind: 'context' }
   | { kind: 'bones' }
   | { kind: 'head' }
+  | { kind: 'fat'; part: string }
   | { kind: 'joint'; joint: string }
   | { kind: 'unknown' }
 
@@ -27,6 +30,8 @@ export function parseNodeName(name: string): ModelNode {
   if (name === 'bones') return { kind: 'bones' }
   if (name === 'head') return { kind: 'head' }
   if (name === 'context') return { kind: 'context' }
+  const f = /^fat-(trunk|(?:arm|leg)-[lr])$/.exec(name)
+  if (f) return { kind: 'fat', part: f[1] }
   const j = /^joint-([a-z]+(?:-[lr])?)$/.exec(name)
   if (j) return { kind: 'joint', joint: j[1] }
   const m = /^muscle-([a-z0-9-]+)-([lrc])$/.exec(name)

@@ -15,6 +15,9 @@ describe('parseNodeName', () => {
     expect(parseNodeName('bones')).toEqual({ kind: 'bones' })
     expect(parseNodeName('context')).toEqual({ kind: 'context' })
     expect(parseNodeName('head')).toEqual({ kind: 'head' })
+    expect(parseNodeName('fat-trunk')).toEqual({ kind: 'fat', part: 'trunk' })
+    expect(parseNodeName('fat-leg-r')).toEqual({ kind: 'fat', part: 'leg-r' })
+    expect(parseNodeName('fat-leg')).toEqual({ kind: 'unknown' })
   })
 
   it('recognises rig joints', () => {
@@ -29,7 +32,7 @@ describe('parseNodeName', () => {
 })
 
 interface GltfJson {
-  nodes: { name?: string; mesh?: number; skin?: number }[]
+  nodes: { name?: string; mesh?: number; skin?: number; extras?: Record<string, number> }[]
   skins: { joints: number[] }[]
 }
 
@@ -66,6 +69,15 @@ describe('public/models/body.glb', () => {
 
   it('has a sculpted head instead of a skull', () => {
     expect(names).toContain('head')
+  })
+
+  it('has a separate fat layer over the whole body, with its areas', () => {
+    for (const part of ['trunk', 'arm-l', 'arm-r', 'leg-l', 'leg-r']) {
+      const node = gltf.nodes.find((n) => n.name === `fat-${part}`)
+      expect(node, part).toBeDefined()
+      expect(node!.extras?.area, part).toBeGreaterThan(0.1)
+      expect(node!.extras?.weightedArea, part).toBeGreaterThan(0)
+    }
   })
 
   it('has a left and right mesh for every muscle the API serves', () => {

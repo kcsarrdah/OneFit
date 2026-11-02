@@ -9,10 +9,13 @@ get a 2D body map instead.
 ### Features
 
 - **Your body:** height, weight, body fat and age sliders reshape the figure. Weight
-  splits into lean and fat mass: lean mass (FFMI) sets muscle size; body fat sets
-  definition, from deep, chiseled separations when lean to a smooth, soft figure
-  with a belly when high (the abs fill in). A guide card explains each body fat
-  range. Height scales from the feet; age adds a slight stoop and duller tone.
+  splits into lean and fat mass, drawn separately: lean mass (FFMI) sets muscle size
+  only; fat is its own translucent yellow layer over the muscles (toggleable), as
+  thick as your fat mass allows and distributed the typical male way: belly, love
+  handles and lower back first, then chest, chin, thighs and arms; little on calves
+  and forearms. Visceral fat bulges the belly. A fat map lists estimated thickness
+  per site, and a guide card explains each body fat range. Height scales from the
+  feet; age adds a slight stoop and duller tone.
   Metric or imperial; remembered per browser.
 - **Looks:** Hologram (glowing x-ray skeleton), Anatomy (ivory bone), Sculpt (clean
   single-tone figure). The skull is replaced by a smooth, stylised mannequin head in
@@ -95,7 +98,10 @@ npm run build:model -- /path/to/package/public
 one `bones` mesh, rigs it (`scripts/lib/rig.mjs`: spine, shoulders, elbows, wrists, hips,
 knees, ankles; bones bind rigidly to one joint, muscles blend across the joints they
 cross), bakes per-vertex crevice occlusion (`scripts/lib/ao.mjs`, used for muscle
-definition), and simplifies and compresses everything. BodyParts3D has no
+definition), builds the subcutaneous fat layer (`scripts/lib/fatLayer.mjs`: one
+voxelized, morphologically closed envelope per body part, meshed with surface nets,
+with per-vertex distribution weights and the areas the app needs to turn litres of
+fat into millimetres), and simplifies and compresses everything. BodyParts3D has no
 latissimus dorsi or rectus abdominis, so `scripts/lib/synthesize.mjs` generates them by
 shrink-wrapping a parametric sheet over the surrounding ribs, spine and obliques.
 

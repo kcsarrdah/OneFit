@@ -8,7 +8,17 @@ import { BodyProfilePanel } from './BodyProfilePanel'
 function Harness() {
   const [profile, setProfile] = useState<BodyProfile>(DEFAULT_PROFILE)
   const [units, setUnits] = useState<Units>('metric')
-  return <BodyProfilePanel profile={profile} units={units} onChange={setProfile} onUnitsChange={setUnits} />
+  const [showFat, setShowFat] = useState(true)
+  return (
+    <BodyProfilePanel
+      profile={profile}
+      units={units}
+      showFat={showFat}
+      onChange={setProfile}
+      onUnitsChange={setUnits}
+      onShowFatChange={setShowFat}
+    />
+  )
 }
 
 describe('BodyProfilePanel', () => {
@@ -39,6 +49,19 @@ describe('BodyProfilePanel', () => {
 
     fireEvent.change(screen.getByLabelText('Body fat'), { target: { value: '35' } })
     expect(screen.getByText('High')).toBeInTheDocument()
+  })
+
+  it('maps where the fat is, and grows it with body fat', async () => {
+    render(<Harness />)
+    const belly = () => screen.getByText('Belly').parentElement!.lastElementChild!.textContent!
+    const lean = parseInt(belly())
+    fireEvent.change(screen.getByLabelText('Body fat'), { target: { value: '30' } })
+    expect(parseInt(belly())).toBeGreaterThan(lean * 1.8)
+
+    const toggle = screen.getByRole('switch', { name: 'Show fat layer on the model' })
+    expect(toggle).toHaveAttribute('aria-checked', 'true')
+    await userEvent.click(toggle)
+    expect(toggle).toHaveAttribute('aria-checked', 'false')
   })
 
   it('switches units without changing the body', async () => {

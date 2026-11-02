@@ -6,6 +6,9 @@ import {
   bmiCategory,
   bodyFatBand,
   bodyShape,
+  bodySurfaceArea,
+  fatSiteThickness,
+  fatStores,
   clampProfile,
   composition,
   ffmiCategory,
@@ -29,7 +32,6 @@ describe('bodyShape', () => {
     expect(s.scaleY).toBe(1)
     expect(s.scaleXZ).toBe(1)
     expect(Math.abs(s.inflate)).toBeLessThan(0.002)
-    expect(s.belly).toBe(0)
     expect(s.spineBend).toBe(0)
   })
 
@@ -44,18 +46,17 @@ describe('bodyShape', () => {
     const heavy = bodyShape({ ...DEFAULT_PROFILE, weightKg: 100 })
     const light = bodyShape({ ...DEFAULT_PROFILE, weightKg: 50 })
     expect(heavy.inflate).toBeGreaterThan(0.005)
-    expect(heavy.inflate).toBeLessThanOrEqual(0.028)
-    expect(heavy.belly).toBe(0) // same body fat, so no belly
+    expect(heavy.inflate).toBeLessThanOrEqual(0.008)
     expect(light.inflate).toBeLessThan(0)
   })
 
-  it('separates fat from muscle: same weight, different body fat', () => {
-    const lean = bodyShape({ ...DEFAULT_PROFILE, weightKg: 85, bodyFatPct: 8 })
-    const soft = bodyShape({ ...DEFAULT_PROFILE, weightKg: 85, bodyFatPct: 32 })
-    expect(lean.definition).toBeGreaterThan(0.9)
-    expect(soft.definition).toBe(0)
-    expect(soft.belly).toBeGreaterThan(lean.belly)
-    expect(lean.belly).toBe(0)
+  it('keeps fat separate from muscle: same lean mass, different fat', () => {
+    // 64 kg lean either way: 70 kg at ~8.6% vs 90 kg at ~28.9%.
+    const lean = bodyShape({ ...DEFAULT_PROFILE, weightKg: 70, bodyFatPct: 8.57 })
+    const soft = bodyShape({ ...DEFAULT_PROFILE, weightKg: 90, bodyFatPct: 28.9 })
+    expect(soft.inflate).toBeCloseTo(lean.inflate, 3)
+    expect(soft.subcutaneousL).toBeGreaterThan(lean.subcutaneousL * 4)
+    expect(soft.visceralL).toBeGreaterThan(lean.visceralL)
   })
 
   it('bends posture and fades muscle tone with age', () => {
@@ -105,6 +106,34 @@ describe('body composition', () => {
     expect(bodyFatBand(20).label).toBe('Average')
     expect(bodyFatBand(28).label).toBe('Above average')
     expect(bodyFatBand(40).label).toBe('High')
+  })
+})
+
+describe('fat stores', () => {
+  it('keeps essential fat out of storage and accounts for all fat', () => {
+    const p = { ...DEFAULT_PROFILE, weightKg: 80, bodyFatPct: 20 }
+    const f = fatStores(p)
+    expect(f.essentialKg).toBeCloseTo(2.4)
+    expect((f.subcutaneousL + f.visceralL) / 1.3 + f.essentialKg).toBeCloseTo(16)
+    expect(fatStores({ ...p, bodyFatPct: 3 }).subcutaneousL).toBeCloseTo(0)
+  })
+
+  it('stores a growing share as visceral fat', () => {
+    const share = (bf: number) => {
+      const f = fatStores({ ...DEFAULT_PROFILE, bodyFatPct: bf })
+      return f.visceralL / (f.visceralL + f.subcutaneousL)
+    }
+    expect(share(35)).toBeGreaterThan(share(10))
+  })
+
+  it('estimates realistic thickness by site', () => {
+    expect(bodySurfaceArea({ ...DEFAULT_PROFILE, heightCm: 180, weightKg: 80 })).toBeCloseTo(2.0, 1)
+    const { meanMm, sites } = fatSiteThickness(DEFAULT_PROFILE)
+    expect(meanMm).toBeGreaterThan(3)
+    expect(meanMm).toBeLessThan(8)
+    const belly = sites.find((s) => s.label === 'Belly')!
+    const calves = sites.find((s) => s.label === 'Calves & forearms')!
+    expect(belly.mm).toBeGreaterThan(calves.mm * 5)
   })
 })
 

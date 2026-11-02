@@ -27,7 +27,8 @@ import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { MeshoptEncoder, MeshoptSimplifier } from 'meshoptimizer'
 import { bakeAmbientOcclusion } from './lib/ao.mjs'
-import { JOINTS, boneJoint, computeJoints, contextHint, muscleHint, skinAttributes } from './lib/rig.mjs'
+import { FAT_PARTS, envelope, fatLandmarks, fatWeight, signedVolume } from './lib/fatLayer.mjs'
+import { JOINTS, boneJoint, computeJoints, contextHint, muscleHint, skinAttributes, vertexWeights } from './lib/rig.mjs'
 import {
   SKULL_SLUGS,
   WRAP_SLUGS,
@@ -86,6 +87,10 @@ const MUSCLE_GROUPS = {
   'fibularis-longus': 'shins',
   'fibularis-brevis': 'shins',
 }
+
+/** _FATW stores weight / FAT_WEIGHT_MAX as a normalized byte. */
+const FAT_WEIGHT_MAX = 4
+const isFat = (name) => name.startsWith('fat-')
 
 const OUT = resolve(dirname(fileURLToPath(import.meta.url)), '../public/models/body.glb')
 
@@ -179,34 +184,13 @@ if (process.env.PROBE) {
     .filter(([slug]) => WRAP_SLUGS.some((re) => re.test(slug)))
     .flatMap(([, prims]) => prims.map((p) => p.getAttribute('POSITION').getArray()))
   const radius = buildRadiusField(wrap)
-  const toPrim = ({ positions, normals, indices, fill, fillNormals }) => {
-    const prim = out
+  const toPrim = ({ positions, normals, indices }) =>
+    out
       .createPrimitive()
       .setAttribute('POSITION', out.createAccessor().setType('VEC3').setArray(positions))
       .setAttribute('NORMAL', out.createAccessor().setType('VEC3').setArray(normals))
       .setIndices(out.createAccessor().setType('SCALAR').setArray(indices))
       .setMaterial(material)
-    // Abs groove depth in cm, as normalized bytes (see synthesize.mjs).
-    if (fill)
-      prim.setAttribute(
-        '_FILL',
-        out
-          .createAccessor()
-          .setType('SCALAR')
-          .setArray(Uint8Array.from(fill, (m) => Math.min(255, Math.round(m * 100 * 255))))
-          .setNormalized(true),
-      )
-    if (fillNormals)
-      prim.setAttribute(
-        '_FNORMAL',
-        out
-          .createAccessor()
-          .setType('VEC3')
-          .setArray(Int8Array.from(fillNormals, (n) => Math.round(n * 127)))
-          .setNormalized(true),
-      )
-    return prim
-  }
   const HUMERUS_INSERTION = [0.163, 1.258, 0.082]
   for (const [sign, side] of [[1, 'l'], [-1, 'r']]) {
     addTo(groups, `muscle-lats-${side}`, toPrim(latissimusDorsi(radius, sign, HUMERUS_INSERTION)))
@@ -251,6 +235,93 @@ for (const [key, prims] of groups) {
   for (const prim of prims) if (!prim.getAttribute('JOINTS_0')) skinPrim(prim, muscleHint(id))
 }
 
+// Subcutaneous fat layer (lib/fatLayer.mjs): one envelope per body part,
+// separate from the muscles, with a per-vertex distribution weight the app
+// scales by the user's fat mass.
+{
+  const t0 = Date.now()
+  const centroidOf = (a) => {
+    const c = [0, 0, 0]
+    for (let i = 0; i < a.length; i += 3) for (let k = 0; k < 3; k++) c[k] += (a[i + k] * 3) / a.length
+    return c
+  }
+  const sideOfX = (x) => (x >= 0 ? 'l' : 'r')
+  /** Which part a source primitive belongs to. */
+  const partOf = (slug, prim) => {
+    const c = centroidOf(prim.getAttribute('POSITION').getArray())
+    const s = sideOfX(c[0])
+    const type = typeBySlug.get(slug)
+    if (type === 'bone') {
+      const joint = boneJoint(slug, s)
+      // Hands and feet hold almost no fat; wrapping them only blurs them.
+      if (/^(wrist|ankle)/.test(joint)) return null
+      if (/^(shoulder|elbow)/.test(joint)) return `arm-${s}`
+      if (/^(hip|knee)/.test(joint)) return `leg-${s}`
+      return 'trunk'
+    }
+    const hint = MUSCLE_GROUPS[slug] ? muscleHint(MUSCLE_GROUPS[slug]) : null
+    if (hint === 'arm') return `arm-${s}`
+    if (hint === 'leg') return `leg-${s}`
+    if (hint) return 'trunk'
+    // Context muscles: by where they sit (forearm, hand and foot muscles).
+    const w = vertexWeights(c, 'auto', jointPos)
+    const sum = (re) => Object.entries(w).reduce((acc, [j, v]) => acc + (re.test(JOINTS[j].name) ? v : 0), 0)
+    if (sum(/^(wrist|ankle)/) > 0.5) return null
+    if (sum(/^(shoulder|elbow|wrist)/) > 0.5) return `arm-${s}`
+    if (sum(/^(hip|knee|ankle)/) > 0.5 || contextHint(slug) === 'leg') return `leg-${s}`
+    return 'trunk'
+  }
+  const parts = new Map(FAT_PARTS.map((p) => [p, []]))
+  const geometry = (prim) => ({
+    positions: prim.getAttribute('POSITION').getArray(),
+    indices: prim.getIndices()?.getArray() ?? Uint32Array.from({ length: prim.getAttribute('POSITION').getCount() }, (_, i) => i),
+  })
+  for (const [slug, prims] of bySlug) {
+    if (SKULL_SLUGS.test(slug)) continue
+    for (const prim of prims) {
+      const part = partOf(slug, prim)
+      if (part) parts.get(part).push(geometry(prim))
+    }
+  }
+  // Generated muscles and the head belong to the trunk.
+  for (const [key, prims] of groups)
+    if (key === 'head' || /^muscle-(lats|abs)-/.test(key)) for (const prim of prims) parts.get('trunk').push(geometry(prim))
+
+  let headBottomY = Infinity
+  for (const prim of groups.get('head')) {
+    const a = prim.getAttribute('POSITION').getArray()
+    for (let i = 1; i < a.length; i += 3) headBottomY = Math.min(headBottomY, a[i])
+  }
+  const marks = fatLandmarks(jointPos, headBottomY)
+  const HINT = { trunk: 'auto', 'arm-l': 'arm', 'arm-r': 'arm', 'leg-l': 'leg', 'leg-r': 'leg' }
+  const toByte = (v) => Math.min(255, Math.round((v / FAT_WEIGHT_MAX) * 255))
+  for (const [part, meshes] of parts) {
+    const env = envelope(meshes)
+    if (signedVolume(env.positions, env.indices) < 0) throw new Error(`fat envelope ${part} is inside out`)
+    const n = env.positions.length / 3
+    const w = new Uint8Array(n)
+    const visc = new Uint8Array(n)
+    for (let i = 0; i < n; i++) {
+      const p = [env.positions[i * 3], env.positions[i * 3 + 1], env.positions[i * 3 + 2]]
+      const nn = [env.normals[i * 3], env.normals[i * 3 + 1], env.normals[i * 3 + 2]]
+      const f = fatWeight(part, p, nn, marks)
+      w[i] = toByte(f.w)
+      visc[i] = Math.round(Math.min(1, f.visceral) * 255)
+    }
+    const prim = out
+      .createPrimitive()
+      .setAttribute('POSITION', out.createAccessor().setType('VEC3').setArray(env.positions))
+      .setAttribute('NORMAL', out.createAccessor().setType('VEC3').setArray(env.normals))
+      .setAttribute('_FATW', out.createAccessor().setType('SCALAR').setArray(w).setNormalized(true))
+      .setAttribute('_VISC', out.createAccessor().setType('SCALAR').setArray(visc).setNormalized(true))
+      .setIndices(out.createAccessor().setType('SCALAR').setArray(env.indices))
+      .setMaterial(material)
+    skinPrim(prim, HINT[part])
+    addTo(groups, `fat-${part}`, prim)
+  }
+  console.log(`fat layer built in ${((Date.now() - t0) / 1000).toFixed(1)} s`)
+}
+
 // One node + mesh per group, with its primitives joined into one draw call.
 for (const [key, prims] of groups) {
   const mesh = out.createMesh(key).addPrimitive(joinPrimitives(prims))
@@ -261,6 +332,8 @@ for (const [key, prims] of groups) {
 const min = [Infinity, Infinity, Infinity]
 const max = [-Infinity, -Infinity, -Infinity]
 for (const node of scene.listChildren()) {
+  // The feet, not the fat under them, stand on the pedestal.
+  if (isFat(node.getName())) continue
   const pos = node.getMesh().listPrimitives()[0].getAttribute('POSITION')
   const lo = pos.getMin([])
   const hi = pos.getMax([])
@@ -278,9 +351,8 @@ console.log('bounds (m):', min.map((v, i) => +(max[i] - v).toFixed(3)))
 
 // Triangle budgets per node. Bones and the dense abdominal/forearm meshes
 // dominate the source; selectable muscles keep the most detail.
-const BUDGET = { bones: 60_000, context: 9_000, default: 7_000 }
-const budgetFor = (name) =>
-  name === 'bones' ? BUDGET.bones : name === 'context' ? BUDGET.context : BUDGET.default
+const BUDGET = { bones: 60_000, context: 9_000, 'fat-trunk': 16_000, fat: 5_000, default: 7_000 }
+const budgetFor = (name) => BUDGET[name] ?? (isFat(name) ? BUDGET.fat : BUDGET.default)
 
 await out.transform(unpartition(), prune(), dedup(), weld())
 let total = 0
@@ -296,7 +368,8 @@ console.log('triangles:', Math.round(total))
 // Crevice occlusion per vertex (lib/ao.mjs), stored as the custom _AO
 // attribute; the app deepens it at low body fat to show definition.
 {
-  const nodes = scene.listChildren().filter((n) => n.getMesh())
+  // The fat layer would occlude everything beneath it.
+  const nodes = scene.listChildren().filter((n) => n.getMesh() && !isFat(n.getName()))
   const prims = nodes.map((n) => n.getMesh().listPrimitives()[0])
   const t0 = Date.now()
   const ao = bakeAmbientOcclusion(
@@ -312,6 +385,31 @@ console.log('triangles:', Math.round(total))
     p.setAttribute('_AO', out.createAccessor().setType('SCALAR').setArray(toBytes(ao[i])).setNormalized(true)),
   )
   console.log(`ambient occlusion baked in ${((Date.now() - t0) / 1000).toFixed(1)} s`)
+}
+
+// Fat layer areas, so the app can turn a fat volume into a thickness:
+// thickness = volume / weightedArea × weight (all in metres).
+for (const node of scene.listChildren()) {
+  if (!isFat(node.getName())) continue
+  const prim = node.getMesh().listPrimitives()[0]
+  const pos = prim.getAttribute('POSITION').getArray()
+  const fw = prim.getAttribute('_FATW').getArray()
+  const vs = prim.getAttribute('_VISC').getArray()
+  const idx = prim.getIndices().getArray()
+  let area = 0
+  let weightedArea = 0
+  let visceralArea = 0
+  for (let t = 0; t < idx.length; t += 3) {
+    const [a, b, c] = [idx[t], idx[t + 1], idx[t + 2]]
+    const u = [0, 1, 2].map((k) => pos[b * 3 + k] - pos[a * 3 + k])
+    const v = [0, 1, 2].map((k) => pos[c * 3 + k] - pos[a * 3 + k])
+    const ar = Math.hypot(u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]) / 2
+    area += ar
+    weightedArea += (ar * FAT_WEIGHT_MAX * (fw[a] + fw[b] + fw[c])) / (3 * 255)
+    visceralArea += (ar * (vs[a] + vs[b] + vs[c])) / (3 * 255)
+  }
+  node.setExtras({ area, weightedArea, visceralArea, weightMax: FAT_WEIGHT_MAX })
+  console.log(node.getName(), 'area', area.toFixed(3), 'mean weight', (weightedArea / area).toFixed(2))
 }
 
 // Rig: joint nodes in a hierarchy (skin weights were set before joining).
