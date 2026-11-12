@@ -8,8 +8,9 @@ import {
   relativeDay,
   startingSet,
   weightStep,
-} from '@/constants/setLogging';
-import { EXERCISES, type SavedWorkout, type WorkoutExercise, type WorkoutSet } from '@/constants/workoutData';
+} from '@/features/workouts/lib/setLogging';
+import { EXERCISES } from '@/features/workouts/constants';
+import type { SavedWorkout, WorkoutExercise, WorkoutSet } from '@/features/workouts/types';
 
 const ex = (id: string) => EXERCISES.find((e) => e.id === id)!;
 const set = (weight: number, reps: number, completed = true): WorkoutSet => ({

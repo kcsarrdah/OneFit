@@ -9,7 +9,7 @@ import { Stepper } from '@/components/ui/Stepper';
 import { SwipeToConfirm } from '@/components/ui/SwipeToConfirm';
 import { Colors } from '@/constants/Colors';
 import { Fonts } from '@/constants/Fonts';
-import type { Exercise, WorkoutSet } from '@/constants/workoutData';
+import type { Exercise, WeightUnit, WorkoutSet } from '../types';
 import {
   formatSets,
   formatWeight,
@@ -18,8 +18,7 @@ import {
   startingSet,
   weightStep,
   type LastPerformance,
-  type WeightUnit,
-} from '@/constants/setLogging';
+} from '../lib/setLogging';
 
 /**
  * @file SetLogger.tsx
