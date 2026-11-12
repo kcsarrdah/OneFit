@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useColorScheme as useSystemColorScheme } from 'react-native';
 
 type ColorScheme = 'light' | 'dark';
 type ThemePreference = ColorScheme | 'system';
@@ -17,14 +16,11 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 const THEME_STORAGE_KEY = 'theme-preference';
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const systemColorScheme = useSystemColorScheme();
   const [themePreference, setThemePreferenceState] = useState<ThemePreference>('system');
   
   // Determine actual color scheme based on preference
-  const colorScheme: ColorScheme = 
-    themePreference === 'system' 
-      ? (systemColorScheme ?? 'light')
-      : themePreference;
+  // Dark only: the stored preference is kept for later, but not applied.
+  const colorScheme = 'dark' as ColorScheme;
 
   // Load saved preference on app start
   useEffect(() => {

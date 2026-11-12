@@ -1,15 +1,27 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import { DarkTheme, ThemeProvider, type Theme } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
-import { ThemeProvider as CustomThemeProvider, useTheme } from '@/contexts/ThemeContext';
+import { ThemeProvider as CustomThemeProvider } from '@/contexts/ThemeContext';
 import { NavigationProvider } from '@/contexts/NavigationContext';
-import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { Colors } from '@/constants/Colors';
+
+const ironNavigationTheme: Theme = {
+  ...DarkTheme,
+  colors: {
+    ...DarkTheme.colors,
+    primary: Colors.dark.accent,
+    background: Colors.dark.background,
+    card: Colors.dark.background,
+    text: Colors.dark.foreground,
+    border: Colors.dark.border,
+  },
+};
 
 function RootLayoutContent() {
-  const { colorScheme } = useTheme();
   const [loaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
@@ -20,19 +32,18 @@ function RootLayoutContent() {
 
   return (
     <NavigationProvider>
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+    <ThemeProvider value={ironNavigationTheme}>
       <Stack>
         <Stack.Screen 
           name="(tabs)" 
           options={{ 
             headerShown: true,
             title: 'OneFit',
-            headerRight: () => <ThemeToggle />,
           }} 
         />
         <Stack.Screen name="+not-found" />
       </Stack>
-      <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+      <StatusBar style="light" />
     </ThemeProvider>
     </NavigationProvider>
   );
@@ -40,8 +51,10 @@ function RootLayoutContent() {
 
 export default function RootLayout() {
   return (
-    <CustomThemeProvider>
-      <RootLayoutContent />
-    </CustomThemeProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <CustomThemeProvider>
+        <RootLayoutContent />
+      </CustomThemeProvider>
+    </GestureHandlerRootView>
   );
 }

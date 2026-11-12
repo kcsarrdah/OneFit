@@ -32,7 +32,8 @@ export function VerticalTabBar({
     currentSidebarOption, 
     setCurrentSidebarOption, 
     getSidebarOptions,
-    getCurrentConfig
+    getCurrentConfig,
+    focusMode
   } = useNavigation();
 
   const config = getCurrentConfig(); 
@@ -67,7 +68,7 @@ export function VerticalTabBar({
 
   };
 
-  if (!config) return null;
+  if (!config || focusMode) return null;
 
   // Filter out separators for the vertical tab bar
   const filteredOptions = sidebarOptions.filter(option => option.id !== 'separator');

@@ -1,6 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useAsyncStorage } from './useAsyncStorage';
-import { WheelPicker } from '@/components/ui/WheelPicker';
 
 /**
  * @file useWorkoutSession.ts
@@ -23,27 +22,9 @@ import { WheelPicker } from '@/components/ui/WheelPicker';
  *   } = useWorkoutSession();
  */
 
-export interface Exercise {
-  id: string;
-  name: string;
-  muscleGroup: string;
-  equipment?: string;
-  instructions?: string;
-}
-
-export interface WorkoutSet {
-  id: string;
-  reps: number;
-  weight: number;
-  completed: boolean;
-}
-
-export interface WorkoutExercise {
-  id: string;
-  exercise: Exercise;
-  sets: WorkoutSet[];
-  notes?: string;
-}
+// The shared workout types live in constants/workoutData.ts.
+import type { Exercise, WorkoutSet, WorkoutExercise } from '@/constants/workoutData';
+export type { Exercise, WorkoutSet, WorkoutExercise };
 
 export interface WorkoutStats {
   totalExercises: number;
@@ -199,6 +180,42 @@ export function useWorkoutSession() {
     setError(null);
   }, []);
 
+  /**
+   * Swipe-to-log: opens an exercise for logging without any placeholder sets.
+   * Returns the session entry's id, reusing the entry if the exercise is
+   * already in this workout.
+   */
+  const startExercise = useCallback((exercise: Exercise): string => {
+    const existing = exercises.find(ex => ex.exercise.id === exercise.id);
+    if (existing) return existing.id;
+    const id = `${Date.now()}_${Math.random()}`;
+    setExercises(prev => [...prev, { id, exercise, sets: [], notes: '' }]);
+    setError(null);
+    return id;
+  }, [exercises]);
+
+  /** Swipe-to-log: records a finished set. */
+  const logSet = useCallback((exerciseId: string, weight: number, reps: number) => {
+    const newSet: WorkoutSet = {
+      id: `set_${Date.now()}_${Math.random()}`,
+      weight,
+      reps,
+      completed: true,
+    };
+    setExercises(prev =>
+      prev.map(ex => ex.id === exerciseId ? { ...ex, sets: [...ex.sets, newSet] } : ex)
+    );
+    setError(null);
+  }, []);
+
+  /** Undoes the most recent set of an exercise. */
+  const removeLastSet = useCallback((exerciseId: string) => {
+    setExercises(prev =>
+      prev.map(ex => ex.id === exerciseId ? { ...ex, sets: ex.sets.slice(0, -1) } : ex)
+    );
+    setError(null);
+  }, []);
+
   const removeExercise = useCallback((exerciseId: string) => {
     setExercises(prev => prev.filter(ex => ex.id !== exerciseId));
     setError(null);
@@ -321,6 +338,9 @@ export function useWorkoutSession() {
     // Set operations
     updateExerciseSets,
     addSetToExercise,
+    startExercise,
+    logSet,
+    removeLastSet,
     updateSet,
     removeSet,
     

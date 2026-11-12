@@ -4,6 +4,7 @@ module.exports = {
     testPathIgnorePatterns: [
       '<rootDir>/node_modules/',
       '<rootDir>/.expo/',
+      '<rootDir>/__tests__/setup.ts',
     ],
     collectCoverageFrom: [
       'hooks/**/*.{ts,tsx}',
