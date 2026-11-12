@@ -40,6 +40,8 @@ export interface ButtonProps extends Omit<TouchableOpacityProps, 'style'> {
   children: React.ReactNode;
   style?: StyleProp<ViewStyle>;
   textStyle?: StyleProp<TextStyle>; 
+  /** Style for the outer (animated) wrapper, e.g. `{ flex: 1 }` to share a row. */
+  containerStyle?: StyleProp<ViewStyle>;
 }
 
 export const Button = React.forwardRef<React.ElementRef<typeof TouchableOpacity>, ButtonProps>(
@@ -50,6 +52,7 @@ export const Button = React.forwardRef<React.ElementRef<typeof TouchableOpacity>
     children, 
     style, 
     textStyle,
+    containerStyle,
     disabled,
     onPressIn,
     onPressOut,
@@ -243,7 +246,7 @@ export const Button = React.forwardRef<React.ElementRef<typeof TouchableOpacity>
     };
 
     return (
-      <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+      <Animated.View style={[containerStyle, { transform: [{ scale: scaleAnim }] }]}>
         <TouchableOpacity
           ref={ref}
           style={[
@@ -257,6 +260,7 @@ export const Button = React.forwardRef<React.ElementRef<typeof TouchableOpacity>
           onPressIn={handlePressIn}
           onPressOut={handlePressOut}
           activeOpacity={0.8}
+          accessibilityRole="button"
           {...props}
         >
           {renderContent()}

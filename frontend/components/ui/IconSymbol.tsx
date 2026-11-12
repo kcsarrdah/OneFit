@@ -58,6 +58,11 @@ const MAPPING = {
   'star.fill': 'star',
   'person.3.fill': 'group',
   'flag.fill': 'flag',
+  'chevron.left': 'chevron-left',
+  'checkmark': 'check',
+  'plus': 'add',
+  'minus': 'remove',
+  'arrow.uturn.backward': 'undo',
 } as const satisfies Record<string, string>;
 
 /**

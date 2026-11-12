@@ -28,6 +28,9 @@ interface NavigationContextType {
   setCurrentSidebarOption: (optionId: string | null) => void;
   getCurrentConfig: () => NavigationConfig | undefined;
   getSidebarOptions: () => SidebarOption[];
+  /** Full-screen tasks, like logging a set: hides the header, sidebar and tab bar. */
+  focusMode: boolean;
+  setFocusMode: (focus: boolean) => void;
 }
 
 const NavigationContext = createContext<NavigationContextType | undefined>(undefined);
@@ -125,6 +128,7 @@ const NAVIGATION_CONFIG: NavigationConfig[] = [
 export function NavigationProvider({ children }: { children: React.ReactNode }) {
   const [currentMode, setCurrentModeState] = useState<NavigationMode>('home');
   const [currentSidebarOption, setCurrentSidebarOption] = useState<string | null>(null);
+  const [focusMode, setFocusMode] = useState(false);
   const router = useRouter();
   const segments = useSegments();
 
@@ -174,6 +178,8 @@ export function NavigationProvider({ children }: { children: React.ReactNode }) 
         setCurrentSidebarOption,
         getCurrentConfig,
         getSidebarOptions,
+        focusMode,
+        setFocusMode,
       }}
     >
       {children}
