@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useRouter, useSegments } from 'expo-router';
+import { useSegments } from 'expo-router';
 
 // Navigation Types
 export type NavigationMode = 'home' | 'fasting' | 'water' | 'workouts' | 'habits' | 'nutrition' | 'explore';
@@ -129,8 +129,7 @@ export function NavigationProvider({ children }: { children: React.ReactNode }) 
   const [currentMode, setCurrentModeState] = useState<NavigationMode>('home');
   const [currentSidebarOption, setCurrentSidebarOption] = useState<string | null>(null);
   const [focusMode, setFocusMode] = useState(false);
-  const router = useRouter();
-  const segments = useSegments();
+  const segments: string[] = useSegments();
 
   // Auto-detect current mode from route segments
   useEffect(() => {
