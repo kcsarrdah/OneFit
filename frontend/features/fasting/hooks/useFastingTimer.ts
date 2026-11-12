@@ -1,16 +1,19 @@
-// frontend/hooks/useFastingTimer.ts
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { fastProgress } from '../lib/format';
+import type { CompletedFastData } from '../types';
+
+/**
+ * @file useFastingTimer.ts
+ * @description The running fast: start, stop (hands the finished fast to
+ * onComplete), reset. The start time is kept on the device so the timer
+ * survives restarts, and it catches up when the app returns to the foreground.
+ */
 
 interface UseFastingTimerProps {
   goalDurationSeconds: number;
-  onComplete: (fastData: {
-    startTime: number;
-    endTime: number;
-    actualDurationSeconds: number;
-    goalDurationSeconds: number;
-  }) => void;
+  onComplete: (fastData: CompletedFastData) => void;
 }
 
 interface TimerState {
@@ -25,7 +28,7 @@ export function useFastingTimer({ goalDurationSeconds, onComplete }: UseFastingT
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [startTime, setStartTime] = useState<number | null>(null);
   
-  const intervalRef = useRef<number | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const appStateRef = useRef(AppState.currentState);
 
   // Load persisted timer state on mount
@@ -166,12 +169,7 @@ export function useFastingTimer({ goalDurationSeconds, onComplete }: UseFastingT
     }
   }, []);
 
-  // Calculated values
-  const progressPercentage = goalDurationSeconds > 0 
-    ? Math.min((elapsedSeconds / goalDurationSeconds) * 100, 100) 
-    : 0;
-  
-  const remainingSeconds = Math.max(0, goalDurationSeconds - elapsedSeconds);
+  const { progressPercentage, remainingSeconds } = fastProgress(elapsedSeconds, goalDurationSeconds);
 
   return {
     isActive,

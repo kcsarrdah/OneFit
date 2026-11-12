@@ -1,7 +1,7 @@
-// __tests__/hooks/useFastingTimer.test.ts
+// __tests__/features/fasting/hooks/useFastingTimer.test.ts
 import { renderHook, act } from '@testing-library/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useFastingTimer } from '../../hooks/useFastingTimer';
+import { useFastingTimer } from '@/features/fasting/hooks/useFastingTimer';
 
 const mockAsyncStorage = AsyncStorage as jest.Mocked<typeof AsyncStorage>;
 

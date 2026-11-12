@@ -1,12 +1,12 @@
-// __tests__/hooks/useFastCompletion.test.ts
+// __tests__/features/fasting/hooks/useFastCompletion.test.ts
 import { renderHook, act } from '@testing-library/react-native';
-import { useFastCompletion } from '../../hooks/useFastCompletion';
+import { useFastCompletion } from '@/features/fasting/hooks/useFastCompletion';
 
 // Mock fetch globally
 global.fetch = jest.fn();
 
 // Mock useToast
-jest.mock('../../hooks/useToast', () => ({
+jest.mock('@/hooks/useToast', () => ({
   useToast: () => ({
     toast: jest.fn(),
   }),
