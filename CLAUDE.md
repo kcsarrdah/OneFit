@@ -5,7 +5,7 @@ OneFit is an all-in-one fitness tracker. Three code folders:
 | Folder | What | Run | Test |
 |---|---|---|---|
 | `backend/` | Go 1.24 + Gin API (SQLite via glebarez, Firebase auth) | `cd backend && go run .` (port 3000) | `go test ./...` |
-| `frontend/` | Expo / React Native app (expo-router) | `cd frontend && npx expo start` · web: launch config `app-web` (port 8081) | `npx jest` · `npx tsc --noEmit` · `npx eslint app components hooks constants contexts` |
+| `frontend/` | Expo / React Native app (expo-router) | `cd frontend && npx expo start` · web: launch config `app-web` (port 8081) | `npx jest` · `npx tsc --noEmit` · `npx eslint app components hooks constants contexts features` |
 | `web/` | React 19 + Vite web app (Muscle Explorer, 3D body) | `npm --prefix web run dev` (port 5173, proxies `/api` to 3000) | `npm --prefix web test` · `npm --prefix web run build` · `npm --prefix web run lint` |
 
 These four rules apply to every change, by every agent. They are not optional.
@@ -27,7 +27,8 @@ Each code folder has a `docs/` folder that mirrors its source tree, with one Mar
 
 ```
 frontend/components/ui/Button.tsx      ->  frontend/docs/components/ui/Button.md
-frontend/__tests__/constants/x.test.ts ->  frontend/docs/__tests__/constants/x.test.md
+frontend/features/water/components/WaterFill.tsx -> frontend/docs/features/water/components/WaterFill.md
+frontend/__tests__/features/workouts/lib/setLogging.test.ts -> frontend/docs/__tests__/features/workouts/lib/setLogging.test.md
 backend/controllers/workout_controller.go -> backend/docs/controllers/workout_controller.md
 web/src/features/body-3d/BodyModel.tsx ->  web/docs/src/features/body-3d/BodyModel.md
 ```
@@ -42,7 +43,7 @@ web/src/features/body-3d/BodyModel.tsx ->  web/docs/src/features/body-3d/BodyMod
 
 - One component or concern per file. Screens compose components; they do not hold 500 lines of everything. Aim for files under ~300 lines and split before 400.
 - Pure logic (calculations, formatting, ordering) lives outside components (`constants/`, `lib/`, `services/`) and has unit tests.
-- Reuse the UI library (`frontend/components/ui`, `web/src/components/ui`) before writing new primitives; add new primitives there, documented.
+- App features live in `frontend/features/<feature>/` (`screens/`, `components/`, `hooks/`, `lib/`, `constants.ts`, `types.ts`); `app/` route files stay one-line re-exports. Shared primitives live in `frontend/components/ui` (web: `web/src/components`); reuse them before writing new ones.
 - No dead code, unused imports or stale styles. Lint and type-check clean for the files you touch.
 - Never commit `backend/onefit.db` or secrets.
 
