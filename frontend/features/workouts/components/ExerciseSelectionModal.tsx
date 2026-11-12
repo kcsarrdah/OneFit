@@ -5,13 +5,17 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card, CardContent } from '@/components/ui/Card';
 import { ThemedText } from '@/components/ThemedText';
-import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
-import { 
-  EXERCISES, 
-  MUSCLE_GROUPS, 
-  Exercise, 
-} from '@/constants/workoutData';
+import { EXERCISES, MUSCLE_GROUPS } from '../constants';
+import { searchExercises } from '../lib/routines';
+import type { Exercise } from '../types';
+
+/**
+ * @file ExerciseSelectionModal.tsx
+ * @description Dialog to browse the exercise catalogue, searchable and
+ * filtered by muscle group; tapping an exercise picks it and closes.
+ * Not used by any screen yet.
+ */
 
 interface ExerciseSelectionModalProps {
   visible: boolean;
@@ -22,19 +26,8 @@ interface ExerciseSelectionModalProps {
 export function ExerciseSelectionModal({ visible, onClose, onSelectExercise }: ExerciseSelectionModalProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMuscleGroup, setSelectedMuscleGroup] = useState<string | null>(null);
-  const [selectedEquipment, setSelectedEquipment] = useState<string | null>(null);
-  
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? 'light'];
-
-  // Filter exercises based on search and filters
-  const filteredExercises = EXERCISES.filter(exercise => {
-    const matchesSearch = exercise.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesMuscleGroup = !selectedMuscleGroup || exercise.muscleGroup === selectedMuscleGroup;
-    const matchesEquipment = !selectedEquipment || exercise.equipment === selectedEquipment;
-    
-    return matchesSearch && matchesMuscleGroup && matchesEquipment;
-  });
+  const colors = Colors.dark;
+  const filteredExercises = searchExercises(EXERCISES, searchQuery, selectedMuscleGroup);
 
   const handleSelectExercise = (exercise: Exercise) => {
     onSelectExercise(exercise);
@@ -44,18 +37,16 @@ export function ExerciseSelectionModal({ visible, onClose, onSelectExercise }: E
   const clearFilters = () => {
     setSearchQuery('');
     setSelectedMuscleGroup(null);
-    setSelectedEquipment(null);
   };
 
-
   return (
-    <Dialog 
-      visible={visible} 
-      onDismiss={onClose} 
+    <Dialog
+      visible={visible}
+      onDismiss={onClose}
     >
       <DialogContent style={[
-        styles.modalContent, 
-        { 
+        styles.modalContent,
+        {
           backgroundColor: colors.card,
         }
       ]}>
@@ -109,16 +100,16 @@ export function ExerciseSelectionModal({ visible, onClose, onSelectExercise }: E
             </View>
           </ScrollView>
         </View>
-       
+
 
         {/* Clear Filters */}
-        {(selectedMuscleGroup || selectedEquipment || searchQuery) && (
+        {(selectedMuscleGroup || searchQuery) && (
           <Button variant="outline" size="sm" onPress={clearFilters} style={styles.clearButton}>
             <Text style={{ color: colors.foreground }}>Clear Filters</Text>
           </Button>
         )}
 
-        {/* Exercise List - Replace the debug version with proper cards */}
+        {/* Exercise List */}
         <ScrollView style={styles.exerciseList} showsVerticalScrollIndicator={false}>
           {filteredExercises.length === 0 ? (
             <ThemedText style={[{ color: colors.foreground, padding: 20 }]}>
@@ -137,7 +128,6 @@ export function ExerciseSelectionModal({ visible, onClose, onSelectExercise }: E
                         {exercise.muscleGroup} • {exercise.equipment}
                       </ThemedText>
                     </View>
-                    {/* Remove the button - whole card is tappable */}
                   </CardContent>
                 </TouchableOpacity>
               </Card>
@@ -158,29 +148,26 @@ export function ExerciseSelectionModal({ visible, onClose, onSelectExercise }: E
 
 const styles = StyleSheet.create({
   modalContent: {
-    maxHeight: '100%',     
+    maxHeight: '100%',
     maxWidth: '100%',
     borderRadius: 16,
-    padding: 16, 
+    padding: 16,
   },
   modalTitle: {
-    fontSize: 18,            
+    fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 10,        
+    marginBottom: 10,
   },
   searchSection: {
-    marginBottom: 10,        
-  },
-  searchInput: {
-    marginBottom: 0,
+    marginBottom: 10,
   },
   filterSection: {
-    marginBottom: 8,      
+    marginBottom: 8,
   },
   filterTitle: {
-    fontSize: 13,            // Reduce from 14
+    fontSize: 13,
     fontWeight: '600',
-    marginBottom: 6,         // Reduce from 8
+    marginBottom: 6,
   },
   filterScroll: {
     marginBottom: 4,
@@ -195,11 +182,11 @@ const styles = StyleSheet.create({
   },
   clearButton: {
     alignSelf: 'flex-start',
-    marginBottom: 12,        // Reduce from 16
+    marginBottom: 12,
   },
   exerciseList: {
     marginTop: 10,
-    marginBottom: 12,         // Reduce from 12
+    marginBottom: 12,
   },
   exerciseCard: {
     marginBottom: 10,
@@ -219,15 +206,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     marginBottom: 4,
-  },
-  exerciseMeta: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  addButton: {
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
   },
   resultsFooter: {
     alignItems: 'center',

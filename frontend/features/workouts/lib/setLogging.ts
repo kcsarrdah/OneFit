@@ -9,9 +9,7 @@
  * most recent first.
  */
 
-import type { Exercise, SavedWorkout, WorkoutExercise, WorkoutSet } from './workoutData';
-
-export type WeightUnit = 'kg' | 'lbs';
+import type { Exercise, SavedWorkout, WeightUnit, WorkoutExercise, WorkoutSet } from '../types';
 
 export interface LastPerformance {
   sets: WorkoutSet[];

@@ -6,8 +6,9 @@ import { IconSymbol } from '@/components/ui/IconSymbol';
 import { Input } from '@/components/ui/Input';
 import { Colors, GlassEffectConfig } from '@/constants/Colors';
 import { Fonts } from '@/constants/Fonts';
-import { MUSCLE_GROUPS, type Exercise } from '@/constants/workoutData';
-import { formatSets, relativeDay, type NextOption } from '@/constants/setLogging';
+import { MUSCLE_GROUPS } from '../constants';
+import type { Exercise } from '../types';
+import { formatSets, relativeDay, type NextOption } from '../lib/setLogging';
 
 /**
  * @file PickNext.tsx
