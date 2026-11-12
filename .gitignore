@@ -46,3 +46,5 @@ go.work.sum
 # Ignore local development files
 *.local
 *.log
+# Agent worktrees (local only)
+.claude/worktrees/
