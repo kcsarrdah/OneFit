@@ -1,6 +1,7 @@
 import React from 'react';
 import { Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Colors } from '@/constants/Colors';
+import { Fonts } from '@/constants/Fonts';
 
 /**
  * @file BigNumber.tsx
@@ -30,7 +31,7 @@ export function BigNumber({ value, caption, onChange, decimal = false, format = 
 
   const shown = format(value);
   // Long values (142.5) shrink so weight and reps always fit side by side.
-  const fontSize = shown.length <= 2 ? 96 : shown.length === 3 ? 84 : shown.length === 4 ? 66 : 56;
+  const fontSize = shown.length <= 2 ? 116 : shown.length === 3 ? 104 : shown.length === 4 ? 88 : 76;
 
   const commit = () => {
     if (draft === null) return;
@@ -72,7 +73,7 @@ export function BigNumber({ value, caption, onChange, decimal = false, format = 
               {
                 fontSize,
                 lineHeight: fontSize * 1.08,
-                width: Math.max(2, draft.length || shown.length) * fontSize * 0.6 + 16,
+                width: Math.max(2, draft.length || shown.length) * fontSize * 0.5 + 16,
                 color: colors.foreground,
                 borderColor: colors.accent,
               },
@@ -91,15 +92,15 @@ const styles = StyleSheet.create({
     minWidth: 120,
   },
   valueBox: {
-    height: 104,
+    height: 128,
     justifyContent: 'flex-end',
     alignItems: 'center',
   },
   value: {
-    fontSize: 96,
-    lineHeight: 104,
-    fontWeight: '800',
-    letterSpacing: -3,
+    fontFamily: Fonts.display,
+    fontSize: 116,
+    lineHeight: 126,
+    letterSpacing: -1,
     fontVariant: ['tabular-nums'],
     textAlign: 'center',
   },
@@ -109,7 +110,7 @@ const styles = StyleSheet.create({
     ...(Platform.OS === 'web' ? ({ outlineStyle: 'none' } as object) : null),
   },
   caption: {
-    marginTop: 4,
+    marginTop: 2,
     fontSize: 13,
     fontWeight: '700',
     letterSpacing: 1.4,

@@ -28,7 +28,7 @@ interface NavigationContextType {
   setCurrentSidebarOption: (optionId: string | null) => void;
   getCurrentConfig: () => NavigationConfig | undefined;
   getSidebarOptions: () => SidebarOption[];
-  /** Hides the floating sidebar on full-screen tasks, like logging a set. */
+  /** Full-screen tasks, like logging a set: hides the header, sidebar and tab bar. */
   focusMode: boolean;
   setFocusMode: (focus: boolean) => void;
 }

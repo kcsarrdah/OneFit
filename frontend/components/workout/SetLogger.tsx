@@ -1,7 +1,6 @@
 import React from 'react';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Svg, { Circle } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import { BigNumber } from '@/components/ui/BigNumber';
 import { Button } from '@/components/ui/Button';
@@ -9,6 +8,7 @@ import { IconSymbol } from '@/components/ui/IconSymbol';
 import { Stepper } from '@/components/ui/Stepper';
 import { SwipeToConfirm } from '@/components/ui/SwipeToConfirm';
 import { Colors } from '@/constants/Colors';
+import { Fonts } from '@/constants/Fonts';
 import type { Exercise, WorkoutSet } from '@/constants/workoutData';
 import {
   formatSets,
@@ -23,10 +23,11 @@ import {
 
 /**
  * @file SetLogger.tsx
- * @description Logs one exercise's sets, Robinhood style: two huge numbers
- * that start from this exercise's own last set, steppers to nudge them, and a
- * bar you swipe up to log. After a swipe the rest timer runs on its own and
- * the numbers stay put, so the same set again is just another swipe.
+ * @description Logs one exercise's sets, Robinhood style. Two huge numbers
+ * start from this exercise's own last set; steppers nudge them; the accent
+ * sheet at the bottom is swiped up to log. The sheet fills the screen and the
+ * rest screen carries on in that colour, with the countdown readable from
+ * across the gym. "Set N" lowers the colour back into the bar, numbers kept.
  */
 
 interface SetLoggerProps {
@@ -41,94 +42,98 @@ interface SetLoggerProps {
   restSeconds?: number;
 }
 
+type Phase = 'enter' | 'returning' | 'resting';
+
 export function SetLogger({ exercise, today, last, unit, onLog, onUndo, onBack, restSeconds = 120 }: SetLoggerProps) {
-  const colors = Colors.dark;
-  const insets = useSafeAreaInsets();
   const [numbers, setNumbers] = React.useState(() => startingSet(exercise.equipment, today, last));
-  const [restStartedAt, setRestStartedAt] = React.useState<number | null>(null);
-  const step = weightStep(exercise.equipment, unit);
-  const setNumber = today.length + 1;
-  const unitCaption = (exercise.equipment === 'Dumbbells' ? `${unit} each` : unit).toUpperCase();
+  const [phase, setPhase] = React.useState<Phase>('enter');
+  const [restStartedAt, setRestStartedAt] = React.useState(0);
 
   const log = () => {
     onLog(numbers.weight, numbers.reps);
     setRestStartedAt(Date.now());
+    setPhase('resting');
   };
 
-  const header = (
-    <View style={styles.header}>
-      <Pressable onPress={onBack} accessibilityRole="button" accessibilityLabel="Back to exercises" style={styles.headerButton}>
-        <IconSymbol name="chevron.left" size={26} color={colors.foreground} />
-      </Pressable>
-      <Text style={[styles.headerText, { color: colors.mutedForeground }]}>
-        {restStartedAt ? exercise.name : `Set ${setNumber}`}
-      </Text>
-      {restStartedAt ? (
-        <Pressable
-          onPress={() => {
-            onUndo();
-            setRestStartedAt(null);
-          }}
-          accessibilityRole="button"
-          style={styles.headerButton}
-        >
-          <Text style={[styles.undo, { color: colors.mutedForeground }]}>Undo</Text>
-        </Pressable>
-      ) : (
-        <View style={styles.headerButton} />
-      )}
-    </View>
-  );
-
-  if (restStartedAt) {
-    const logged = today[today.length - 1];
+  if (phase === 'resting') {
     return (
-      <View style={[styles.screen, { backgroundColor: colors.background, paddingBottom: insets.bottom + 96 }]}>
-        {header}
-        <View style={styles.restTop}>
-          <View style={[styles.check, { backgroundColor: colors.accent }]}>
-            <IconSymbol name="checkmark" size={32} color={colors.accentForeground} />
-          </View>
-          <Text style={[styles.loggedTitle, { color: colors.foreground }]} accessibilityRole="header">
-            Set {today.length} logged
-          </Text>
-          {logged && (
-            <Text style={[styles.loggedSub, { color: colors.mutedForeground }]}>
-              {formatWeight(logged.weight)} {unit} × {logged.reps}
-            </Text>
-          )}
-        </View>
-        <RestTimer startedAt={restStartedAt} seconds={restSeconds} />
-        <SetChips sets={today} highlightLast />
-        <View style={{ flex: 1 }} />
-        <View style={styles.restActions}>
-          <Button variant="secondary" size="lg" onPress={onBack} containerStyle={styles.restButtonWrap} style={styles.restButton}>
-            Next exercise
-          </Button>
-          <Button
-            variant="default"
-            size="lg"
-            onPress={() => setRestStartedAt(null)}
-            containerStyle={styles.restButtonWrap}
-            style={[styles.restButton, { backgroundColor: colors.accent }]}
-            textStyle={{ color: colors.accentForeground, fontWeight: '700' }}
-          >
-            {`Set ${setNumber}`}
-          </Button>
-        </View>
-      </View>
+      <RestScreen
+        exerciseName={exercise.name}
+        today={today}
+        unit={unit}
+        startedAt={restStartedAt}
+        seconds={restSeconds}
+        onNextSet={() => setPhase('returning')}
+        onUndo={() => {
+          onUndo();
+          setPhase('returning');
+        }}
+        onNextExercise={onBack}
+      />
     );
   }
 
   return (
-    <View style={[styles.screen, { backgroundColor: colors.background, paddingBottom: insets.bottom + 96 }]}>
-      {header}
+    <SwipeToConfirm label="Swipe up to log" onConfirm={log} enterFromFull={phase === 'returning'}>
+      <EntryScreen
+        exercise={exercise}
+        today={today}
+        last={last}
+        unit={unit}
+        numbers={numbers}
+        setNumbers={setNumbers}
+        onBack={onBack}
+      />
+    </SwipeToConfirm>
+  );
+}
+
+const capitalise = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+function EntryScreen({
+  exercise,
+  today,
+  last,
+  unit,
+  numbers,
+  setNumbers,
+  onBack,
+}: {
+  exercise: Exercise;
+  today: WorkoutSet[];
+  last: LastPerformance | null;
+  unit: WeightUnit;
+  numbers: { weight: number; reps: number };
+  setNumbers: React.Dispatch<React.SetStateAction<{ weight: number; reps: number }>>;
+  onBack: () => void;
+}) {
+  const colors = Colors.dark;
+  const insets = useSafeAreaInsets();
+  const step = weightStep(exercise.equipment, unit);
+  const unitCaption = (exercise.equipment === 'Dumbbells' ? `${unit} each` : unit).toUpperCase();
+
+  return (
+    <View style={[styles.entry, { paddingTop: insets.top + 4 }]}>
+      <View style={styles.header}>
+        <Pressable onPress={onBack} accessibilityRole="button" accessibilityLabel="Back to exercises" style={styles.headerButton} hitSlop={8}>
+          <IconSymbol name="chevron.left" size={28} color={colors.foreground} />
+        </Pressable>
+        <Text style={[styles.headerText, { color: colors.mutedForeground }]}>Set {today.length + 1}</Text>
+        <View style={styles.headerButton} />
+      </View>
+
       <Pressable onPress={onBack} accessibilityRole="button" accessibilityLabel={`${exercise.name}, change exercise`} style={styles.titleWrap}>
-        <Text style={[styles.title, { color: colors.foreground }]}>{exercise.name}</Text>
+        <Text style={[styles.title, { color: colors.foreground }]} numberOfLines={2}>
+          {exercise.name}
+        </Text>
         <IconSymbol name="chevron.down" size={22} color={colors.mutedForeground} />
       </Pressable>
-      <Text style={[styles.lastTime, { color: colors.mutedForeground }]}>
-        {last ? `${capitalise(relativeDay(last.date))}: ${formatSets(last.sets)}` : 'First time logging this one'}
+      <Text style={[styles.lastTime, { color: colors.mutedForeground }]} numberOfLines={1}>
+        {today.length
+          ? `Today: ${formatSets(today)}`
+          : last
+            ? `${capitalise(relativeDay(last.date))}: ${formatSets(last.sets)}`
+            : 'First time logging this one'}
       </Text>
 
       <View style={styles.numbers}>
@@ -165,48 +170,39 @@ export function SetLogger({ exercise, today, last, unit, onLog, onUndo, onBack, 
           onIncrement={() => setNumbers((n) => ({ ...n, reps: nudge(n.reps, 1, 1, 200) }))}
         />
       </View>
-
-      <SetChips sets={today} next={setNumber} />
-      <View style={{ flex: 1 }} />
-      <SwipeToConfirm label="Swipe up to log" onConfirm={log} style={styles.swipe} />
     </View>
   );
 }
 
-const capitalise = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
-
-/** Today's sets as small chips, plus a dashed one for the set being entered. */
-function SetChips({ sets, next, highlightLast = false }: { sets: WorkoutSet[]; next?: number; highlightLast?: boolean }) {
+/**
+ * The confirmation, in the accent colour the swipe filled the screen with.
+ * Ink is near-black for contrast (7.6:1 on the orange).
+ */
+function RestScreen({
+  exerciseName,
+  today,
+  unit,
+  startedAt,
+  seconds,
+  onNextSet,
+  onUndo,
+  onNextExercise,
+}: {
+  exerciseName: string;
+  today: WorkoutSet[];
+  unit: WeightUnit;
+  startedAt: number;
+  seconds: number;
+  onNextSet: () => void;
+  onUndo: () => void;
+  onNextExercise: () => void;
+}) {
   const colors = Colors.dark;
-  if (!sets.length && !next) return null;
-  return (
-    <View style={styles.chips} accessibilityLabel={sets.length ? `Today: ${formatSets(sets)}` : undefined}>
-      {sets.map((s, i) => (
-        <View key={s.id} style={[styles.chip, { backgroundColor: colors.card }]}>
-          <Text
-            style={[
-              styles.chipText,
-              { color: highlightLast && i === sets.length - 1 ? colors.accent : colors.foreground },
-            ]}
-          >
-            {formatWeight(s.weight)} × {s.reps}
-          </Text>
-        </View>
-      ))}
-      {next !== undefined && (
-        <View style={[styles.chip, styles.nextChip, { borderColor: colors.accent }]}>
-          <Text style={[styles.chipText, { color: colors.accent }]}>Set {next}</Text>
-        </View>
-      )}
-    </View>
-  );
-}
-
-/** Counts the rest down from the moment the set was logged; buzzes at zero. */
-function RestTimer({ startedAt, seconds }: { startedAt: number; seconds: number }) {
-  const colors = Colors.dark;
+  const ink = colors.accentForeground;
+  const insets = useSafeAreaInsets();
   const [now, setNow] = React.useState(Date.now());
   const remaining = Math.max(0, seconds - Math.floor((now - startedAt) / 1000));
+  const logged = today[today.length - 1];
 
   React.useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 250);
@@ -216,84 +212,131 @@ function RestTimer({ startedAt, seconds }: { startedAt: number; seconds: number 
     if (remaining === 0 && Platform.OS !== 'web') Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
   }, [remaining]);
 
-  const size = 200;
-  const stroke = 8;
-  const r = (size - stroke) / 2;
-  const circumference = 2 * Math.PI * r;
-  const progress = remaining / seconds;
-  const label = `${Math.floor(remaining / 60)}:${String(remaining % 60).padStart(2, '0')}`;
+  const clock = `${Math.floor(remaining / 60)}:${String(remaining % 60).padStart(2, '0')}`;
 
   return (
-    <View style={styles.timer} accessibilityRole="timer" accessibilityLabel={remaining ? `Rest, ${label} left` : 'Rest over'}>
-      <Svg width={size} height={size}>
-        <Circle cx={size / 2} cy={size / 2} r={r} stroke={colors.secondary} strokeWidth={stroke} fill="none" />
-        <Circle
-          cx={size / 2}
-          cy={size / 2}
-          r={r}
-          stroke={remaining ? colors.foreground : colors.accent}
-          strokeWidth={stroke}
-          fill="none"
-          strokeLinecap="round"
-          strokeDasharray={circumference}
-          strokeDashoffset={circumference * (1 - progress)}
-          transform={`rotate(-90 ${size / 2} ${size / 2})`}
-        />
-      </Svg>
-      <View style={styles.timerCenter}>
-        <Text style={[styles.timerLabel, { color: colors.mutedForeground }]}>{remaining ? 'REST' : 'GO'}</Text>
-        <Text style={[styles.timerValue, { color: colors.foreground }]}>{label}</Text>
-        <Text style={[styles.timerOf, { color: colors.mutedForeground }]}>of {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, '0')}</Text>
+    <View style={[styles.rest, { backgroundColor: colors.accent, paddingTop: insets.top + 4, paddingBottom: insets.bottom + 16 }]}>
+      <View style={styles.header}>
+        <Pressable onPress={onNextExercise} accessibilityRole="button" accessibilityLabel="Back to exercises" style={styles.headerButton} hitSlop={8}>
+          <IconSymbol name="chevron.left" size={28} color={ink} />
+        </Pressable>
+        <Text style={[styles.headerText, { color: ink }]}>{exerciseName}</Text>
+        <Pressable onPress={onUndo} accessibilityRole="button" accessibilityLabel="Undo this set" style={styles.headerButton} hitSlop={8}>
+          <Text style={[styles.undo, { color: ink }]}>Undo</Text>
+        </Pressable>
+      </View>
+
+      <View style={styles.restBody}>
+        <Text style={[styles.loggedTitle, { color: ink }]} accessibilityRole="header">
+          Set {today.length} logged
+        </Text>
+        {logged && (
+          <Text style={[styles.loggedSub, { color: ink }]}>
+            {formatWeight(logged.weight)} {unit} × {logged.reps}
+          </Text>
+        )}
+
+        <View
+          style={styles.clockBlock}
+          accessible
+          accessibilityRole="timer"
+          accessibilityLabel={remaining ? `Rest, ${clock} left` : 'Rest over'}
+        >
+          <Text style={[styles.clockLabel, { color: ink }]}>{remaining ? 'Rest' : 'Go'}</Text>
+          <Text style={[styles.clock, { color: ink }]}>{clock}</Text>
+          <View style={[styles.track, { backgroundColor: 'rgba(11, 9, 8, 0.16)' }]}>
+            <View style={[styles.trackFill, { backgroundColor: ink, width: `${(remaining / seconds) * 100}%` }]} />
+          </View>
+        </View>
+
+        <View style={styles.chips} accessibilityLabel={`Today: ${formatSets(today)}`}>
+          {today.map((s) => (
+            <View key={s.id} style={[styles.chip, { backgroundColor: 'rgba(11, 9, 8, 0.12)' }]}>
+              <Text style={[styles.chipText, { color: ink }]}>
+                {formatWeight(s.weight)} × {s.reps}
+              </Text>
+            </View>
+          ))}
+        </View>
+      </View>
+
+      <View style={styles.restActions}>
+        <Button
+          variant="outline"
+          onPress={onNextExercise}
+          containerStyle={styles.restButtonWrap}
+          style={[styles.restButton, { backgroundColor: 'transparent', borderColor: ink, borderWidth: 2 }]}
+          textStyle={[styles.restButtonText, { color: ink }]}
+        >
+          Next exercise
+        </Button>
+        <Button
+          onPress={onNextSet}
+          containerStyle={styles.restButtonWrap}
+          style={[styles.restButton, { backgroundColor: ink }]}
+          textStyle={[styles.restButtonText, { color: colors.accent }]}
+        >
+          {`Set ${today.length + 1}`}
+        </Button>
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, paddingHorizontal: 16 },
+  entry: { flex: 1, paddingHorizontal: 16 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: 8,
   },
   headerButton: { minWidth: 48, height: 48, alignItems: 'center', justifyContent: 'center' },
-  headerText: { fontSize: 14, fontWeight: '500' },
-  undo: { fontSize: 15, fontWeight: '600' },
+  headerText: { fontSize: 15, fontWeight: '600' },
+  undo: { fontSize: 16, fontWeight: '700' },
   titleWrap: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 4,
-    marginTop: 4,
-    minHeight: 44,
+    marginTop: 12,
+    minHeight: 48,
+    paddingHorizontal: 24,
   },
-  title: { fontSize: 26, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.3 },
-  lastTime: { textAlign: 'center', fontSize: 14, marginTop: 2 },
+  // Long names ("Incline Bench Press") wrap to two lines rather than truncate.
+  title: {
+    flexShrink: 1,
+    fontFamily: Fonts.display,
+    fontSize: 32,
+    lineHeight: 36,
+    letterSpacing: 0.4,
+    textAlign: 'center',
+    textTransform: 'uppercase',
+  },
+  lastTime: { textAlign: 'center', fontSize: 15, marginTop: 2 },
   numbers: {
-    marginTop: 36,
+    marginTop: 44,
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'center',
-    gap: 10,
+    gap: 8,
   },
-  times: { fontSize: 40, fontWeight: '600', marginTop: 34 },
-  steppers: { flexDirection: 'row', gap: 12, marginTop: 28, paddingHorizontal: 8 },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8, marginTop: 28 },
+  times: { fontFamily: Fonts.display, fontSize: 40, marginTop: 40 },
+  steppers: { flexDirection: 'row', gap: 12, marginTop: 36, paddingHorizontal: 4 },
+
+  rest: { flex: 1, paddingHorizontal: 16 },
+  restBody: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingBottom: 24 },
+  loggedTitle: { fontFamily: Fonts.displayBold, fontSize: 40, letterSpacing: 0.4, textTransform: 'uppercase' },
+  loggedSub: { marginTop: 2, fontSize: 18, fontWeight: '600', fontVariant: ['tabular-nums'] },
+  clockBlock: { alignItems: 'center', marginTop: 48, width: '100%' },
+  clockLabel: { fontSize: 13, fontWeight: '800', letterSpacing: 2.4, textTransform: 'uppercase' },
+  clock: { fontFamily: Fonts.displayBold, fontSize: 128, lineHeight: 140, fontVariant: ['tabular-nums'] },
+  track: { width: '72%', height: 6, borderRadius: 3, overflow: 'hidden', marginTop: 8 },
+  trackFill: { height: '100%', borderRadius: 3 },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8, marginTop: 40 },
   chip: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12 },
-  nextChip: { borderWidth: 1, borderStyle: 'dashed' },
-  chipText: { fontSize: 13, fontWeight: '700', fontVariant: ['tabular-nums'] },
-  swipe: { marginBottom: 8 },
-  restTop: { alignItems: 'center', marginTop: 24 },
-  check: { width: 64, height: 64, borderRadius: 32, alignItems: 'center', justifyContent: 'center' },
-  loggedTitle: { marginTop: 16, fontSize: 28, fontWeight: '800', textTransform: 'uppercase' },
-  loggedSub: { marginTop: 4, fontSize: 15 },
-  timer: { alignSelf: 'center', marginTop: 32, width: 200, height: 200 },
-  timerCenter: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center' },
-  timerLabel: { fontSize: 11, fontWeight: '700', letterSpacing: 1.2 },
-  timerValue: { fontSize: 54, fontWeight: '800', fontVariant: ['tabular-nums'] },
-  timerOf: { fontSize: 12 },
-  restActions: { flexDirection: 'row', gap: 10, marginBottom: 8 },
+  chipText: { fontSize: 14, fontWeight: '700', fontVariant: ['tabular-nums'] },
+  restActions: { flexDirection: 'row', gap: 10 },
   restButtonWrap: { flex: 1 },
-  restButton: { height: 60, borderRadius: 22 },
+  restButton: { height: 64, borderRadius: 22 },
+  restButtonText: { fontFamily: Fonts.display, fontSize: 18, letterSpacing: 1, textTransform: 'uppercase' },
 });

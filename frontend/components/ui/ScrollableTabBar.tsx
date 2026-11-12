@@ -7,6 +7,7 @@ import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import * as Haptics from 'expo-haptics';
+import { useNavigation } from '@/contexts/NavigationContext';
 import { GlassmorphismColors, GlassEffectConfig } from '@/constants/Colors';
 
 const iconMap = {
@@ -26,6 +27,9 @@ export function ScrollableTabBar({ state, descriptors, navigation }: BottomTabBa
   // Use constants for cleaner code
   const glassColors = GlassmorphismColors[colorScheme ?? 'light'];
   const config = GlassEffectConfig;
+  const { focusMode } = useNavigation();
+
+  if (focusMode) return null;
 
   return (
     <View style={[styles.container, { bottom: insets.bottom + 10 }]}>

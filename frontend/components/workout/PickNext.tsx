@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { Input } from '@/components/ui/Input';
 import { Colors, GlassEffectConfig } from '@/constants/Colors';
+import { Fonts } from '@/constants/Fonts';
 import { MUSCLE_GROUPS, type Exercise } from '@/constants/workoutData';
 import { formatSets, relativeDay, type NextOption } from '@/constants/setLogging';
 
@@ -37,9 +38,6 @@ export function PickNext({ options, muscleGroup, onMuscleGroup, query, onQuery, 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
       <ScrollView contentContainerStyle={[styles.content, { paddingLeft: SIDEBAR_INSET, paddingBottom: insets.bottom + 160 }]} keyboardShouldPersistTaps="handled">
-        <Text style={[styles.kicker, { color: colors.mutedForeground }]}>
-          {setsLogged > 0 ? `This workout · ${setsLogged} ${setsLogged === 1 ? 'set' : 'sets'} logged` : 'New workout'}
-        </Text>
         <Text style={[styles.title, { color: colors.foreground }]} accessibilityRole="header">
           What&apos;s next?
         </Text>
@@ -68,10 +66,6 @@ export function PickNext({ options, muscleGroup, onMuscleGroup, query, onQuery, 
             );
           })}
         </ScrollView>
-
-        <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>
-          {searching ? 'Matches' : `${muscleGroup ?? 'All'} moves · most recent first`}
-        </Text>
 
         <View style={styles.list}>
           {options.map(({ exercise, last, setsToday }) => (
@@ -113,9 +107,19 @@ export function PickNext({ options, muscleGroup, onMuscleGroup, query, onQuery, 
           inputStyle={{ ...styles.search, backgroundColor: colors.card, borderColor: colors.border }}
         />
         {setsLogged > 0 && (
-          <Button variant="ghost" onPress={onFinish} textStyle={{ color: colors.mutedForeground }}>
-            Finish workout
-          </Button>
+          <View style={styles.session}>
+            <Text style={[styles.sessionText, { color: colors.mutedForeground }]}>
+              {setsLogged} {setsLogged === 1 ? 'set' : 'sets'} this workout
+            </Text>
+            <Button
+              variant="ghost"
+              onPress={onFinish}
+              style={styles.finish}
+              textStyle={[styles.finishText, { color: colors.accent }]}
+            >
+              Finish
+            </Button>
+          </View>
         )}
       </View>
     </View>
@@ -125,13 +129,12 @@ export function PickNext({ options, muscleGroup, onMuscleGroup, query, onQuery, 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   content: { paddingHorizontal: 20, paddingTop: 20 },
-  kicker: { fontSize: 13, fontWeight: '500' },
   title: {
-    marginTop: 6,
-    fontSize: 34,
-    fontWeight: '800',
+    fontFamily: Fonts.display,
+    fontSize: 40,
+    lineHeight: 46,
     textTransform: 'uppercase',
-    letterSpacing: 0.3,
+    letterSpacing: 0.4,
   },
   chips: { gap: 8, paddingVertical: 18 },
   chip: {
@@ -141,13 +144,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   chipText: { fontSize: 14, fontWeight: '600' },
-  sectionLabel: {
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 1.2,
-    textTransform: 'uppercase',
-    marginBottom: 10,
-  },
   list: { gap: 8 },
   row: {
     minHeight: 68,
@@ -172,6 +168,15 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     gap: 4,
   },
+  session: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingLeft: 8,
+  },
+  sessionText: { fontSize: 14, fontWeight: '500' },
+  finish: { height: 44, paddingHorizontal: 12 },
+  finishText: { fontFamily: Fonts.display, fontSize: 17, letterSpacing: 1, textTransform: 'uppercase' },
   search: {
     height: 52,
     borderRadius: 26,
