@@ -1,13 +1,15 @@
 
 import { useState, useCallback } from 'react';
-import { useToast } from './useToast';
+import { useToast } from '@/hooks/useToast';
+import { formatFastLength } from '../lib/format';
+import type { CompletedFastData } from '../types';
 
-interface CompletedFastData {
-  startTime: number;
-  endTime: number;
-  actualDurationSeconds: number;
-  goalDurationSeconds: number;
-}
+/**
+ * @file useFastCompletion.ts
+ * @description The "Fast complete" dialog's state: open it with a finished
+ * fast, add notes, then save it to the API or discard it, with a toast either
+ * way.
+ */
 
 interface FastToSave extends CompletedFastData {
   notes?: string;
@@ -23,17 +25,6 @@ export function useFastCompletion() {
   const [isLoading, setIsLoading] = useState(false);
   
   const { toast } = useToast();
-
-  // Helper to format duration for display
-  const formatDuration = useCallback((seconds: number) => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    
-    if (hours > 0) {
-      return minutes > 0 ? `${hours}h ${minutes}m` : `${hours}h`;
-    }
-    return `${minutes}m`;
-  }, []);
 
   const openModal = useCallback((fastData: CompletedFastData) => {
     setCompletedFast(fastData);
@@ -75,7 +66,7 @@ export function useFastCompletion() {
 
       toast({
         title: "Fast Saved!",
-        description: `Your ${formatDuration(completedFast.actualDurationSeconds)} fast has been logged.`,
+        description: `Your ${formatFastLength(completedFast.actualDurationSeconds)} fast has been logged.`,
       });
       
       closeModal();
@@ -95,7 +86,7 @@ export function useFastCompletion() {
     } finally {
       setIsLoading(false);
     }
-  }, [completedFast, notes, toast, closeModal, formatDuration]);
+  }, [completedFast, notes, toast, closeModal]);
 
   const discardFast = useCallback(() => {
     toast({

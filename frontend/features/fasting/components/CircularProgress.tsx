@@ -1,22 +1,11 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Animated,
-} from 'react-native';
-import Svg, {
-  Circle,
-  Defs,
-  LinearGradient,
-  Stop,
-} from 'react-native-svg';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import Svg, { Circle, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/Popover';
-import type { FastingMilestone } from '@/constants/fastingMilestones';
+import type { FastingMilestone } from '../constants';
 
 /**
  * @file CircularProgress.tsx
