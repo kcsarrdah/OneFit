@@ -3,27 +3,38 @@
 ## Purpose
 
 Today's water intake, the daily goal and the amount one tap logs, kept on the
-device. A new day starts from 0; every change is also written to the 30-day
-history.
+device. A new local day starts from 0, also when the app stays open past
+midnight; every change is also written to the 30-day history.
 
 ## Public API
 
 `useHydration()` returns `{ dailyGoal, intake, logAmount, isLoaded, logWater(), resetWater() }`.
-`logWater` adds `logAmount`; `resetWater` sets intake to 0.
+`logWater` adds `logAmount` (to a fresh day if the date changed); `resetWater`
+sets today's intake to 0.
 
 ## How it works
 
 - Keys from [constants](../constants.md) (`aquaViz_*`).
-- Load once: goal and log amount (or defaults); if `intakeDate` is today
-  ([dayKey](../lib/hydration.md)) restore `currentIntake`, else write 0, today's
-  date and a 0 history entry.
-- After load, every change to `intake` or `dailyGoal` writes `currentIntake`
-  and upserts today's history entry.
+- State is a `DayTally` `{ day, intake }` ([hydration](../lib/hydration.md)),
+  so the intake always knows which local day it counts for.
+- Load once: goal and log amount (or defaults). Then, once per device,
+  `migrateDayKeys` moves UTC day keys to local ones
+  ([migrateToLocalDays](../lib/hydration.md)) and sets `aquaViz_dayKeys` to
+  `'local'`. The stored intake is restored only if its day is today
+  ([rollover](../lib/hydration.md)); otherwise the day starts at 0.
+- Rollover past midnight: `logWater` uses [addIntake](../lib/hydration.md),
+  which starts a new day when `dayKey()` has moved on, and an `AppState`
+  listener rolls over when the app returns to the foreground.
+- After load, every change to the tally or `dailyGoal` writes
+  `currentIntake`, `intakeDate` and upserts that day's history entry. Saves
+  run through a promise queue (`saveQueue` ref) so two quick changes cannot
+  interleave their history read-modify-write (which would lose the previous
+  day's entry at rollover).
 
 ## Depends on
 
-`@react-native-async-storage/async-storage`, [hydration](../lib/hydration.md),
-[constants](../constants.md).
+`@react-native-async-storage/async-storage`, `react-native` `AppState`,
+[hydration](../lib/hydration.md), [constants](../constants.md).
 
 ## Used by
 
@@ -31,13 +42,12 @@ history.
 
 ## Tests
 
-none (pure parts: [hydration.test](../../../__tests__/features/water/lib/hydration.test.md)).
+[useHydration.test](../../../__tests__/features/water/hooks/useHydration.test.md);
+pure parts in [hydration.test](../../../__tests__/features/water/lib/hydration.test.md).
 
 ## Gotchas / TODO
 
-- **Day rollover only happens on mount.** If the app stays open past the
-  (UTC) day boundary, intake keeps adding to yesterday's total, and the save
-  effect writes that total into the new day's history entry, while
-  `intakeDate` stays on the old day.
+- With the app open in the foreground over midnight and no tap, the screen
+  shows yesterday's total until the next log or foreground return.
 - No undo of a single log, only reset.
 - No setters for goal or log amount.

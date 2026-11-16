@@ -14,4 +14,6 @@ export const WATER_STORAGE_KEYS = {
   currentIntake: `${STORAGE_PREFIX}currentIntake`,
   intakeDate: `${STORAGE_PREFIX}intakeDate`,
   history: `${STORAGE_PREFIX}hydrationHistory`,
+  /** 'local' once day keys have been moved from UTC to local dates. */
+  dayKeys: `${STORAGE_PREFIX}dayKeys`,
 } as const;
