@@ -6,7 +6,7 @@ Entry point (`package main`): loads config, opens the database, initialises Fire
 
 ## Public API
 
-No exports. Two inline endpoints (no auth):
+No exports. Unexported helpers: `setupDevData(db)`, `createTestUser(db)`. Two inline endpoints (no auth):
 
 | Method | Path | Auth | Request | Response |
 |---|---|---|---|---|
@@ -20,8 +20,8 @@ See [API.md#root](API.md#root).
 1. `godotenv.Load()` reads `backend/.env` if present (logs and continues otherwise).
 2. `GIN_MODE` (if set) is passed to `gin.SetMode`. `gin.Default()` adds Logger and Recovery middleware.
 3. CORS: origins from `CORS_ORIGINS` (comma-split, default `http://localhost:3000`); methods `GET POST PUT PATCH DELETE OPTIONS`; headers `Origin Authorization Content-Type`.
-4. `models.SetupDB()` opens `onefit.db` and runs AutoMigrate.
-5. If `GIN_MODE` is not `release`: runs `DELETE FROM users WHERE id = 1`, then `createTestUser` re-creates user ID 1 (Firebase UID `test-firebase-uid-123`, email `test@onefit.com`).
+4. `models.SetupDB()` opens `onefit.db` and runs `models.Migrate`.
+5. `setupDevData`: if `GIN_MODE` is not `release`, `createTestUser` creates user ID 1 (Firebase UID `test-firebase-uid-123`, email `test@onefit.com`) only if no user 1 exists. An existing user 1 and its data are kept; only a missing Firebase UID is filled in.
 6. `utils.InitFirebase()`; on failure it only logs a warning, so every protected route then answers 401.
 7. Registers routes: auth, fasting, water, exercise, workout, template (all get `db`), anatomy (no db; `log.Fatalf` if the embedded content fails to load).
 8. `r.Run(":" + PORT)` (default `3000`). The return error is ignored.
@@ -38,11 +38,11 @@ Env vars: `PORT`, `GIN_MODE`, `CORS_ORIGINS`, plus `FIREBASE_CREDENTIALS_PATH` (
 
 ## Tests
 
-none
+[main_test.go](main_test.md): dev test-user setup.
 
 ## Gotchas / TODO
 
-- **Risk:** in any non-release run, the user with ID 1 is hard-deleted on every start (raw SQL, bypasses soft delete). In a dev database where a real Firebase user got ID 1, that user is replaced by the test user and their fasts/water/workouts become attached to the test user.
+- In a dev database where a real Firebase user already has ID 1, no test user is created (and `DEV_MODE` would fail with `Test user not found`). If user 1 is missing but its email or Firebase UID belongs to another row, the create fails silently.
 - The test user is only useful with `middleware.DEV_MODE = true` (currently `false`).
 - `/health` is static; it does not ping the DB or Firebase.
 - Default CORS origin `http://localhost:3000` is the API's own port; the Expo web app (8081) needs `CORS_ORIGINS`. The Vite web app proxies `/api`, so it does not.

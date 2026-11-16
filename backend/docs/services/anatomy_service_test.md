@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Unit tests for [anatomy_service.go](anatomy_service.md) and, through it, the embedded [muscles.json](../data/muscles.md). The only Go tests in the backend.
+Unit tests for [anatomy_service.go](anatomy_service.md) and, through it, the embedded [muscles.json](../data/muscles.md).
 
 ## Public API
 

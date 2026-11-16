@@ -13,26 +13,28 @@ Go tests live next to the code (`*_test.go` in the same package), so their docs 
 
 ## Last recorded result
 
-2026-11-12, Go 1.24.5 (darwin/arm64), branch `docs/backend`:
+2026-11-16, Go 1.24.5 (darwin/arm64), branch `fix/backend-dev-test-user` (top of the backend bug-fix stack):
 
 ```
-?   onefit/backend               [no test files]
-?   onefit/backend/controllers   [no test files]
+ok  onefit/backend               1.198s
+ok  onefit/backend/controllers   0.545s
 ?   onefit/backend/data          [no test files]
 ?   onefit/backend/middleware    [no test files]
-?   onefit/backend/models        [no test files]
+ok  onefit/backend/models        1.690s
 ?   onefit/backend/queries       [no test files]
 ?   onefit/backend/routes        [no test files]
-ok  onefit/backend/services      0.417s
+ok  onefit/backend/services      2.239s
+?   onefit/backend/testutil      [no test files]
 ?   onefit/backend/utils         [no test files]
 ```
 
-4 tests, 7 subtests, all pass. `go vet ./...` is clean.
+17 tests, 28 subtests, all pass. `go vet ./...` is clean.
 
 ## Test files
 
 | File | Covers | Doc |
 |---|---|---|
+| `main_test.go` | Dev test user created when missing, kept across restarts, skipped in release mode | [main_test.md](../main_test.md) |
 | `controllers/errors_test.go` | Service errors → 400/404/409 through the exercise, template and workout handlers | [controllers/errors_test.md](../controllers/errors_test.md) |
 | `models/setup_test.go` | `Migrate` drops the old global exercise-name index | [models/setup_test.md](../models/setup_test.md) |
 | `services/exercise_service_test.go` | `ExerciseService` queries and custom-exercise rules | [services/exercise_service_test.md](../services/exercise_service_test.md) |
@@ -42,14 +44,14 @@ ok  onefit/backend/services      0.417s
 
 ## Coverage summary
 
-Covered: the anatomy feature's service layer and content (indirectly `data/anatomy.go` and `models/muscle.go`).
+Covered: the anatomy feature's service layer and content (indirectly `data/anatomy.go` and `models/muscle.go`); exercise filters, search and per-user names; workout/template delete cascades and stats; 400/404/409 error mapping; the exercise-name migration; the dev test user.
 
-Not covered at all:
+Not covered:
 
 - DB-backed services beyond the cases above: `user_service`, most of `template_service` and `workout_service`, and `exercise_service` update paths.
 - Controllers other than the 4xx error mapping (binding, fasting time checks, water date parsing, 500 paths).
 - Routes and middleware (auth header parsing, 401 paths, public vs protected split).
-- `main.go` startup behaviour (CORS, dev test-user reset).
+- `main.go` startup beyond the dev test user (CORS, route wiring).
 
 ## Adding tests
 
