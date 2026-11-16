@@ -27,5 +27,5 @@ none.
 
 ## Gotchas / TODO
 
-[ExerciseSelectionModal](../components/ExerciseSelectionModal.md) already
-browses the catalogue and could become this screen.
+The unused catalogue browser that could have become this screen was
+removed; build this from `EXERCISES` in [constants](../constants.md).

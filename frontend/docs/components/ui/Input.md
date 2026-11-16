@@ -24,8 +24,7 @@ wrapper is full width.
 
 [PickNext](../../features/workouts/components/PickNext.md) (search, restyled to a 52 px pill),
 [RoutineDetailsStep](../../features/workouts/components/RoutineDetailsStep.md),
-[RoutineExercisesStep](../../features/workouts/components/RoutineExercisesStep.md),
-[ExerciseSelectionModal](../../features/workouts/components/ExerciseSelectionModal.md).
+[RoutineExercisesStep](../../features/workouts/components/RoutineExercisesStep.md).
 
 ## Tests
 

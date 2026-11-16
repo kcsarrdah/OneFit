@@ -40,7 +40,6 @@ halves opacity. Sets `accessibilityRole="button"`.
 [RoutineCard](../../features/workouts/components/RoutineCard.md), [RoutinesScreen](../../features/workouts/screens/RoutinesScreen.md),
 [WorkoutHistoryCard](../../features/workouts/components/WorkoutHistoryCard.md),
 [CreateCustomRoutineModal](../../features/workouts/components/CreateCustomRoutineModal.md),
-[ExerciseSelectionModal](../../features/workouts/components/ExerciseSelectionModal.md),
 [FastingScreen](../../features/fasting/screens/FastingScreen.md), [FastCompleteDialog](../../features/fasting/components/FastCompleteDialog.md),
 [HydrationActions](../../features/water/components/HydrationActions.md).
 

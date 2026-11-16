@@ -17,7 +17,7 @@ import { WorkoutScreen } from './WorkoutScreen';
  */
 
 export default function WorkoutsTab() {
-  const { currentSidebarOption, setCurrentSidebarOption } = useNavigation();
+  const { currentSidebarOption, setCurrentSidebarOption, focusMode } = useNavigation();
   const insets = useSafeAreaInsets();
   const session = useWorkoutSession();
 
@@ -42,7 +42,11 @@ export default function WorkoutsTab() {
     }
   };
 
-  return <ThemedView style={[styles.container, { paddingBottom: insets.bottom + 20 }]}>{renderContent()}</ThemedView>;
+  // In focus mode the set logger is full screen and handles the safe area
+  // itself, so the swipe bar and the accent flood reach the bottom edge.
+  const paddingBottom = focusMode ? 0 : insets.bottom + 20;
+
+  return <ThemedView style={[styles.container, { paddingBottom }]}>{renderContent()}</ThemedView>;
 }
 
 const styles = StyleSheet.create({

@@ -22,7 +22,9 @@ Default export `WorkoutsTab()`, re-exported by [app/(tabs)/workouts](../../../ap
 
 `useWorkoutSession()` lives here so the session survives switching sidebar
 options. Wrapped in a [ThemedView](../../../components/ThemedView.md) with
-`paddingBottom: insets.bottom + 20`.
+`paddingBottom: insets.bottom + 20`, except in focus mode (logging a set),
+where the padding is 0 so the swipe bar and the accent flood reach the bottom
+edge; the set logger handles the safe area itself.
 
 ## Depends on
 

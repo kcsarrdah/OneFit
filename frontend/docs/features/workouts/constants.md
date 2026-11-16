@@ -28,7 +28,7 @@ Routines reference exercises with `EXERCISES.find(e => e.id === ...)!`.
 
 [WorkoutScreen](screens/WorkoutScreen.md), [PickNext](components/PickNext.md),
 [RoutinesScreen](screens/RoutinesScreen.md), [RoutineDetailsStep](components/RoutineDetailsStep.md),
-[RoutineExercisesStep](components/RoutineExercisesStep.md), [ExerciseSelectionModal](components/ExerciseSelectionModal.md),
+[RoutineExercisesStep](components/RoutineExercisesStep.md),
 [useCustomRoutines](hooks/useCustomRoutines.md); tests.
 
 ## Tests

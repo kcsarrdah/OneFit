@@ -30,8 +30,7 @@ card from dismissing.
 ## Used by
 
 [FastCompleteDialog](../../features/fasting/components/FastCompleteDialog.md),
-[CreateCustomRoutineModal](../../features/workouts/components/CreateCustomRoutineModal.md),
-[ExerciseSelectionModal](../../features/workouts/components/ExerciseSelectionModal.md).
+[CreateCustomRoutineModal](../../features/workouts/components/CreateCustomRoutineModal.md).
 
 ## Tests
 
