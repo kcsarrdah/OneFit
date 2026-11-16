@@ -19,38 +19,29 @@ func NewExerciseService(db *gorm.DB) *ExerciseService {
 func (es *ExerciseService) GetExercises(userID uint, muscleGroup, equipment, search string, includeCustom bool) ([]models.Exercise, error) {
 	var exercises []models.Exercise
 
+	// Built-in exercises, plus the user's own custom ones when asked. Each
+	// Where is ANDed in its own parentheses, so the filters apply to both.
 	query := es.db.Model(&models.Exercise{})
-
-	// Base condition: include built-in exercises
-	conditions := []string{"is_custom = ? OR is_custom IS NULL"}
-	args := []interface{}{false}
-
-	// Optionally include user's custom exercises
 	if includeCustom {
-		conditions[0] = "(is_custom = ? OR is_custom IS NULL OR (is_custom = ? AND created_by_user_id = ?))"
-		args = []interface{}{false, true, userID}
+		query = query.Where("is_custom = ? OR is_custom IS NULL OR (is_custom = ? AND created_by_user_id = ?)", false, true, userID)
+	} else {
+		query = query.Where("is_custom = ? OR is_custom IS NULL", false)
 	}
 
-	// Apply filters
 	if muscleGroup != "" {
-		conditions = append(conditions, "muscle_groups LIKE ?")
-		args = append(args, "%"+muscleGroup+"%")
+		query = query.Where("muscle_groups LIKE ?", "%"+muscleGroup+"%")
 	}
 
 	if equipment != "" {
-		conditions = append(conditions, "equipment LIKE ?")
-		args = append(args, "%"+equipment+"%")
+		query = query.Where("equipment LIKE ?", "%"+equipment+"%")
 	}
 
+	// SQLite has no ILIKE
 	if search != "" {
-		conditions = append(conditions, "name ILIKE ?")
-		args = append(args, "%"+search+"%")
+		query = query.Where("LOWER(name) LIKE LOWER(?)", "%"+search+"%")
 	}
 
-	// Build WHERE clause
-	whereClause := strings.Join(conditions, " AND ")
-
-	err := query.Where(whereClause, args...).
+	err := query.
 		Order("is_custom ASC, name ASC").
 		Find(&exercises).Error
 

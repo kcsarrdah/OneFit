@@ -44,5 +44,4 @@ Parses ids with `strconv.ParseUint(..., 10, 32)`, reads the user from context, d
 
 ## Gotchas / TODO
 
-- **Bug:** `?search=` always returns 500 (`ILIKE` on SQLite), and `include_custom=false` ignores filters for built-ins. See [exercise_service.md](../services/exercise_service.md).
 - `GET /:id` has no ownership check, so other users' custom exercises are readable.

@@ -81,7 +81,8 @@ Secrets: `backend/.env` and the Firebase service-account JSON are git-ignored.
 
 - [services/errors.md](services/errors.md): error kinds (`ErrInvalidInput`, `ErrNotFound`, `ErrConflict`).
 - [services/user_service.md](services/user_service.md): get-or-create user by Firebase UID, save profile.
-- [services/exercise_service.md](services/exercise_service.md): exercise queries and custom CRUD (has verified bugs).
+- [services/exercise_service.md](services/exercise_service.md): exercise queries and custom CRUD.
+- [services/exercise_service_test.md](services/exercise_service_test.md): tests for exercise filters, search and custom names.
 - [services/template_service.md](services/template_service.md): template CRUD, template exercises, duplicate.
 - [services/workout_service.md](services/workout_service.md): workout lifecycle, sets, active workout, stats.
 - [services/anatomy_service.md](services/anatomy_service.md): in-memory muscle list/filter/lookup.
