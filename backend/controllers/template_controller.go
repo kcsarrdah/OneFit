@@ -78,11 +78,7 @@ func (tc *TemplateController) GetTemplate(c *gin.Context) {
 
 	template, err := tc.templateService.GetTemplateWithExercises(userModel.ID, uint(templateID))
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Template not found"})
-		} else {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch template"})
-		}
+		respondError(c, err, "Template not found", "Failed to fetch template")
 		return
 	}
 
@@ -112,7 +108,7 @@ func (tc *TemplateController) CreateTemplate(c *gin.Context) {
 
 	template, err := tc.templateService.CreateTemplate(userModel.ID, input.Name, input.Description, input.Category, input.IsPublic)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create template"})
+		respondError(c, err, "Template not found", "Failed to create template")
 		return
 	}
 
@@ -151,11 +147,7 @@ func (tc *TemplateController) UpdateTemplate(c *gin.Context) {
 
 	template, err := tc.templateService.UpdateTemplate(userModel.ID, uint(templateID), input.Name, input.Description, input.Category, input.IsPublic)
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Template not found or not owned by user"})
-		} else {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update template"})
-		}
+		respondError(c, err, "Template not found or not owned by user", "Failed to update template")
 		return
 	}
 
@@ -181,11 +173,7 @@ func (tc *TemplateController) DeleteTemplate(c *gin.Context) {
 
 	err = tc.templateService.DeleteTemplate(userModel.ID, uint(templateID))
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Template not found or not owned by user"})
-		} else {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete template"})
-		}
+		respondError(c, err, "Template not found or not owned by user", "Failed to delete template")
 		return
 	}
 
@@ -232,11 +220,7 @@ func (tc *TemplateController) AddExerciseToTemplate(c *gin.Context) {
 		input.RestSeconds,
 	)
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Template or exercise not found"})
-		} else {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to add exercise to template"})
-		}
+		respondError(c, err, "Template or exercise not found", "Failed to add exercise to template")
 		return
 	}
 
@@ -268,11 +252,7 @@ func (tc *TemplateController) RemoveExerciseFromTemplate(c *gin.Context) {
 
 	err = tc.templateService.RemoveExerciseFromTemplate(userModel.ID, uint(templateID), uint(exerciseID))
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Template exercise not found"})
-		} else {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to remove exercise from template"})
-		}
+		respondError(c, err, "Template exercise not found", "Failed to remove exercise from template")
 		return
 	}
 
@@ -324,11 +304,7 @@ func (tc *TemplateController) UpdateTemplateExercise(c *gin.Context) {
 		input.RestSeconds,
 	)
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Template exercise not found"})
-		} else {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update template exercise"})
-		}
+		respondError(c, err, "Template exercise not found", "Failed to update template exercise")
 		return
 	}
 

@@ -24,11 +24,11 @@ func (ec *ExerciseController) DeleteExercise(c *gin.Context)
 | `PUT` | `/api/exercises/:id` | Firebase | `{"name"?, "muscle_groups"?, "equipment"?, "instructions"?}` | `200 {"message": "Exercise updated successfully", "exercise": Exercise}` |
 | `DELETE` | `/api/exercises/:id` | Firebase | path `id` | `200 {"message": "Exercise deleted successfully"}` |
 
-Errors: 400 `Invalid exercise ID` / binding; 404 `Exercise not found` / `Exercise not found or not owned by user`; 500 `Failed to fetch|create|update|delete exercise(s)`. Full detail: [API.md#exercises-apiexercises](../API.md#exercises-apiexercises).
+Errors: 400 `Invalid exercise ID` / binding / `exercise name is required`; 404 `Exercise not found` / `Exercise not found or not owned by user`; 409 duplicate name / exercise in use (service message); 500 `Failed to fetch|create|update|delete exercise(s)`. Full detail: [API.md#exercises-apiexercises](../API.md#exercises-apiexercises).
 
 ## How it works
 
-Parses ids with `strconv.ParseUint(..., 10, 32)`, reads the user from context, delegates to `ExerciseService`, maps `gorm.ErrRecordNotFound` to 404 and everything else to 500.
+Parses ids with `strconv.ParseUint(..., 10, 32)`, reads the user from context, delegates to `ExerciseService`, and maps errors through [`respondError`](errors.md): `gorm.ErrRecordNotFound` → 404 with the handler's message, typed service errors → 400/404/409 with the service's message, anything else → 500 `Failed to ...`.
 
 ## Depends on
 
@@ -40,10 +40,9 @@ Parses ids with `strconv.ParseUint(..., 10, 32)`, reads the user from context, d
 
 ## Tests
 
-none
+[controllers/errors_test.go](errors_test.md) checks the 400/404/409 mappings end to end.
 
 ## Gotchas / TODO
 
 - **Bug:** `?search=` always returns 500 (`ILIKE` on SQLite), and `include_custom=false` ignores filters for built-ins. See [exercise_service.md](../services/exercise_service.md).
-- Duplicate names, blank names and "exercise in use" come back as 500 with a generic message; the client cannot tell them apart.
 - `GET /:id` has no ownership check, so other users' custom exercises are readable.

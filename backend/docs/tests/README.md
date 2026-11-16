@@ -5,7 +5,7 @@
 ```bash
 cd backend
 go test ./...            # all packages
-go test -v ./services/   # verbose, the only package with tests
+go test -v ./controllers/ ./services/
 go vet ./...
 ```
 
@@ -33,6 +33,7 @@ ok  onefit/backend/services      0.417s
 
 | File | Covers | Doc |
 |---|---|---|
+| `controllers/errors_test.go` | Service errors → 400/404/409 through the exercise, template and workout handlers | [controllers/errors_test.md](../controllers/errors_test.md) |
 | `services/anatomy_service_test.go` | `AnatomyService` (list filters, lookup, id validation) and the embedded `data/muscles.json` content | [services/anatomy_service_test.md](../services/anatomy_service_test.md) |
 
 ## Coverage summary
@@ -42,14 +43,14 @@ Covered: the anatomy feature's service layer and content (indirectly `data/anato
 Not covered at all:
 
 - Every DB-backed service: `user_service`, `exercise_service`, `template_service`, `workout_service`. Several verified bugs live here (SQLite `ILIKE`, filter precedence, global exercise-name uniqueness, soft-delete leaving children counted in stats); see [services/exercise_service.md](../services/exercise_service.md) and [services/workout_service.md](../services/workout_service.md).
-- All controllers (status-code mapping, binding, validation such as fasting time checks and water date parsing).
+- Controllers other than the 4xx error mapping (binding, fasting time checks, water date parsing, 500 paths).
 - Routes and middleware (auth header parsing, 401 paths, public vs protected split).
 - `main.go` startup behaviour (CORS, dev test-user reset).
 
 ## Adding tests
 
-- DB services: open an in-memory SQLite DB with the same driver, `gorm.Open(sqlite.Open("file::memory:"), &gorm.Config{})` from `github.com/glebarez/sqlite`, and `AutoMigrate` the models you need. No cgo or external DB required.
-- Controllers: `httptest` + a `gin.Engine` in test mode; set the `user`/`userId` context keys in a stub middleware instead of calling Firebase.
+- DB services: `testutil.NewDB(t)` ([testutil/db.go](../testutil/db.md)) gives a migrated in-memory SQLite DB private to the test; `testutil.NewUser` adds a user. No cgo or external DB required.
+- Controllers: `newTestRouter` in [controllers/helpers_test.go](../controllers/helpers_test.md) sets the `user`/`userId` context keys instead of calling Firebase; `do`/`mustDo` send JSON requests.
 - Middleware: `utils.VerifyFirebaseToken` uses a package global; testing the success path needs a seam (e.g. an injectable verifier).
 - Add a doc for each new test file at `docs/<same path>.md` and a row in the table above.
 

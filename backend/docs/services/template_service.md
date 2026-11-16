@@ -32,11 +32,12 @@ func (ts *TemplateService) DuplicateTemplate(userID, templateID uint, newName st
 - Create/Update trim strings and enforce unique names per user (service check, no DB index).
 - `DeleteTemplate`: refuses if any non-deleted `workout_sessions.template_id` points at it; soft-deletes the template only.
 - `AddExerciseToTemplate`: checks the exercise exists and is not already in the template; `orderIndex == 0` → `MAX(order_index) + 1`; returns the row with `Exercise` preloaded.
+- Errors ([errors.go](errors.md)): a blank name wraps `ErrInvalidInput`; a duplicate name, an exercise already in the template and deleting a template still used by a workout wrap `ErrConflict`. Missing rows are `gorm.ErrRecordNotFound`.
 - `DuplicateTemplate`: copies a readable template and its exercises as a private template (default name `"<name> (Copy)"`).
 
 ## Depends on
 
-[models/workout_template.go](../models/workout_template.md), [models/exercise.go](../models/exercise.md), [models/workout_session.go](../models/workout_session.md), `gorm`.
+[models/workout_template.go](../models/workout_template.md), [models/exercise.go](../models/exercise.md), [models/workout_session.go](../models/workout_session.md), [errors.go](errors.md), `gorm`.
 
 ## Used by
 
@@ -48,7 +49,6 @@ none
 
 ## Gotchas / TODO
 
-- "Already exists", "already in this template" and "being used in workout sessions" are plain errors → HTTP 500.
 - `AddExerciseToTemplate` accepts any exercise ID, including other users' custom exercises.
 - Soft-deleted templates leave `template_exercises` rows behind (no cascade).
 - Multi-row writes (`DuplicateTemplate`) are not in a transaction.

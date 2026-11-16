@@ -42,11 +42,11 @@ All routes: Auth Firebase. `:exercise_id` = **SessionExercise** ID (`workout.exe
 | `PUT` | `/api/workouts/:id/sets/:set_id` | same fields, optional | `200 {"message": "Set updated successfully", "set"}` |
 | `DELETE` | `/api/workouts/:id/sets/:set_id` | none | `200 {"message": "Set deleted successfully"}` |
 
-Errors: 400 `Invalid workout ID` / `Invalid session exercise ID` / `Invalid set ID` / binding; 404 `Workout not found` / `Workout not found or not owned by user` / `Workout or exercise not found` / `Session exercise not found` / `Set not found`; 500 `Failed to ...`. Full detail: [API.md#workouts-apiworkouts](../API.md#workouts-apiworkouts).
+Errors: 400 `Invalid workout ID` / `Invalid session exercise ID` / `Invalid set ID` / binding / set with no metric (service message); 404 `Workout not found` / `Workout not found or not owned by user` / `Workout or exercise not found` / `Session exercise not found` / `Set not found` / `template not found or not accessible`; 500 `Failed to ...`. Full detail: [API.md#workouts-apiworkouts](../API.md#workouts-apiworkouts).
 
 ## How it works
 
-Parse ids, read the user from context, call `WorkoutService`, map `gorm.ErrRecordNotFound` → 404, other errors → 500. `limit`/`offset` use `strconv.Atoi` with errors ignored (bad value → 0). `days` falls back to 30 when invalid or ≤ 0.
+Parse ids, read the user from context, call `WorkoutService`, and maps errors through [`respondError`](errors.md): `gorm.ErrRecordNotFound` → 404 with the handler's message, typed service errors → 400/404/409 with the service's message, anything else → 500 `Failed to ...`. `limit`/`offset` use `strconv.Atoi` with errors ignored (bad value → 0). `days` falls back to 30 when invalid or ≤ 0.
 
 ## Depends on
 
@@ -58,11 +58,10 @@ Parse ids, read the user from context, call `WorkoutService`, map `gorm.ErrRecor
 
 ## Tests
 
-none
+[controllers/errors_test.go](errors_test.md) checks the 400/404/409 mappings end to end.
 
 ## Gotchas / TODO
 
 - `?limit=abc` → 0 → empty page (GORM emits `LIMIT 0`); `?limit=-1` → no limit.
-- Starting from an inaccessible template, or logging a set with no metric, returns 500 instead of 404/400.
 - `PUT /:id` responds without exercises (`"exercises": null`); refetch with `GET /:id` for the full workout.
 - `start_date` / `end_date` are not validated.
