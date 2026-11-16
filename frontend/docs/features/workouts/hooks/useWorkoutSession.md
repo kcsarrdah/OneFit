@@ -27,7 +27,8 @@ every change so nothing is lost if the app closes.
 - Loads once on mount; with nothing stored, a new `sessionId` and `startTime`
   are made (in memory).
 - Auto-saves whenever `exercises` changes, once loaded and only while
-  `exercises.length > 0`.
+  `exercises.length > 0`. A failed save is caught and logged, like a failed
+  load (`useAsyncStorage` also logs storage errors itself).
 
 ## Depends on
 
