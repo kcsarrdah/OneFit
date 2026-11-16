@@ -36,7 +36,7 @@ halves opacity. Sets `accessibilityRole="button"`.
 
 ## Used by
 
-[PickNext](../../features/workouts/components/PickNext.md), [SetLogger](../../features/workouts/components/SetLogger.md),
+[ConfirmDialog](ConfirmDialog.md), [PickNext](../../features/workouts/components/PickNext.md), [SetLogger](../../features/workouts/components/SetLogger.md),
 [RoutineCard](../../features/workouts/components/RoutineCard.md), [RoutinesScreen](../../features/workouts/screens/RoutinesScreen.md),
 [WorkoutHistoryCard](../../features/workouts/components/WorkoutHistoryCard.md),
 [CreateCustomRoutineModal](../../features/workouts/components/CreateCustomRoutineModal.md),

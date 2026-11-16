@@ -148,6 +148,7 @@ update [tests/README](tests/README.md). Never copy secrets into docs.
 - [Card.md](components/ui/Card.md): card and its parts.
 - [Checkbox.md](components/ui/Checkbox.md): animated checkbox (unused).
 - [Dialog.md](components/ui/Dialog.md): modal dialog and parts.
+- [ConfirmDialog.md](components/ui/ConfirmDialog.md): "Are you sure?" for destructive actions (works on web).
 - [IconSymbol.md](components/ui/IconSymbol.md): SF Symbol names mapped to Material Icons (Android, web).
 - [IconSymbol.ios.md](components/ui/IconSymbol.ios.md): native SF Symbols (iOS).
 - [Input.md](components/ui/Input.md): text field.

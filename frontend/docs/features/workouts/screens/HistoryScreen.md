@@ -34,5 +34,4 @@ none.
 ## Gotchas / TODO
 
 - "Total Volume" has no unit and mixes kg and lbs workouts.
-- Delete on a card is immediate, without confirmation.
 - No sidebar inset.

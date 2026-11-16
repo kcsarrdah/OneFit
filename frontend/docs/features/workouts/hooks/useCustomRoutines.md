@@ -35,4 +35,5 @@ none (pure parts: [routines.test](../../../__tests__/features/workouts/lib/routi
 - No edit action; a custom routine can only be duplicated or deleted.
 - `saveCustomRoutines` rethrows errors, but `useAsyncStorage.setItem` never
   throws, so callers' `.catch` handlers never run.
-- Deleting is immediate, with no confirmation or undo.
+- No undo after deleting (the [RoutineCard](../components/RoutineCard.md) asks
+  for confirmation first).

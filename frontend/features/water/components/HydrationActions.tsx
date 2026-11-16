@@ -1,6 +1,7 @@
-import React from 'react';
-import { Alert, StyleSheet, Text, View } from 'react-native';
+import React, { useState } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
 import { Button } from '@/components/ui/Button';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import { Colors, WaterColors } from '@/constants/Colors';
 
@@ -20,15 +21,7 @@ interface HydrationActionsProps {
 export function HydrationActions({ intake, logAmount, onLog, onReset }: HydrationActionsProps) {
   const colors = Colors.dark;
 
-  const confirmReset = () =>
-    Alert.alert(
-      'Reset Water Intake',
-      `Are you sure you want to reset your water intake to 0ml?\n\nCurrent intake: ${intake}ml`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Reset', style: 'destructive', onPress: onReset },
-      ],
-    );
+  const [confirming, setConfirming] = useState(false);
 
   return (
     <View style={styles.area}>
@@ -47,7 +40,7 @@ export function HydrationActions({ intake, logAmount, onLog, onReset }: Hydratio
       {intake > 0 && (
         <>
           <Button
-            onPress={confirmReset}
+            onPress={() => setConfirming(true)}
             accessibilityLabel="Reset water intake"
             style={[styles.resetButton, { backgroundColor: colors.card, borderColor: colors.destructive }]}
           >
@@ -56,6 +49,18 @@ export function HydrationActions({ intake, logAmount, onLog, onReset }: Hydratio
           <Text style={[styles.resetLabel, { color: colors.destructive }]}>Reset</Text>
         </>
       )}
+
+      <ConfirmDialog
+        visible={confirming}
+        title="Reset water intake?"
+        description={`Today's ${intake.toLocaleString()}ml goes back to 0ml.`}
+        confirmLabel="Reset"
+        onConfirm={() => {
+          setConfirming(false);
+          onReset();
+        }}
+        onCancel={() => setConfirming(false)}
+      />
     </View>
   );
 }

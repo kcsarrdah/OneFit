@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Colors } from '@/constants/Colors';
 import { isCustomRoutine, type AnyRoutine } from '../lib/routines';
 import { StatColumn } from './StatColumn';
@@ -11,7 +12,7 @@ import { StatColumn } from './StatColumn';
  * @file RoutineCard.tsx
  * @description One routine on the Routines screen: name, description, its
  * minutes / exercises / category, and Start, Duplicate and (custom only)
- * Delete actions.
+ * Delete actions. Delete asks for confirmation first.
  */
 
 interface RoutineCardProps {
@@ -24,6 +25,7 @@ interface RoutineCardProps {
 export function RoutineCard({ routine, onStart, onDuplicate, onDelete }: RoutineCardProps) {
   const colors = Colors.dark;
   const custom = isCustomRoutine(routine);
+  const [confirming, setConfirming] = useState(false);
   const stat = (value: React.ReactNode, label: string) => (
     <StatColumn value={value} label={label} valueColor={colors.foreground} labelColor={colors.mutedForeground} />
   );
@@ -57,13 +59,27 @@ export function RoutineCard({ routine, onStart, onDuplicate, onDelete }: Routine
               <ThemedText style={[styles.secondaryText, { color: colors.foreground }]}>Duplicate</ThemedText>
             </Button>
             {custom && (
-              <Button onPress={onDelete} variant="ghost" size="sm" style={styles.deleteButton}>
+              <Button onPress={() => setConfirming(true)} variant="ghost" size="sm" style={styles.deleteButton}>
                 <ThemedText style={[styles.secondaryText, { color: colors.destructive }]}>Delete</ThemedText>
               </Button>
             )}
           </View>
         </View>
       </CardContent>
+
+      {custom && (
+        <ConfirmDialog
+          visible={confirming}
+          title="Delete routine?"
+          description={`${routine.name} will be removed from your routines. This can't be undone.`}
+          confirmLabel="Delete"
+          onConfirm={() => {
+            setConfirming(false);
+            onDelete();
+          }}
+          onCancel={() => setConfirming(false)}
+        />
+      )}
     </Card>
   );
 }

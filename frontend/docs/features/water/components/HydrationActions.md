@@ -14,12 +14,14 @@ that asks for confirmation first.
 An absolutely positioned row 140 px from the bottom (above the tab bar): an
 80 px round [Button](../../../components/ui/Button.md) with a `drop.fill` icon
 in water blue and a "+250ml" caption; when `intake > 0`, a 60 px destructive
-Reset button whose press shows `Alert.alert` (Cancel / Reset).
+Reset button that opens a [ConfirmDialog](../../../components/ui/ConfirmDialog.md)
+("Reset water intake?", today's intake, Cancel / Reset). Unlike `Alert.alert`
+it works on web; only Reset calls `onReset`.
 
 ## Depends on
 
 [Button](../../../components/ui/Button.md), [IconSymbol](../../../components/ui/IconSymbol.md),
-[Colors](../../../constants/Colors.md) (`WaterColors`), `react-native` `Alert`.
+[ConfirmDialog](../../../components/ui/ConfirmDialog.md), [Colors](../../../constants/Colors.md) (`WaterColors`).
 
 ## Used by
 
@@ -31,7 +33,4 @@ none.
 
 ## Gotchas / TODO
 
-- **Reset does nothing on web**: React Native Web's `Alert.alert` is a no-op,
-  so the confirmation never appears and `onReset` never runs. Use a
-  [Dialog](../../../components/ui/Dialog.md) (or `window.confirm` on web).
 - No haptic on log, unlike the workout controls.
