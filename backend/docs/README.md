@@ -96,6 +96,7 @@ Secrets: `backend/.env` and the Firebase service-account JSON are git-ignored.
 - [models/fast_session.md](models/fast_session.md): `fast_sessions`.
 - [models/water_log.md](models/water_log.md): `water_logs`.
 - [models/exercise.md](models/exercise.md): `exercises`.
+- [models/setup_test.md](models/setup_test.md): migration test (old exercise-name index dropped).
 - [models/workout_template.md](models/workout_template.md): `workout_templates`, `template_exercises`.
 - [models/workout_session.md](models/workout_session.md): `workout_sessions`, `session_exercises`, `exercise_sets`.
 - [models/meal.md](models/meal.md): `meals` (migrated, unused).

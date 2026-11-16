@@ -34,6 +34,7 @@ ok  onefit/backend/services      0.417s
 | File | Covers | Doc |
 |---|---|---|
 | `controllers/errors_test.go` | Service errors → 400/404/409 through the exercise, template and workout handlers | [controllers/errors_test.md](../controllers/errors_test.md) |
+| `models/setup_test.go` | `Migrate` drops the old global exercise-name index | [models/setup_test.md](../models/setup_test.md) |
 | `services/exercise_service_test.go` | `ExerciseService` queries and custom-exercise rules | [services/exercise_service_test.md](../services/exercise_service_test.md) |
 | `services/anatomy_service_test.go` | `AnatomyService` (list filters, lookup, id validation) and the embedded `data/muscles.json` content | [services/anatomy_service_test.md](../services/anatomy_service_test.md) |
 
