@@ -48,4 +48,4 @@ func (es *ExerciseService) SeedDefaultExercises() error          // unused
 - Name uniqueness is per user and only enforced by this check (see [models/exercise.md](../models/exercise.md)); it is case-sensitive and racy under concurrent creates.
 - `LOWER` folds ASCII only, so `search` is case-sensitive for non-ASCII letters. `%` and `_` in filters are not escaped and act as wildcards.
 - `SeedDefaultExercises` is never called: a fresh database has no built-in exercises.
-- The in-use check counts `template_exercises` / `session_exercises` rows left behind when their template or workout was soft-deleted, so an exercise used only in deleted workouts can never be deleted.
+- The in-use check counts live `template_exercises` / `session_exercises` rows. Deleting a template or workout now soft-deletes those too, but rows orphaned before that fix still block deleting the exercise.

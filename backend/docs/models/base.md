@@ -34,5 +34,6 @@ none
 ## Gotchas / TODO
 
 - No JSON tags: the fields serialise as `ID`, `CreatedAt`, `UpdatedAt`, `DeletedAt` while the rest of each model is snake_case. Clients depend on this; changing it is an API break.
-- Soft delete means `OnDelete:CASCADE` constraints on child relations never fire; children remain (see [workout_session.md](workout_session.md)).
-- Soft-deleted rows still count for unique indexes (e.g. `exercises.name`, `users.email`).
+- Soft delete means `OnDelete:CASCADE` constraints on child relations never fire; the services soft-delete children explicitly (see [workout_service.md](../services/workout_service.md), [template_service.md](../services/template_service.md)).
+- Soft-deleted rows still count for unique indexes (e.g. `users.email`).
+- GORM adds `deleted_at IS NULL` only for the queried model, not for joined tables; joins must filter the joined tables' `deleted_at` themselves.
