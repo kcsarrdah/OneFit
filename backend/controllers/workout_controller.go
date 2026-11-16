@@ -86,11 +86,7 @@ func (wc *WorkoutController) GetWorkout(c *gin.Context) {
 
 	workout, err := wc.workoutService.GetWorkoutWithDetails(userModel.ID, uint(workoutID))
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Workout not found"})
-		} else {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch workout"})
-		}
+		respondError(c, err, "Workout not found", "Failed to fetch workout")
 		return
 	}
 
@@ -119,7 +115,7 @@ func (wc *WorkoutController) StartWorkout(c *gin.Context) {
 
 	workout, err := wc.workoutService.StartWorkout(userModel.ID, input.Name, input.TemplateID, input.Notes)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to start workout"})
+		respondError(c, err, "Workout not found", "Failed to start workout")
 		return
 	}
 
@@ -158,11 +154,7 @@ func (wc *WorkoutController) UpdateWorkout(c *gin.Context) {
 
 	workout, err := wc.workoutService.UpdateWorkout(userModel.ID, uint(workoutID), input.Name, input.Notes, input.EndedAt, input.IsActive)
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Workout not found or not owned by user"})
-		} else {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update workout"})
-		}
+		respondError(c, err, "Workout not found or not owned by user", "Failed to update workout")
 		return
 	}
 
@@ -188,11 +180,7 @@ func (wc *WorkoutController) DeleteWorkout(c *gin.Context) {
 
 	err = wc.workoutService.DeleteWorkout(userModel.ID, uint(workoutID))
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Workout not found or not owned by user"})
-		} else {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete workout"})
-		}
+		respondError(c, err, "Workout not found or not owned by user", "Failed to delete workout")
 		return
 	}
 
@@ -227,11 +215,7 @@ func (wc *WorkoutController) AddExerciseToWorkout(c *gin.Context) {
 
 	sessionExercise, err := wc.workoutService.AddExerciseToWorkout(userModel.ID, uint(workoutID), input.ExerciseID, input.OrderIndex, input.Notes)
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Workout or exercise not found"})
-		} else {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to add exercise to workout"})
-		}
+		respondError(c, err, "Workout or exercise not found", "Failed to add exercise to workout")
 		return
 	}
 
@@ -275,11 +259,7 @@ func (wc *WorkoutController) UpdateSessionExercise(c *gin.Context) {
 
 	sessionExercise, err := wc.workoutService.UpdateSessionExercise(userModel.ID, uint(workoutID), uint(sessionExerciseID), input.OrderIndex, input.Notes, input.CompletedAt)
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Session exercise not found"})
-		} else {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update session exercise"})
-		}
+		respondError(c, err, "Session exercise not found", "Failed to update session exercise")
 		return
 	}
 
@@ -325,11 +305,7 @@ func (wc *WorkoutController) LogSet(c *gin.Context) {
 
 	exerciseSet, err := wc.workoutService.LogSet(userModel.ID, uint(workoutID), uint(sessionExerciseID), input.Reps, input.Weight, input.DurationSeconds, input.DistanceMeters, input.RPE)
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Session exercise not found"})
-		} else {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to log set"})
-		}
+		respondError(c, err, "Session exercise not found", "Failed to log set")
 		return
 	}
 
@@ -375,11 +351,7 @@ func (wc *WorkoutController) UpdateSet(c *gin.Context) {
 
 	exerciseSet, err := wc.workoutService.UpdateSet(userModel.ID, uint(workoutID), uint(setID), input.Reps, input.Weight, input.DurationSeconds, input.DistanceMeters, input.RPE)
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Set not found"})
-		} else {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update set"})
-		}
+		respondError(c, err, "Set not found", "Failed to update set")
 		return
 	}
 
@@ -411,11 +383,7 @@ func (wc *WorkoutController) DeleteSet(c *gin.Context) {
 
 	err = wc.workoutService.DeleteSet(userModel.ID, uint(workoutID), uint(setID))
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Set not found"})
-		} else {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete set"})
-		}
+		respondError(c, err, "Set not found", "Failed to delete set")
 		return
 	}
 
@@ -490,11 +458,7 @@ func (wc *WorkoutController) RemoveExerciseFromWorkout(c *gin.Context) {
 
 	err = wc.workoutService.RemoveExerciseFromWorkout(userModel.ID, uint(workoutID), uint(sessionExerciseID))
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Session exercise not found"})
-		} else {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to remove exercise from workout"})
-		}
+		respondError(c, err, "Session exercise not found", "Failed to remove exercise from workout")
 		return
 	}
 

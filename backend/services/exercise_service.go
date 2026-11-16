@@ -1,7 +1,6 @@
 package services
 
 import (
-	"fmt"
 	"onefit/backend/models"
 	"strings"
 
@@ -74,14 +73,14 @@ func (es *ExerciseService) GetExerciseByID(exerciseID uint) (*models.Exercise, e
 func (es *ExerciseService) CreateCustomExercise(userID uint, name, muscleGroups, equipment, instructions string) (*models.Exercise, error) {
 	// Validate required fields
 	if strings.TrimSpace(name) == "" {
-		return nil, fmt.Errorf("exercise name is required")
+		return nil, newError(ErrInvalidInput, "exercise name is required")
 	}
 
 	// Check if exercise name already exists for this user
 	var existingExercise models.Exercise
 	err := es.db.Where("name = ? AND created_by_user_id = ?", name, userID).First(&existingExercise).Error
 	if err == nil {
-		return nil, fmt.Errorf("exercise with name '%s' already exists", name)
+		return nil, newError(ErrConflict, "exercise with name '%s' already exists", name)
 	}
 	if err != gorm.ErrRecordNotFound {
 		return nil, err
@@ -120,7 +119,7 @@ func (es *ExerciseService) UpdateCustomExercise(userID, exerciseID uint, name, m
 		var existingExercise models.Exercise
 		err := es.db.Where("name = ? AND created_by_user_id = ? AND id != ?", strings.TrimSpace(*name), userID, exerciseID).First(&existingExercise).Error
 		if err == nil {
-			return nil, fmt.Errorf("exercise with name '%s' already exists", *name)
+			return nil, newError(ErrConflict, "exercise with name '%s' already exists", *name)
 		}
 		if err != gorm.ErrRecordNotFound {
 			return nil, err
@@ -172,7 +171,7 @@ func (es *ExerciseService) DeleteCustomExercise(userID, exerciseID uint) error {
 	}
 
 	if templateCount > 0 || sessionCount > 0 {
-		return fmt.Errorf("cannot delete exercise: it is being used in workout templates or sessions")
+		return newError(ErrConflict, "cannot delete exercise: it is being used in workout templates or sessions")
 	}
 
 	// Safe to delete

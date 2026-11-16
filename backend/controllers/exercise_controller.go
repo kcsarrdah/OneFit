@@ -74,11 +74,7 @@ func (ec *ExerciseController) GetExercise(c *gin.Context) {
 
 	exercise, err := ec.exerciseService.GetExerciseByID(uint(exerciseID))
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Exercise not found"})
-		} else {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch exercise"})
-		}
+		respondError(c, err, "Exercise not found", "Failed to fetch exercise")
 		return
 	}
 
@@ -108,7 +104,7 @@ func (ec *ExerciseController) CreateExercise(c *gin.Context) {
 
 	exercise, err := ec.exerciseService.CreateCustomExercise(userModel.ID, input.Name, input.MuscleGroups, input.Equipment, input.Instructions)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create exercise"})
+		respondError(c, err, "Exercise not found", "Failed to create exercise")
 		return
 	}
 
@@ -147,11 +143,7 @@ func (ec *ExerciseController) UpdateExercise(c *gin.Context) {
 
 	exercise, err := ec.exerciseService.UpdateCustomExercise(userModel.ID, uint(exerciseID), input.Name, input.MuscleGroups, input.Equipment, input.Instructions)
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Exercise not found or not owned by user"})
-		} else {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update exercise"})
-		}
+		respondError(c, err, "Exercise not found or not owned by user", "Failed to update exercise")
 		return
 	}
 
@@ -177,11 +169,7 @@ func (ec *ExerciseController) DeleteExercise(c *gin.Context) {
 
 	err = ec.exerciseService.DeleteCustomExercise(userModel.ID, uint(exerciseID))
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Exercise not found or not owned by user"})
-		} else {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete exercise"})
-		}
+		respondError(c, err, "Exercise not found or not owned by user", "Failed to delete exercise")
 		return
 	}
 

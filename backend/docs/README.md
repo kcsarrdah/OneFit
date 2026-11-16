@@ -73,9 +73,13 @@ Secrets: `backend/.env` and the Firebase service-account JSON are git-ignored.
 - [controllers/template_controller.md](controllers/template_controller.md): templates and template exercises.
 - [controllers/workout_controller.md](controllers/workout_controller.md): workouts, session exercises, sets, stats.
 - [controllers/anatomy_controller.md](controllers/anatomy_controller.md): muscle list and detail.
+- [controllers/errors.md](controllers/errors.md): `respondError`, service error → HTTP status.
+- [controllers/errors_test.md](controllers/errors_test.md): 400/404/409 status-code tests.
+- [controllers/helpers_test.md](controllers/helpers_test.md): test router and request helpers for controller tests.
 
 ### Services
 
+- [services/errors.md](services/errors.md): error kinds (`ErrInvalidInput`, `ErrNotFound`, `ErrConflict`).
 - [services/user_service.md](services/user_service.md): get-or-create user by Firebase UID, save profile.
 - [services/exercise_service.md](services/exercise_service.md): exercise queries and custom CRUD (has verified bugs).
 - [services/template_service.md](services/template_service.md): template CRUD, template exercises, duplicate.
@@ -86,7 +90,7 @@ Secrets: `backend/.env` and the Firebase service-account JSON are git-ignored.
 ### Models
 
 - [models/base.md](models/base.md): `ID`, timestamps, soft delete.
-- [models/setup.md](models/setup.md): open SQLite, AutoMigrate.
+- [models/setup.md](models/setup.md): open SQLite, `Migrate` (AutoMigrate).
 - [models/user.md](models/user.md): `users`.
 - [models/fast_session.md](models/fast_session.md): `fast_sessions`.
 - [models/water_log.md](models/water_log.md): `water_logs`.
@@ -108,6 +112,10 @@ Secrets: `backend/.env` and the Firebase service-account JSON are git-ignored.
 ### Utils
 
 - [utils/firebase.md](utils/firebase.md): Firebase Admin init and token verification.
+
+### Test helpers
+
+- [testutil/db.md](testutil/db.md): in-memory test database and user fixture.
 
 ### Tests
 

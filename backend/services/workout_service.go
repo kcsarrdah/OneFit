@@ -68,7 +68,7 @@ func (ws *WorkoutService) GetWorkoutWithDetails(userID, workoutID uint) (*models
 func (ws *WorkoutService) StartWorkout(userID uint, name string, templateID *uint, notes string) (*models.WorkoutSession, error) {
 	// Validate name
 	if name == "" {
-		return nil, fmt.Errorf("workout name is required")
+		return nil, newError(ErrInvalidInput, "workout name is required")
 	}
 
 	// If starting from template, verify template exists and user has access
@@ -76,7 +76,7 @@ func (ws *WorkoutService) StartWorkout(userID uint, name string, templateID *uin
 		var template models.WorkoutTemplate
 		err := ws.db.Where("id = ? AND (user_id = ? OR is_public = ?)", *templateID, userID, true).First(&template).Error
 		if err != nil {
-			return nil, fmt.Errorf("template not found or not accessible")
+			return nil, newError(ErrNotFound, "template not found or not accessible")
 		}
 	}
 
@@ -286,7 +286,7 @@ func (ws *WorkoutService) LogSet(userID, workoutID, sessionExerciseID uint, reps
 
 	// Validate that at least one metric is provided
 	if reps == nil && weight == nil && durationSeconds == nil && distanceMeters == nil {
-		return nil, fmt.Errorf("at least one set metric (reps, weight, duration, or distance) must be provided")
+		return nil, newError(ErrInvalidInput, "at least one set metric (reps, weight, duration, or distance) must be provided")
 	}
 
 	// Get next set number

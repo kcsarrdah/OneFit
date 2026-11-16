@@ -45,7 +45,7 @@ Every controller that reads the user from context can also return `500 {"error":
 
 All errors are `{"error": "<message>"}`. Body binding failures (malformed JSON, missing `binding:"required"` field, wrong type) return **400** with Gin's validator message as `error`. An **empty body** on a PUT/PATCH whose fields are all optional is also a 400 (`"EOF"`): send `{}`.
 
-Service-level validation errors (duplicate names, "in use", "at least one metric") are **not** mapped to 4xx; they come back as **500** with a generic message. See each endpoint.
+Service-level errors carry their own message and a 4xx status ([controllers/errors.go](controllers/errors.md)): invalid input (blank name, set with no metric) is **400**, an inaccessible template is **404**, and conflicts (duplicate name, exercise already in the template, deleting something still in use) are **409**. Only unexpected database errors return **500** with the generic `Failed to ...` message. See each endpoint.
 
 ### Trailing slashes
 
@@ -298,8 +298,9 @@ Any exercise by ID, including other users' custom exercises (no ownership check)
 Create a custom exercise owned by the caller. Body: `{"name": string (required), "muscle_groups": string, "equipment": string, "instructions": string}`. Values are trimmed.
 
 - `201 {"message": "Exercise created successfully", "exercise": Exercise}`
-- `400` binding error
-- `500 {"error": "Failed to create exercise"}`: also returned for a blank (whitespace) name, a name the caller already used, and any name that exists anywhere (`exercises.name` is globally unique, including soft-deleted rows and built-ins).
+- `400` binding error / `{"error": "exercise name is required"}` (blank after trimming)
+- `409 {"error": "exercise with name '<name>' already exists"}`: the caller already has a custom exercise with this name
+- `500 {"error": "Failed to create exercise"}`: also returned for a name that exists anywhere else (`exercises.name` is globally unique, including soft-deleted rows and built-ins).
 
 ### `PUT /api/exercises/:id`
 
@@ -308,7 +309,8 @@ Update the caller's own custom exercise. Body (all optional): `{"name", "muscle_
 - `200 {"message": "Exercise updated successfully", "exercise": Exercise}`
 - `400 {"error": "Invalid exercise ID"}` / binding error
 - `404 {"error": "Exercise not found or not owned by user"}` (also for built-ins)
-- `500 {"error": "Failed to update exercise"}` (also name conflicts)
+- `409 {"error": "exercise with name '<name>' already exists"}`
+- `500 {"error": "Failed to update exercise"}`
 
 ### `DELETE /api/exercises/:id`
 
@@ -317,7 +319,8 @@ Soft-delete the caller's own custom exercise.
 - `200 {"message": "Exercise deleted successfully"}`
 - `400 {"error": "Invalid exercise ID"}`
 - `404 {"error": "Exercise not found or not owned by user"}`
-- `500 {"error": "Failed to delete exercise"}` (also when the exercise is used in any template or workout)
+- `409 {"error": "cannot delete exercise: it is being used in workout templates or sessions"}`
+- `500 {"error": "Failed to delete exercise"}`
 
 ---
 
@@ -348,8 +351,9 @@ Own or public template, `exercises` sorted by `order_index`.
 Body: `{"name": string (required), "description": string, "category": string, "is_public": bool}`. Trimmed.
 
 - `201 {"message": "Template created successfully", "template": WorkoutTemplate}` (`exercises: null`)
-- `400` binding error
-- `500 {"error": "Failed to create template"}` (also for a name the caller already uses)
+- `400` binding error / `{"error": "template name is required"}` (blank after trimming)
+- `409 {"error": "template with name '<name>' already exists"}`
+- `500 {"error": "Failed to create template"}`
 
 ### `PUT /api/templates/:id`
 
@@ -358,7 +362,8 @@ Owner only. Body (all optional): `{"name", "description", "category", "is_public
 - `200 {"message": "Template updated successfully", "template": WorkoutTemplate}` (`exercises: null`)
 - `400 {"error": "Invalid template ID"}` / binding error
 - `404 {"error": "Template not found or not owned by user"}`
-- `500 {"error": "Failed to update template"}` (also name conflicts)
+- `409 {"error": "template with name '<name>' already exists"}`
+- `500 {"error": "Failed to update template"}`
 
 ### `DELETE /api/templates/:id`
 
@@ -367,7 +372,8 @@ Owner only. Soft-deletes the template only (its `template_exercises` rows remain
 - `200 {"message": "Template deleted successfully"}`
 - `400 {"error": "Invalid template ID"}`
 - `404 {"error": "Template not found or not owned by user"}`
-- `500 {"error": "Failed to delete template"}` (also when any non-deleted workout used this template)
+- `409 {"error": "cannot delete template: it is being used in workout sessions"}` (any non-deleted workout used it)
+- `500 {"error": "Failed to delete template"}`
 
 ### `POST /api/templates/:id/exercises`
 
@@ -383,7 +389,8 @@ Owner only (public is not enough). Body:
 - `201 {"message": "Exercise added to template successfully", "template_exercise": TemplateExercise}` (with `exercise`)
 - `400 {"error": "Invalid template ID"}` / binding error
 - `404 {"error": "Template or exercise not found"}`
-- `500 {"error": "Failed to add exercise to template"}` (also when the exercise is already in the template)
+- `409 {"error": "exercise is already in this template"}`
+- `500 {"error": "Failed to add exercise to template"}`
 
 ### `PUT /api/templates/:id/exercises/:exercise_id`
 
@@ -426,7 +433,8 @@ Start a workout. Body: `{"name": string (required), "template_id": uint (optiona
 
 - `201 {"message": "Workout started successfully", "workout": WorkoutSession}` (full details)
 - `400` binding error
-- `500 {"error": "Failed to start workout"}` (also when the template is missing or not accessible)
+- `404 {"error": "template not found or not accessible"}`
+- `500 {"error": "Failed to start workout"}`
 
 ### `GET /api/workouts/active`
 
@@ -521,8 +529,9 @@ Body: `{"exercise_id": uint (required, Exercise ID), "order_index": int, "notes"
 
 - `201 {"message": "Set logged successfully", "set": ExerciseSet}`
 - `400 {"error": "Invalid workout ID"}` / `{"error": "Invalid session exercise ID"}` / binding error
+- `400 {"error": "at least one set metric (reps, weight, duration, or distance) must be provided"}`
 - `404 {"error": "Session exercise not found"}`
-- `500 {"error": "Failed to log set"}` (also when no metric is given)
+- `500 {"error": "Failed to log set"}`
 
 ### `PUT /api/workouts/:id/sets/:set_id`
 
@@ -577,7 +586,7 @@ The older reference is [`../Data_&_API_Related_Documentation/API_EndPoints.md`](
 5. **"Cascade deletes".** Deletes are GORM soft deletes. The `OnDelete:CASCADE` constraints never fire, so template exercises, session exercises and sets remain after their parent is deleted.
 6. **"Users can only access their own data".** `GET /api/exercises/:id` returns any user's custom exercise.
 7. **"Timestamps are UTC".** Responses use the server's local offset; fasting and water requests take epoch milliseconds, not ISO strings.
-8. **Status codes.** It implies 400 for invalid input; duplicate names, "in use" deletes, a set with no metric and an inaccessible template all return 500.
+8. **Status codes.** It implies 400 for every invalid input; the code returns 400 for invalid input, 404 for an inaccessible template and 409 for conflicts (duplicate names, "in use" deletes, an exercise already in a template).
 9. **`:exercise_id` meaning** is not explained: Exercise ID under templates, SessionExercise ID under workouts.
 10. **Response objects.** It does not say base fields are `ID`/`CreatedAt`/`UpdatedAt`/`DeletedAt` (Go case) or that `User` has no snake_case keys at all.
 11. **ER diagrams.** `fasting_types`, `fasting_type_id`, `is_completed`, `timezone`, `date_of_birth`, `activity_level`, `weight_logs`, `body_measurements`, `user_preferences` do not exist in the models. `meals` exists in the schema (AutoMigrate) but has no endpoints.

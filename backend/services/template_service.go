@@ -1,7 +1,6 @@
 package services
 
 import (
-	"fmt"
 	"onefit/backend/models"
 	"strings"
 
@@ -67,14 +66,14 @@ func (ts *TemplateService) GetTemplateWithExercises(userID, templateID uint) (*m
 func (ts *TemplateService) CreateTemplate(userID uint, name, description, category string, isPublic bool) (*models.WorkoutTemplate, error) {
 	// Validate required fields
 	if strings.TrimSpace(name) == "" {
-		return nil, fmt.Errorf("template name is required")
+		return nil, newError(ErrInvalidInput, "template name is required")
 	}
 
 	// Check if template name already exists for this user
 	var existingTemplate models.WorkoutTemplate
 	err := ts.db.Where("name = ? AND user_id = ?", strings.TrimSpace(name), userID).First(&existingTemplate).Error
 	if err == nil {
-		return nil, fmt.Errorf("template with name '%s' already exists", strings.TrimSpace(name))
+		return nil, newError(ErrConflict, "template with name '%s' already exists", strings.TrimSpace(name))
 	}
 	if err != gorm.ErrRecordNotFound {
 		return nil, err
@@ -112,7 +111,7 @@ func (ts *TemplateService) UpdateTemplate(userID, templateID uint, name, descrip
 		var existingTemplate models.WorkoutTemplate
 		err := ts.db.Where("name = ? AND user_id = ? AND id != ?", strings.TrimSpace(*name), userID, templateID).First(&existingTemplate).Error
 		if err == nil {
-			return nil, fmt.Errorf("template with name '%s' already exists", strings.TrimSpace(*name))
+			return nil, newError(ErrConflict, "template with name '%s' already exists", strings.TrimSpace(*name))
 		}
 		if err != gorm.ErrRecordNotFound {
 			return nil, err
@@ -158,7 +157,7 @@ func (ts *TemplateService) DeleteTemplate(userID, templateID uint) error {
 	}
 
 	if sessionCount > 0 {
-		return fmt.Errorf("cannot delete template: it is being used in workout sessions")
+		return newError(ErrConflict, "cannot delete template: it is being used in workout sessions")
 	}
 
 	// Delete template (cascade will handle template_exercises)
@@ -185,7 +184,7 @@ func (ts *TemplateService) AddExerciseToTemplate(userID, templateID, exerciseID 
 	var existingTemplateExercise models.TemplateExercise
 	err = ts.db.Where("template_id = ? AND exercise_id = ?", templateID, exerciseID).First(&existingTemplateExercise).Error
 	if err == nil {
-		return nil, fmt.Errorf("exercise is already in this template")
+		return nil, newError(ErrConflict, "exercise is already in this template")
 	}
 	if err != gorm.ErrRecordNotFound {
 		return nil, err
@@ -323,7 +322,7 @@ func (ts *TemplateService) DuplicateTemplate(userID, templateID uint, newName st
 	var existingTemplate models.WorkoutTemplate
 	err = ts.db.Where("name = ? AND user_id = ?", strings.TrimSpace(newName), userID).First(&existingTemplate).Error
 	if err == nil {
-		return nil, fmt.Errorf("template with name '%s' already exists", strings.TrimSpace(newName))
+		return nil, newError(ErrConflict, "template with name '%s' already exists", strings.TrimSpace(newName))
 	}
 	if err != gorm.ErrRecordNotFound {
 		return nil, err

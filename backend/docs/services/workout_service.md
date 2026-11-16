@@ -34,11 +34,12 @@ func (ws *WorkoutService) GetWorkoutStats(userID uint, days int) (map[string]int
 - `UpdateWorkout`: non-blank name, notes; `endedAt` sets end + `DurationMinutes` (truncated minutes); else `isActive == false` ends now if not ended.
 - `AddExerciseToWorkout`: exercise must exist; `orderIndex == 0` → max + 1.
 - `LogSet`: requires one of reps/weight/duration/distance; `SetNumber = max + 1`; `CompletedAt = now`.
+- Errors ([errors.go](errors.md)): a blank name and a set with no metric wrap `ErrInvalidInput`; a template that is missing or not the caller's (and not public) wraps `ErrNotFound`. Missing rows are `gorm.ErrRecordNotFound`.
 - `GetWorkoutStats`: window `now - days`. `total_workouts`, `total_minutes` over finished sessions; `total_sets` over sets joined to sessions in the window; `average_duration_minutes = total_minutes / total_workouts`.
 
 ## Depends on
 
-[models/workout_session.go](../models/workout_session.md), [models/workout_template.go](../models/workout_template.md), [models/exercise.go](../models/exercise.md), `gorm`.
+[models/workout_session.go](../models/workout_session.md), [models/workout_template.go](../models/workout_template.md), [models/exercise.go](../models/exercise.md), [errors.go](errors.md), `gorm`.
 
 ## Used by
 
@@ -52,7 +53,7 @@ none
 
 - **Bug (verified):** deletes are soft and do not cascade. After `DeleteWorkout`, the session's exercises and sets stay live, and `GetWorkoutStats.total_sets` still counts them (the join does not filter `workout_sessions.deleted_at`). Same for `RemoveExerciseFromWorkout` (sets remain).
 - `total_sets` also counts sets from unfinished workouts, while `total_workouts`/`total_minutes` only count finished ones.
-- `StartWorkout` errors (missing name, inaccessible template) are plain errors → HTTP 500, not 400/404. It does not block a second active workout; `GetActiveWorkout` then returns the oldest.
+- `StartWorkout` does not block a second active workout; `GetActiveWorkout` then returns the oldest.
 - `UpdateWorkout` accepts an `ended_at` before `started_at` (negative duration) and lets a finished workout be re-ended.
 - `UpdateSet`/`DeleteSet` do not filter soft-deleted `session_exercises` in the join, so sets of a removed exercise can still be edited.
 - `RPE` is not range-checked; set fields cannot be cleared to null once set.
