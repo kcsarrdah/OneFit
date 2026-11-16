@@ -46,13 +46,17 @@ export function useWorkoutSession() {
   }, [getItem]);
 
   const saveSession = useCallback(async () => {
-    const state: WorkoutSessionState = {
-      exercises,
-      sessionId,
-      startTime,
-      lastUpdated: new Date().toISOString(),
-    };
-    await setItem(STORAGE_KEY, state);
+    try {
+      const state: WorkoutSessionState = {
+        exercises,
+        sessionId,
+        startTime,
+        lastUpdated: new Date().toISOString(),
+      };
+      await setItem(STORAGE_KEY, state);
+    } catch (error) {
+      console.error('Error saving workout session:', error);
+    }
   }, [exercises, sessionId, startTime, setItem]);
 
   useEffect(() => {
