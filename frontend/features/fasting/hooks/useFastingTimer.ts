@@ -2,23 +2,21 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { fastProgress } from '../lib/format';
+import { restoreFast, type StoredTimer } from '../lib/restore';
 import type { CompletedFastData } from '../types';
 
 /**
  * @file useFastingTimer.ts
  * @description The running fast: start, stop (hands the finished fast to
- * onComplete), reset. The start time is kept on the device so the timer
- * survives restarts, and it catches up when the app returns to the foreground.
+ * onComplete and clears the timer), reset. The start time is kept on the
+ * device so the timer survives restarts; a fast that reached its goal while
+ * the app was closed is completed on launch. It catches up when the app
+ * returns to the foreground.
  */
 
 interface UseFastingTimerProps {
   goalDurationSeconds: number;
   onComplete: (fastData: CompletedFastData) => void;
-}
-
-interface TimerState {
-  startTime: number;
-  goalDurationSeconds: number;
 }
 
 const TIMER_STORAGE_KEY = 'fastingTimerState';
@@ -30,29 +28,26 @@ export function useFastingTimer({ goalDurationSeconds, onComplete }: UseFastingT
   
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const appStateRef = useRef(AppState.currentState);
+  // The load effect must not re-run when the parent passes a new callback.
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
 
   // Load persisted timer state on mount
   useEffect(() => {
     const loadTimerState = async () => {
       try {
         const stored = await AsyncStorage.getItem(TIMER_STORAGE_KEY);
-        if (stored) {
-          const { startTime: storedStartTime, goalDurationSeconds: storedGoal }: TimerState = JSON.parse(stored);
-          
-          // Only restore if goal matches current goal
-          if (storedGoal === goalDurationSeconds) {
-            const now = Date.now();
-            const elapsed = Math.floor((now - storedStartTime) / 1000);
-            
-            if (elapsed < goalDurationSeconds) {
-              setStartTime(storedStartTime);
-              setElapsedSeconds(elapsed);
-              setIsActive(true);
-            } else {
-              // Timer completed while app was closed
-              await AsyncStorage.removeItem(TIMER_STORAGE_KEY);
-            }
-          }
+        const storedTimer: StoredTimer | null = stored ? JSON.parse(stored) : null;
+        const restored = restoreFast(storedTimer, goalDurationSeconds, Date.now());
+
+        if (restored.kind === 'resume') {
+          setStartTime(restored.startTime);
+          setElapsedSeconds(restored.elapsedSeconds);
+          setIsActive(true);
+        } else if (restored.kind === 'complete') {
+          // Reached its goal while the app was closed: offer it for saving.
+          await AsyncStorage.removeItem(TIMER_STORAGE_KEY);
+          onCompleteRef.current(restored.fast);
         }
       } catch (error) {
         console.error('Failed to load timer state:', error);
@@ -67,7 +62,7 @@ export function useFastingTimer({ goalDurationSeconds, onComplete }: UseFastingT
     const saveTimerState = async () => {
       try {
         if (isActive && startTime) {
-          const state: TimerState = { startTime, goalDurationSeconds };
+          const state: StoredTimer = { startTime, goalDurationSeconds };
           await AsyncStorage.setItem(TIMER_STORAGE_KEY, JSON.stringify(state));
         } else {
           await AsyncStorage.removeItem(TIMER_STORAGE_KEY);
@@ -80,13 +75,15 @@ export function useFastingTimer({ goalDurationSeconds, onComplete }: UseFastingT
     saveTimerState();
   }, [isActive, startTime, goalDurationSeconds]);
 
-  // Complete the fast - centralized logic
+  // Hand the finished fast to onComplete and clear the timer, so the screen
+  // goes back to "Not started" whether it is then saved or discarded.
   const completeState = useCallback((endTime: number) => {
     if (!startTime) return;
     
     const actualDuration = Math.floor((endTime - startTime) / 1000);
     setIsActive(false);
-    setElapsedSeconds(actualDuration);
+    setStartTime(null);
+    setElapsedSeconds(0);
     
     onComplete({
       startTime,
@@ -123,15 +120,10 @@ export function useFastingTimer({ goalDurationSeconds, onComplete }: UseFastingT
   useEffect(() => {
     const handleAppStateChange = (nextAppState: AppStateStatus) => {
       if (appStateRef.current.match(/inactive|background/) && nextAppState === 'active') {
-        // App came to foreground - recalculate elapsed time
+        // Back in the foreground: catch up on the time spent away. A running
+        // fast keeps counting past its goal until the user completes it.
         if (isActive && startTime) {
-          const elapsed = Math.floor((Date.now() - startTime) / 1000);
-          setElapsedSeconds(Math.min(elapsed, goalDurationSeconds));
-          
-          // If completed while backgrounded, let interval handle it on next tick
-          if (elapsed >= goalDurationSeconds) {
-            setElapsedSeconds(goalDurationSeconds);
-          }
+          setElapsedSeconds(Math.floor((Date.now() - startTime) / 1000));
         }
       }
       appStateRef.current = nextAppState;
@@ -139,7 +131,7 @@ export function useFastingTimer({ goalDurationSeconds, onComplete }: UseFastingT
 
     const subscription = AppState.addEventListener('change', handleAppStateChange);
     return () => subscription.remove();
-  }, [isActive, startTime, goalDurationSeconds]);
+  }, [isActive, startTime]);
 
   const startFast = useCallback(() => {
     if (isActive) return;

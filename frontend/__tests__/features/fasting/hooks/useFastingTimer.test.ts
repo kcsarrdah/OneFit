@@ -211,6 +211,47 @@ it('should continue running past goal duration without auto-stopping', async () 
     expect(mockAsyncStorage.removeItem).toHaveBeenCalledWith('fastingTimerState');
   });
 
+  it('completes a fast that reached its goal while the app was closed', async () => {
+    const savedStartTime = Date.now() - (goalDurationSeconds + 3600) * 1000; // goal passed an hour ago
+    mockAsyncStorage.getItem.mockResolvedValue(JSON.stringify({ startTime: savedStartTime, goalDurationSeconds }));
+
+    const { result } = renderHook(() =>
+      useFastingTimer({ goalDurationSeconds, onComplete: mockOnComplete })
+    );
+
+    await act(async () => {
+      await new Promise(resolve => setTimeout(resolve, 10));
+    });
+
+    expect(mockOnComplete).toHaveBeenCalledWith({
+      startTime: savedStartTime,
+      endTime: savedStartTime + goalDurationSeconds * 1000,
+      actualDurationSeconds: goalDurationSeconds,
+      goalDurationSeconds,
+    });
+    expect(mockAsyncStorage.removeItem).toHaveBeenCalledWith('fastingTimerState');
+    expect(result.current.isActive).toBe(false);
+    expect(result.current.startTime).toBe(null);
+  });
+
+  it('clears the start time once a fast is stopped', async () => {
+    const { result } = renderHook(() =>
+      useFastingTimer({ goalDurationSeconds, onComplete: mockOnComplete })
+    );
+
+    await act(async () => {
+      result.current.startFast();
+    });
+    await act(async () => {
+      result.current.stopFast();
+    });
+
+    expect(mockOnComplete).toHaveBeenCalledTimes(1);
+    expect(result.current.isActive).toBe(false);
+    expect(result.current.startTime).toBe(null);
+    expect(result.current.elapsedSeconds).toBe(0);
+  });
+
     it('should not break when stopping an inactive timer', async () => {
         const { result } = renderHook(() => 
           useFastingTimer({ goalDurationSeconds, onComplete: mockOnComplete })

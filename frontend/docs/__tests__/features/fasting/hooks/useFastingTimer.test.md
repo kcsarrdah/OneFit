@@ -3,7 +3,7 @@
 ## Purpose
 
 Hook tests for [useFastingTimer](../../../../features/fasting/hooks/useFastingTimer.md)
-with `renderHook`. 10 tests in `describe('useFastingTimer')`.
+with `renderHook`. 12 tests in `describe('useFastingTimer')`.
 
 ## Public API
 
@@ -18,6 +18,8 @@ with `renderHook`. 10 tests in `describe('useFastingTimer')`.
 | should increment elapsed seconds over time | Fake timers + mocked `Date.now`: 10 s, then 15 s |
 | should continue running past goal duration without auto-stopping | Elapsed 40 s on a 30 s goal, still active, progress capped at 100, no `onComplete` |
 | should save and restore timer state from storage | A stored start 5 s ago resumes; stopping removes `fastingTimerState` |
+| completes a fast that reached its goal while the app was closed | A stored start 17 h ago on a 16 h goal: `onComplete` with end = start + goal, key removed, timer cleared |
+| clears the start time once a fast is stopped | After `stopFast`: inactive, `startTime` null, 0 elapsed |
 | should not break when stopping an inactive timer | No-op stop, then a normal start |
 
 ## How it works
@@ -40,9 +42,8 @@ This is a test file.
 
 ## Gotchas / TODO
 
-- Not covered: restoring a fast whose goal has already passed (the hook
-  deletes it; see the bug in [useFastingTimer](../../../../features/fasting/hooks/useFastingTimer.md)),
-  a stored state with a different goal, the `AppState` foreground handler.
+- Not covered here: a stored state with a different goal (see
+  [restore.test](../lib/restore.test.md)), the `AppState` foreground handler.
 - Mocked `Date.now` spies are not restored between tests (only
   `clearAllMocks`); later tests see the last mocked value.
 - Indentation of the last two tests is off (cosmetic).

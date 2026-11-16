@@ -226,6 +226,7 @@ update [tests/README](tests/README.md). Never copy secrets into docs.
 - [hooks/useFastingTimer.md](features/fasting/hooks/useFastingTimer.md): running fast, persisted start time.
 - [hooks/useFastCompletion.md](features/fasting/hooks/useFastCompletion.md): dialog state, POST to the backend.
 - [lib/format.md](features/fasting/lib/format.md): time formats and progress.
+- [lib/restore.md](features/fasting/lib/restore.md): resume or complete a stored fast at launch.
 
 ### `features/water/`
 
@@ -248,6 +249,7 @@ update [tests/README](tests/README.md). Never copy secrets into docs.
 - [features/workouts/lib/history.test.md](__tests__/features/workouts/lib/history.test.md): history helpers.
 - [features/workouts/lib/routines.test.md](__tests__/features/workouts/lib/routines.test.md): routine helpers.
 - [features/fasting/lib/format.test.md](__tests__/features/fasting/lib/format.test.md): fasting formats.
+- [features/fasting/lib/restore.test.md](__tests__/features/fasting/lib/restore.test.md): restoring a stored fast.
 - [features/fasting/hooks/useFastingTimer.test.md](__tests__/features/fasting/hooks/useFastingTimer.test.md): timer hook.
 - [features/fasting/hooks/useFastCompletion.test.md](__tests__/features/fasting/hooks/useFastCompletion.test.md): completion hook, mocked fetch.
 - [features/water/lib/hydration.test.md](__tests__/features/water/lib/hydration.test.md): hydration helpers.
