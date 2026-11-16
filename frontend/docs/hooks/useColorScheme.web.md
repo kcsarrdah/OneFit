@@ -29,7 +29,6 @@ none.
 ## Gotchas / TODO
 
 It ignores [ThemeContext](../contexts/ThemeContext.md), unlike the native
-hook. Harmless today because `Colors.light` and `Colors.dark` are both iron,
-but `GlassmorphismColors` differs per scheme: on web with a light OS
-preference the tab bar and sidebar use the light glass (white 70% fill with
-dark icons). Make this return `'dark'` too.
+hook. Harmless today: `Colors.light` and `Colors.dark` are both iron, and the
+glass panels always use `GlassmorphismColors.dark`. Make this return
+`'dark'` too.

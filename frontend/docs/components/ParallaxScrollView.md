@@ -15,12 +15,14 @@ Default export `ParallaxScrollView({ headerImage: ReactElement, headerBackground
 down, 0.75 when scrolled up) and `scale` (2 at 250 px overscroll). Bottom
 padding comes from `useBottomTabOverflow()` in
 [TabBarBackground](ui/TabBarBackground.md) (iOS variant: the tab bar height;
-elsewhere 0).
+elsewhere 0). The content (not the header) is padded on the left by
+`GlassEffectConfig.dimensions.vertical.contentInset` to clear the sidebar.
 
 ## Depends on
 
 `react-native-reanimated`, [ThemedView](ThemedView.md),
-[TabBarBackground](ui/TabBarBackground.md), [useColorScheme](../hooks/useColorScheme.md).
+[TabBarBackground](ui/TabBarBackground.md), [useColorScheme](../hooks/useColorScheme.md),
+[Colors](../constants/Colors.md).
 
 ## Used by
 
