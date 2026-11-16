@@ -43,12 +43,7 @@ func main() {
 	// Setup Database
 	db := models.SetupDB()
 
-	// Create test user only in development
-	if os.Getenv("GIN_MODE") != "release" {
-		// Clean up old test user without FirebaseUID
-		db.Exec("DELETE FROM users WHERE id = 1")
-		createTestUser(db)
-	}
+	setupDevData(db)
 
 	// Initialize Firebase
 	if err := utils.InitFirebase(); err != nil {
@@ -84,6 +79,15 @@ func main() {
 	}
 	log.Printf("Server started on :%s", port)
 	r.Run(":" + port)
+}
+
+// setupDevData creates the test user outside release mode. An existing test
+// user and its data are kept across restarts.
+func setupDevData(db *gorm.DB) {
+	if os.Getenv("GIN_MODE") == "release" {
+		return
+	}
+	createTestUser(db)
 }
 
 // createTestUser creates a test user for development purposes

@@ -37,7 +37,7 @@ Environment variables (from the process or `backend/.env` via godotenv). Names o
 | Variable | Used in | Default |
 |---|---|---|
 | `PORT` | `main.go` | `3000` |
-| `GIN_MODE` | `main.go` | Gin default (debug). Anything but `release` also resets the dev test user. |
+| `GIN_MODE` | `main.go` | Gin default (debug). Anything but `release` also creates the dev test user if it is missing. |
 | `CORS_ORIGINS` | `main.go` | `http://localhost:3000` |
 | `FIREBASE_CREDENTIALS_PATH` | `utils/firebase.go` | `serviceAccountKey.json` |
 
@@ -48,6 +48,7 @@ Secrets: `backend/.env` and the Firebase service-account JSON are git-ignored.
 ### Root
 
 - [main.md](main.md): `main.go`, startup, CORS, dev test user, `/` and `/health`.
+- [main_test.md](main_test.md): tests for the dev test-user setup.
 
 ### Routes
 
