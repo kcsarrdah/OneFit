@@ -28,5 +28,5 @@ none.
 
 ## Gotchas / TODO
 
-[FastCompleteDialog](../../features/fasting/components/FastCompleteDialog.md)
-builds its own notes `TextInput` instead of using this.
+[FastComplete](../../features/fasting/components/FastComplete.md) builds its
+own bottom-ruled note `TextInput` (on the accent) instead of using this.

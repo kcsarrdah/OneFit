@@ -1,19 +1,17 @@
 import React, { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
-import { ThemedText } from '@/components/ThemedText';
-import { Button } from '@/components/ui/Button';
-import { Card, CardContent } from '@/components/ui/Card';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { IconSymbol } from '@/components/ui/IconSymbol';
 import { Colors } from '@/constants/Colors';
-import { formatDuration, formatWorkoutDate } from '../lib/history';
+import { Fonts } from '@/constants/Fonts';
+import { formatWorkoutDay, formatWorkoutSummary } from '../lib/history';
 import type { SavedWorkout } from '../types';
-import { StatColumn } from './StatColumn';
 
 /**
  * @file WorkoutHistoryCard.tsx
- * @description One saved workout on the History screen: name, date, duration,
- * exercises, sets and volume, the exercise names, and a delete button that
- * asks for confirmation first.
+ * @description One saved workout on the History screen, as a row: name and
+ * day, its numbers on one Oswald line (minutes, sets, volume), the exercises
+ * on one muted line, and a quiet × that asks before deleting.
  */
 
 interface WorkoutHistoryCardProps {
@@ -24,58 +22,34 @@ interface WorkoutHistoryCardProps {
 export function WorkoutHistoryCard({ workout, onDelete }: WorkoutHistoryCardProps) {
   const colors = Colors.dark;
   const [confirming, setConfirming] = useState(false);
-  const stat = (value: React.ReactNode, label: string) => (
-    <StatColumn
-      size="sm"
-      value={value}
-      label={label}
-      valueColor={colors.foreground}
-      labelColor={colors.mutedForeground}
-    />
-  );
+  const day = formatWorkoutDay(workout.date);
 
   return (
-    <Card style={[styles.card, { backgroundColor: colors.card }]}>
-      <CardContent style={styles.content}>
-        <View style={styles.header}>
-          <View style={styles.info}>
-            <ThemedText style={[styles.name, { color: colors.foreground }]}>{workout.name}</ThemedText>
-            <ThemedText style={[styles.date, { color: colors.mutedForeground }]}>
-              {formatWorkoutDate(workout.date)}
-            </ThemedText>
-          </View>
-          <View style={styles.actions}>
-            <Button
-              onPress={() => setConfirming(true)}
-              variant="ghost"
-              size="sm"
-              style={styles.deleteButton}
-              accessibilityLabel="Delete workout"
-            >
-              <ThemedText style={[styles.deleteText, { color: colors.destructive }]}>✕</ThemedText>
-            </Button>
-          </View>
-        </View>
+    <View style={[styles.row, { backgroundColor: colors.card }]}>
+      <View style={styles.text}>
+        <Text style={[styles.name, { color: colors.foreground }]} numberOfLines={1}>
+          {workout.name}
+        </Text>
+        <Text style={[styles.sub, { color: colors.mutedForeground }]}>{day}</Text>
+        <Text style={[styles.numbers, { color: colors.foreground }]}>{formatWorkoutSummary(workout)}</Text>
+        <Text style={[styles.sub, { color: colors.mutedForeground }]} numberOfLines={1}>
+          {workout.exercises.map((ex) => ex.exercise.name).join(', ')}
+        </Text>
+      </View>
 
-        <View style={styles.stats}>
-          {stat(formatDuration(workout.duration), 'Duration')}
-          {stat(workout.exercises.length, 'Exercises')}
-          {stat(`${workout.completedSets}/${workout.totalSets}`, 'Sets')}
-          {stat(`${Math.round(workout.totalVolume)} ${workout.weightUnit}`, 'Volume')}
-        </View>
-
-        <View style={styles.summary}>
-          <ThemedText style={[styles.summaryTitle, { color: colors.mutedForeground }]}>Exercises:</ThemedText>
-          <ThemedText style={[styles.summaryText, { color: colors.foreground }]}>
-            {workout.exercises.map((ex) => ex.exercise.name).join(', ')}
-          </ThemedText>
-        </View>
-      </CardContent>
+      <Pressable
+        onPress={() => setConfirming(true)}
+        accessibilityRole="button"
+        accessibilityLabel={`Delete ${workout.name}`}
+        style={({ pressed }) => [styles.delete, pressed && { backgroundColor: colors.secondary }]}
+      >
+        <IconSymbol name="xmark" size={16} color={colors.icon} />
+      </Pressable>
 
       <ConfirmDialog
         visible={confirming}
         title="Delete workout?"
-        description={`${workout.name} (${formatWorkoutDate(workout.date)}) will be removed from your history. This can't be undone.`}
+        description={`${workout.name} (${day}) will be removed from your history. This can't be undone.`}
         confirmLabel="Delete"
         onConfirm={() => {
           setConfirming(false);
@@ -83,28 +57,29 @@ export function WorkoutHistoryCard({ workout, onDelete }: WorkoutHistoryCardProp
         }}
         onCancel={() => setConfirming(false)}
       />
-    </Card>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  card: { borderRadius: 16 },
-  content: { padding: 16 },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 },
-  info: { flex: 1 },
-  name: { fontSize: 16, fontWeight: 'bold', marginBottom: 4 },
-  date: { fontSize: 14 },
-  actions: { marginLeft: 12 },
-  deleteButton: { width: 28, height: 28, borderRadius: 14, padding: 0, justifyContent: 'center', alignItems: 'center' },
-  deleteText: { fontSize: 16, fontWeight: 'bold' },
-  stats: {
+  row: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: 'rgba(0,0,0,0.1)',
+    alignItems: 'flex-start',
+    gap: 4,
+    borderRadius: 18,
+    paddingVertical: 14,
+    paddingLeft: 16,
+    paddingRight: 6,
   },
-  summary: { marginTop: 8 },
-  summaryTitle: { fontSize: 12, fontWeight: '500', marginBottom: 4 },
-  summaryText: { fontSize: 14, lineHeight: 18 },
+  text: { flex: 1, minWidth: 0 },
+  name: { fontSize: 16, fontWeight: '600' },
+  sub: { marginTop: 3, fontSize: 13 },
+  numbers: {
+    marginTop: 10,
+    fontFamily: Fonts.display,
+    fontSize: 17,
+    letterSpacing: 0.6,
+    fontVariant: ['tabular-nums'],
+  },
+  delete: { width: 44, height: 44, marginTop: -8, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
 });

@@ -12,6 +12,7 @@ category, build new custom routines, search the exercise catalogue.
 | `AnyRoutine` | `WorkoutRoutine \| CustomRoutine` | |
 | `isCustomRoutine` | `(r) => r is CustomRoutine` | `'isCustom' in r && r.isCustom` |
 | `allRoutines` | `(builtIn, custom) => AnyRoutine[]` | Built-ins (marked `isCustom: false`) then custom |
+| `routineSummary` | `(routine) => string` | `"45 min · 5 exercises · Full Body"`, led by `"Custom · "` for custom ones; "1 exercise" singular |
 | `filterRoutines` | `<T>(routines, 'All' \| RoutineCategory) => T[]` | |
 | `createRoutine` | `(fields: NewRoutine, now = new Date()) => CustomRoutine` | id `custom-<ms>`, `isCustom`, `createdAt`/`updatedAt` |
 | `duplicateOf` | `(routine, now = new Date()) => CustomRoutine` | Copy named `"<name> (Copy)"` with a new id |

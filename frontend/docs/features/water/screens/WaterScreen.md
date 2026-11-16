@@ -2,8 +2,8 @@
 
 ## Purpose
 
-The water tracker: today's intake in big numbers, what is left of the goal,
-and the screen filling with water as you log.
+The water tracker: today's intake as one big number, what is left of the
+goal, the screen filling with water as you log, and one action at the thumb.
 
 ## Public API
 
@@ -11,17 +11,25 @@ and the screen filling with water as you log.
 
 ## How it works
 
-From [useHydration](../hooks/useHydration.md): a loading line until loaded,
-then intake ("1,250ml", 64 bold), "Remaining 750ml of 2,000ml", "N% Complete",
-[HydrationActions](../components/HydrationActions.md), and
-[WaterFill](../components/WaterFill.md) behind everything at
-[fillFraction](../lib/hydration.md).
+- From [useHydration](../hooks/useHydration.md): an empty ground while
+  loading, then:
+- [ScreenTitle](../../../components/ui/ScreenTitle.md) "Water", the intake in
+  Oswald 104 with a muted "ML" (shrinks to fit), and one muted line:
+  "750 ml to go of 2,000" or "Goal reached · 2,000 ml", with
+  [ResetIntake](../components/ResetIntake.md) on the right.
+- [WaterFill](../components/WaterFill.md) behind everything at
+  `fillFraction(intake, goal)`.
+- An [ActionButton](../../../components/ui/ActionButton.md) "+ 250 ml" (the
+  log amount) above the tab bar.
+- Content is inset by `GlassEffectConfig.dimensions.vertical.contentInset`
+  to clear the sidebar.
 
 ## Depends on
 
 [useHydration](../hooks/useHydration.md), [hydration](../lib/hydration.md),
-[HydrationActions](../components/HydrationActions.md), [WaterFill](../components/WaterFill.md),
-[Colors](../../../constants/Colors.md).
+[WaterFill](../components/WaterFill.md), [ResetIntake](../components/ResetIntake.md),
+[ActionButton](../../../components/ui/ActionButton.md), [ScreenTitle](../../../components/ui/ScreenTitle.md),
+[Colors](../../../constants/Colors.md), [Fonts](../../../constants/Fonts.md).
 
 ## Used by
 
@@ -29,12 +37,11 @@ then intake ("1,250ml", 64 bold), "Remaining 750ml of 2,000ml", "N% Complete",
 
 ## Tests
 
-none.
+The hook and maths: [useHydration.test](../../../__tests__/features/water/hooks/useHydration.test.md),
+[hydration.test](../../../__tests__/features/water/lib/hydration.test.md). The screen: none.
 
 ## Gotchas / TODO
 
-- The "ml" suffix is a nested `Text` with the same 64 px style, not a smaller
-  unit.
-- The headline text sits above the water (`zIndex 20`) in chalk; once the
-  water rises past it, contrast depends on the blue.
-- Headings use system bold, not Oswald.
+- The water body stays blue: it is the water, not UI, so the one-accent rule
+  does not apply to it.
+- The sidebar's Goals and Reminders items do not change the screen yet.

@@ -31,8 +31,8 @@ checkmark, plus, minus, arrow.uturn.backward.
 ## Used by
 
 Every screen with an icon: the tab bar, sidebar, SwipeToConfirm, Stepper,
-PickNext, SetLogger, Fasting, Water, CircularProgress, Collapsible, Toast,
-Dialog, RoutineExercisesStep, Explore.
+PickNext, SetLogger, RoutineCard (`ellipsis`, `play.fill`), WorkoutHistoryCard
+(`xmark`), Collapsible, Toast, Dialog, RoutineExercisesStep, Explore.
 
 ## Tests
 
@@ -42,7 +42,6 @@ none.
 
 - To add an icon, add its SF Symbol name and Material name to `MAPPING`, or
   Android/web show nothing. The type only protects callers that do not cast;
-  [VerticalTabBar](VerticalTabBar.md) and [CircularProgress](../../features/fasting/components/CircularProgress.md)
-  pass `as any`. `FASTING_SCHEDULES` icons (`clock.3`, `pencil`, ...) are not
+  [VerticalTabBar](VerticalTabBar.md) passes `as any`. `FASTING_SCHEDULES` icons (`clock.3`, `pencil`, ...) are not
   mapped (they are not rendered yet).
 - Lint: unused `IconMapping` type.

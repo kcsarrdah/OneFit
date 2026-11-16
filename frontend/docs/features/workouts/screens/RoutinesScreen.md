@@ -3,7 +3,8 @@
 ## Purpose
 
 Built-in and custom routines, filtered by category. Start one to load its
-exercises into the workout, duplicate it, or create your own.
+exercises into the workout, duplicate or delete it from its ⋯ menu, or create
+your own.
 
 ## Public API
 
@@ -11,21 +12,24 @@ exercises into the workout, duplicate it, or create your own.
 
 ## How it works
 
-- Data from [useCustomRoutines](../hooks/useCustomRoutines.md); a loading
-  [CenteredMessage](../components/CenteredMessage.md) until read.
-- Header "Workout Routines" and an accent "+ Create" button that opens
-  [CreateCustomRoutineModal](../components/CreateCustomRoutineModal.md).
-- Category chips from `ROUTINE_FILTERS`; the list is
-  [filterRoutines](../lib/routines.md) of all routines, each a
-  [RoutineCard](../components/RoutineCard.md). Duplicate/delete errors are
-  logged.
+- From [useCustomRoutines](../hooks/useCustomRoutines.md); a loading message
+  until ready.
+- [ScreenTitle](../../../components/ui/ScreenTitle.md) "Routines" with a
+  "+ New" outline pill that opens [CreateCustomRoutineModal](../components/CreateCustomRoutineModal.md).
+- A sideways strip of category chips (`ROUTINE_FILTERS`): 40 pt pills,
+  outlined when idle, chalk fill with ground text when selected. The strip
+  bleeds to the right edge.
+- A [RoutineCard](../components/RoutineCard.md) per routine in
+  `filterRoutines(routines, filter)`, or "No <category> routines yet."
+- Duplicate and delete errors are logged to the console.
+- Inset on the left by `contentInset` to clear the sidebar.
 
 ## Depends on
 
 [useCustomRoutines](../hooks/useCustomRoutines.md), [routines](../lib/routines.md),
 [RoutineCard](../components/RoutineCard.md), [CreateCustomRoutineModal](../components/CreateCustomRoutineModal.md),
-[CenteredMessage](../components/CenteredMessage.md), [Button](../../../components/ui/Button.md),
-[ThemedText](../../../components/ThemedText.md), [Colors](../../../constants/Colors.md).
+[CenteredMessage](../components/CenteredMessage.md), [ScreenTitle](../../../components/ui/ScreenTitle.md),
+[constants](../constants.md), [Colors](../../../constants/Colors.md).
 
 ## Used by
 
@@ -33,11 +37,8 @@ exercises into the workout, duplicate it, or create your own.
 
 ## Tests
 
-none.
+The filtering: [routines.test](../../../__tests__/features/workouts/lib/routines.test.md). The screen: none.
 
 ## Gotchas / TODO
 
-- No left inset for the floating sidebar, which overlaps the left edge of the
-  cards.
-- Chips are `Button`s with hand-set accent colours; a shared chip component
-  (PickNext has another) would remove duplication.
+none.

@@ -1,8 +1,9 @@
 import { EXERCISES } from '@/features/workouts/constants';
 import {
   buildSavedWorkout,
-  formatDuration,
-  formatWorkoutDate,
+  formatCompact,
+  formatWorkoutDay,
+  formatWorkoutSummary,
   overallStats,
   sortByNewest,
   workoutTotals,
@@ -71,13 +72,24 @@ describe('overallStats', () => {
 });
 
 describe('formatting', () => {
-  it('formats seconds as m:ss', () => {
-    expect(formatDuration(0)).toBe('0:00');
-    expect(formatDuration(754)).toBe('12:34');
-    expect(formatDuration(3600)).toBe('60:00');
+  it('keeps big numbers short', () => {
+    expect(formatCompact(0)).toBe('0');
+    expect(formatCompact(4240.4)).toBe('4,240');
+    expect(formatCompact(24_300)).toBe('24.3k');
+    expect(formatCompact(120_000)).toBe('120k');
+    expect(formatCompact(1_250_000)).toBe('1.3M');
   });
 
-  it('formats dates as "Mon D, YYYY"', () => {
-    expect(formatWorkoutDate('2026-11-12T12:00:00.000Z')).toBe('Nov 12, 2026');
+  it("puts a workout's numbers on one line", () => {
+    const workout = buildSavedWorkout([entry], 52 * 60 + 10, 'kg');
+    expect(formatWorkoutSummary(workout)).toBe('52\u00A0MIN · 2/3\u00A0SETS · 1,080\u00A0KG');
+  });
+
+  it('says Today / Yesterday with the time, else the day', () => {
+    const now = new Date(2026, 10, 16, 20, 0);
+    expect(formatWorkoutDay(new Date(2026, 10, 16, 19, 12).toISOString(), now)).toMatch(/^Today, 7:12\sPM$/);
+    expect(formatWorkoutDay(new Date(2026, 10, 15, 18, 5).toISOString(), now)).toMatch(/^Yesterday, 6:05\sPM$/);
+    expect(formatWorkoutDay(new Date(2026, 10, 14, 9, 0).toISOString(), now)).toBe('Sat, Nov 14');
+    expect(formatWorkoutDay(new Date(2025, 10, 14, 9, 0).toISOString(), now)).toBe('Fri, Nov 14, 2025');
   });
 });

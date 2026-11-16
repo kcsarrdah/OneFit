@@ -34,7 +34,8 @@ close itself: callers hide it in both callbacks.
 
 [WorkoutHistoryCard](../../features/workouts/components/WorkoutHistoryCard.md),
 [RoutineCard](../../features/workouts/components/RoutineCard.md),
-[HydrationActions](../../features/water/components/HydrationActions.md).
+[ResetIntake](../../features/water/components/ResetIntake.md),
+[FastingScreen](../../features/fasting/screens/FastingScreen.md) (ending a fast early).
 
 ## Tests
 

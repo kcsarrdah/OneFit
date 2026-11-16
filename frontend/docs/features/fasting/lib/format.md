@@ -8,10 +8,9 @@ Pure formatting and progress helpers for the fasting timer.
 
 | Export | Signature | Example |
 |---|---|---|
-| `formatTime` | `(seconds) => string` | `"05:09"`, `"16:00:00"`; negative counts as 0 |
-| `formatHoursMinutes` | `(seconds) => string` | `"16h 0m"`, `"45m"` (dialog) |
-| `formatFastLength` | `(seconds) => string` | `"16h"`, `"16h 5m"`, `"45m"` (toast) |
-| `formatClock` | `(ms \| null) => string` | `"Nov 12, 9:30 PM"` (en-US), or `"Not started"` |
+| `formatFastLength` | `(seconds) => string` | `"16h"`, `"16h 5m"`, `"45m"` (takeover, confirm, toast) |
+| `formatHoursClock` | `(seconds) => string` | `"16:00"`, `"7:42"`, `"0:05"`: the ring's big number; negative counts as 0 |
+| `formatDayTime` | `(ms \| null) => string` | `"Tue 12:30 PM"` (en-US), or `"Now"` |
 | `expectedEnd` | `(startMs \| null, goalSeconds) => number \| null` | start + goal |
 | `fastProgress` | `(elapsed, goal) => { progressPercentage, remainingSeconds }` | 0..100 (0 for a zero goal), remaining never negative |
 
@@ -26,7 +25,7 @@ nothing.
 ## Used by
 
 [FastingScreen](../screens/FastingScreen.md), [useFastingTimer](../hooks/useFastingTimer.md),
-[useFastCompletion](../hooks/useFastCompletion.md), [FastCompleteDialog](../components/FastCompleteDialog.md).
+[useFastCompletion](../hooks/useFastCompletion.md), [FastComplete](../components/FastComplete.md).
 
 ## Tests
 
@@ -34,4 +33,4 @@ nothing.
 
 ## Gotchas / TODO
 
-`formatClock` treats `0` as "not started" (falsy check).
+`formatDayTime` treats `0` as no time ("Now", falsy check).

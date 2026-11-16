@@ -29,7 +29,7 @@ chalk `#f3ece4`); the caller's `style` wins.
 
 ## Used by
 
-Most workout components and screens, `CenteredMessage`, `StatColumn`,
+Most workout components and screens, `CenteredMessage`,
 `NutritionScreen`, the template tabs, `+not-found`, `Collapsible`, `HelloWave`.
 
 ## Tests

@@ -1,45 +1,34 @@
 import {
   expectedEnd,
   fastProgress,
-  formatClock,
+  formatDayTime,
   formatFastLength,
-  formatHoursMinutes,
-  formatTime,
+  formatHoursClock,
 } from '@/features/fasting/lib/format';
 
-describe('formatTime', () => {
-  it('shows MM:SS under an hour', () => {
-    expect(formatTime(0)).toBe('00:00');
-    expect(formatTime(65)).toBe('01:05');
-  });
-
-  it('shows HH:MM:SS from an hour', () => {
-    expect(formatTime(3661)).toBe('01:01:01');
-    expect(formatTime(16 * 3600)).toBe('16:00:00');
+describe('formatHoursClock', () => {
+  it('shows hours and minutes', () => {
+    expect(formatHoursClock(16 * 3600)).toBe('16:00');
+    expect(formatHoursClock(7 * 3600 + 42 * 60 + 59)).toBe('7:42');
+    expect(formatHoursClock(5 * 60)).toBe('0:05');
   });
 
   it('treats negative input as zero', () => {
-    expect(formatTime(-5)).toBe('00:00');
+    expect(formatHoursClock(-5)).toBe('0:00');
   });
 });
 
-describe('formatHoursMinutes / formatFastLength', () => {
-  it('keeps "0m" in the dialog format', () => {
-    expect(formatHoursMinutes(16 * 3600)).toBe('16h 0m');
-    expect(formatHoursMinutes(16 * 3600 + 300)).toBe('16h 5m');
-    expect(formatHoursMinutes(45 * 60)).toBe('45m');
-  });
-
-  it('drops "0m" in the toast format', () => {
+describe('formatFastLength', () => {
+  it('drops "0m"', () => {
     expect(formatFastLength(16 * 3600)).toBe('16h');
     expect(formatFastLength(16 * 3600 + 300)).toBe('16h 5m');
     expect(formatFastLength(45 * 60)).toBe('45m');
   });
 });
 
-describe('formatClock / expectedEnd', () => {
-  it('says "Not started" without a time', () => {
-    expect(formatClock(null)).toBe('Not started');
+describe('formatDayTime / expectedEnd', () => {
+  it('says "Now" without a time', () => {
+    expect(formatDayTime(null)).toBe('Now');
     expect(expectedEnd(null, 3600)).toBeNull();
   });
 
@@ -47,10 +36,10 @@ describe('formatClock / expectedEnd', () => {
     expect(expectedEnd(1_000, 16 * 3600)).toBe(1_000 + 16 * 3600 * 1000);
   });
 
-  it('formats a timestamp with month, day and time', () => {
-    const text = formatClock(new Date(2026, 10, 12, 21, 30).getTime());
-    expect(text).toContain('Nov 12');
-    expect(text).toMatch(/9:30\sPM/);
+  it('formats a timestamp as weekday and time', () => {
+    const text = formatDayTime(new Date(2026, 10, 17, 12, 30).getTime());
+    expect(text).toContain('Tue');
+    expect(text).toMatch(/12:30\sPM/);
   });
 });
 

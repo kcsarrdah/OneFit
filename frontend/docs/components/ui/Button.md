@@ -37,11 +37,10 @@ halves opacity. Sets `accessibilityRole="button"`.
 ## Used by
 
 [ConfirmDialog](ConfirmDialog.md), [PickNext](../../features/workouts/components/PickNext.md), [SetLogger](../../features/workouts/components/SetLogger.md),
-[RoutineCard](../../features/workouts/components/RoutineCard.md), [RoutinesScreen](../../features/workouts/screens/RoutinesScreen.md),
-[WorkoutHistoryCard](../../features/workouts/components/WorkoutHistoryCard.md),
+[RoutineMenu](../../features/workouts/components/RoutineMenu.md),
 [CreateCustomRoutineModal](../../features/workouts/components/CreateCustomRoutineModal.md),
-[FastingScreen](../../features/fasting/screens/FastingScreen.md), [FastCompleteDialog](../../features/fasting/components/FastCompleteDialog.md),
-[HydrationActions](../../features/water/components/HydrationActions.md).
+[ConfirmDialog](ConfirmDialog.md). A screen's primary action uses
+[ActionButton](ActionButton.md) instead.
 
 ## Tests
 

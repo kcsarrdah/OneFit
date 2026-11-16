@@ -13,6 +13,13 @@ export function isCustomRoutine(routine: AnyRoutine): routine is CustomRoutine {
   return 'isCustom' in routine && routine.isCustom;
 }
 
+/** A routine's one-line summary: "45 min · 5 exercises · Full Body", led by "Custom · " for the user's own. */
+export function routineSummary(routine: AnyRoutine): string {
+  const count = routine.exercises.length;
+  const parts = [`${routine.estimatedDuration} min`, `${count} ${count === 1 ? 'exercise' : 'exercises'}`, routine.category];
+  return (isCustomRoutine(routine) ? ['Custom', ...parts] : parts).join(' · ');
+}
+
 /** Built-in routines first (marked not custom), then the user's own. */
 export function allRoutines(builtIn: WorkoutRoutine[], custom: CustomRoutine[]): AnyRoutine[] {
   return [...builtIn.map((routine) => ({ ...routine, isCustom: false })), ...custom];

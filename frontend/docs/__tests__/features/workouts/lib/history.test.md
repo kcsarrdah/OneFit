@@ -12,7 +12,7 @@ Unit tests for [history](../../../../features/workouts/lib/history.md). 7 tests.
 | `buildSavedWorkout` | 1 | Exercises, duration, unit, ISO date and totals from a fixed `now` |
 | `sortByNewest` | 1 | Newest first, input not mutated |
 | `overallStats` | 1 | Sums workouts, seconds and volume |
-| `formatting` | 2 | `formatDuration` m:ss; `formatWorkoutDate` "Mon D, YYYY" |
+| `formatting` | 3 | `formatCompact` thresholds; `formatWorkoutSummary` line with no-break spaces; `formatWorkoutDay` today / yesterday / this year / other year |
 
 ## How it works
 
