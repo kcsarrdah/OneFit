@@ -4,6 +4,8 @@ The OneFit mobile app: Expo 53, React Native 0.79, expo-router, Reanimated and G
 
 Design rules live in `DESIGN.md` and product context in `PRODUCT.md` at the repo root: dark "iron" theme only, one orange accent for actions, liquid glass tab bar and sidebar, swipe to confirm for logging.
 
+Every source and test file has a doc in [`docs/`](docs/README.md), mirroring the tree. Start with [`docs/README.md`](docs/README.md) (architecture, navigation, storage keys, the swipe-to-log flow, and the index); test coverage and the last check results are in [`docs/tests/README.md`](docs/tests/README.md). Update the docs in the same change as the code (`CLAUDE.md` rule 2).
+
 ## Structure
 
 ```
@@ -47,6 +49,7 @@ frontend/
   contexts/               NavigationContext (sidebar options, focus mode), ThemeContext
   hooks/                  app-wide hooks: useAsyncStorage, useToast, useColorScheme, useThemeColor
   __tests__/              Jest tests, mirroring the source tree (e.g. __tests__/features/water/lib)
+  docs/                   one Markdown doc per source and test file (docs/README.md is the index)
 ```
 
 ### Conventions
@@ -67,7 +70,7 @@ npx expo start          # then press i (iOS simulator), a (Android) or w (web)
 npx expo start --web    # web only, http://localhost:8081
 ```
 
-The fasting dialog saves to the backend at `http://localhost:3000` in development (`cd backend && go run .`). Everything else works offline.
+Everything works offline. The one call to the Go backend is saving a completed fast (`POST http://localhost:3000/api/fasts` in development); it fails today because the app sends no Firebase token (see [`docs/features/fasting/hooks/useFastCompletion.md`](docs/features/fasting/hooks/useFastCompletion.md)).
 
 ## Test and check
 
