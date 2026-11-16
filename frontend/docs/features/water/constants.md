@@ -9,7 +9,9 @@ Water tracker defaults and the AsyncStorage keys it uses.
 - `DEFAULT_GOAL = 2000` (ml), `DEFAULT_LOG_AMOUNT = 250` (ml).
 - `WATER_STORAGE_KEYS`: `dailyGoal` `aquaViz_dailyGoal`, `defaultLogAmount`
   `aquaViz_defaultLogAmount`, `currentIntake` `aquaViz_currentIntake`,
-  `intakeDate` `aquaViz_intakeDate`, `history` `aquaViz_hydrationHistory`.
+  `intakeDate` `aquaViz_intakeDate`, `history` `aquaViz_hydrationHistory`,
+  `dayKeys` `aquaViz_dayKeys` (`'local'` once the UTC-to-local day key
+  migration has run).
 
 ## How it works
 

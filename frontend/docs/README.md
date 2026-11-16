@@ -69,7 +69,7 @@ loaded in `app/_layout`); body text is the platform sans. Newer screens use
 |---|---|---|
 | Workouts | `workout_current_session`, `workout_history`, `custom-routines`, `workout_weight_unit` | [useWorkoutSession](features/workouts/hooks/useWorkoutSession.md), [useWorkoutHistory](features/workouts/hooks/useWorkoutHistory.md), [useCustomRoutines](features/workouts/hooks/useCustomRoutines.md), [useWeightUnit](features/workouts/hooks/useWeightUnit.md) |
 | Fasting | `fastingTimerState` | [useFastingTimer](features/fasting/hooks/useFastingTimer.md) |
-| Water | `aquaViz_dailyGoal`, `aquaViz_defaultLogAmount`, `aquaViz_currentIntake`, `aquaViz_intakeDate`, `aquaViz_hydrationHistory` | [useHydration](features/water/hooks/useHydration.md) |
+| Water | `aquaViz_dailyGoal`, `aquaViz_defaultLogAmount`, `aquaViz_currentIntake`, `aquaViz_intakeDate`, `aquaViz_hydrationHistory`, `aquaViz_dayKeys` | [useHydration](features/water/hooks/useHydration.md) |
 | Theme | `theme-preference` (stored, not applied) | [ThemeContext](contexts/ThemeContext.md) |
 
 **Backend.** The app does not use the Go backend yet, with one exception:
@@ -234,8 +234,8 @@ update [tests/README](tests/README.md). Never copy secrets into docs.
 - [screens/WaterScreen.md](features/water/screens/WaterScreen.md): intake, remaining, fill.
 - [components/WaterFill.md](features/water/components/WaterFill.md): Reanimated rising water.
 - [components/HydrationActions.md](features/water/components/HydrationActions.md): log and reset buttons.
-- [hooks/useHydration.md](features/water/hooks/useHydration.md): intake, new-day reset, history.
-- [lib/hydration.md](features/water/lib/hydration.md): day key, fill fraction, history.
+- [hooks/useHydration.md](features/water/hooks/useHydration.md): intake, local-day rollover, history.
+- [lib/hydration.md](features/water/lib/hydration.md): local day key and migration, rollover, fill fraction, history.
 
 ### `features/nutrition/`
 
@@ -253,6 +253,7 @@ update [tests/README](tests/README.md). Never copy secrets into docs.
 - [features/fasting/hooks/useFastingTimer.test.md](__tests__/features/fasting/hooks/useFastingTimer.test.md): timer hook.
 - [features/fasting/hooks/useFastCompletion.test.md](__tests__/features/fasting/hooks/useFastCompletion.test.md): completion hook, mocked fetch.
 - [features/water/lib/hydration.test.md](__tests__/features/water/lib/hydration.test.md): hydration helpers.
+- [features/water/hooks/useHydration.test.md](__tests__/features/water/hooks/useHydration.test.md): water hook, rollover past midnight.
 
 ### Other
 
