@@ -3,6 +3,7 @@ package services
 import (
 	"errors"
 	"fmt"
+	"net/url"
 	"onefit/backend/data"
 	"onefit/backend/models"
 	"slices"
@@ -36,8 +37,39 @@ func newAnatomyServiceFrom(muscles []models.Muscle) (*AnatomyService, error) {
 			return nil, fmt.Errorf("duplicate muscle id %q", m.ID)
 		}
 		byID[m.ID] = i
+		withTutorialLinks(&muscles[i])
 	}
 	return &AnatomyService{muscles: muscles, byID: byID}, nil
+}
+
+const youtubeSearch = "https://www.youtube.com/results?search_query="
+
+// withTutorialLinks gives every exercise without a curated video a YouTube
+// search for tutorials on it, so links never go stale.
+func withTutorialLinks(m *models.Muscle) {
+	for i := range m.Strength {
+		e := &m.Strength[i]
+		if e.VideoURL == "" {
+			e.VideoURL = youtubeSearch + url.QueryEscape(e.Name+" exercise proper form")
+		}
+	}
+	for i := range m.Flexibility {
+		e := &m.Flexibility[i]
+		if e.VideoURL == "" {
+			e.VideoURL = youtubeSearch + url.QueryEscape(strings.TrimSpace("how to do "+e.Name+" "+flexibilitySuffix(e.Name)))
+		}
+	}
+}
+
+// flexibilitySuffix avoids queries like "Calf Stretch stretch".
+func flexibilitySuffix(name string) string {
+	lower := strings.ToLower(name)
+	for _, w := range []string{"stretch", "pose", "mobility", "circles", "rolls", "swings", "rotations"} {
+		if strings.Contains(lower, w) {
+			return ""
+		}
+	}
+	return "stretch"
 }
 
 // MuscleFilter narrows the muscle list. Empty fields are ignored.

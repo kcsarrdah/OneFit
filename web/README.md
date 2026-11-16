@@ -3,7 +3,30 @@
 An interactive 3D anatomy viewer: orbit a realistic muscular figure 360°, click
 any muscle, and a leader line ties it to an info panel showing what it does,
 gym and bodyweight exercises that strengthen it, and stretches / mobility work
-that keep it flexible. Browsers without WebGL get a 2D body map instead.
+that keep it flexible, each with a "Watch tutorial" link. Browsers without WebGL
+get a 2D body map instead.
+
+### Features
+
+- **Your body:** height, weight, body fat and age sliders reshape the figure. Weight
+  splits into lean and fat mass, drawn separately: lean mass (FFMI) sets muscle size
+  only; fat is its own translucent yellow layer over the muscles (toggleable), as
+  thick as your fat mass allows and distributed the typical male way: belly, love
+  handles and lower back first, then chest, chin, thighs and arms; little on calves
+  and forearms. Visceral fat bulges the belly. A fat map lists estimated thickness
+  per site, and a guide card explains each body fat range. Height scales from the
+  feet; age adds a slight stoop and duller tone.
+  Metric or imperial; remembered per browser.
+- **Looks:** Hologram (glowing x-ray skeleton), Anatomy (ivory bone), Sculpt (clean
+  single-tone figure). The skull is replaced by a smooth, stylised mannequin head in
+  every look.
+- **Pose mode (experimental):** drag an arm, leg or the torso to rotate that joint
+  (with anatomical limits), or pick a preset (T-pose, Reach up, Flex, Squat, Lunge).
+  Feet stay planted on the pedestal.
+- **Themes:** dark, gym-inspired Iron, Volt and Steel, plus Hologram, with a daily
+  motivation line.
+- **Animation:** scan-line reveal on load, light sweep over the selected muscle, hover
+  rim glow, eased camera turns, idle camera sway.
 
 ## Stack
 
@@ -72,7 +95,13 @@ npm run build:model -- /path/to/package/public
 
 `scripts/build-body-model.mjs` groups the source meshes into the app's muscle ids
 (`MUSCLE_GROUPS`), one node per side named `muscle-<id>-<l|r>`, joins the skeleton into
-one `bones` mesh, and simplifies and compresses everything. BodyParts3D has no
+one `bones` mesh, rigs it (`scripts/lib/rig.mjs`: spine, shoulders, elbows, wrists, hips,
+knees, ankles; bones bind rigidly to one joint, muscles blend across the joints they
+cross), bakes per-vertex crevice occlusion (`scripts/lib/ao.mjs`, used for muscle
+definition), builds the subcutaneous fat layer (`scripts/lib/fatLayer.mjs`: one
+voxelized, morphologically closed envelope per body part, meshed with surface nets,
+with per-vertex distribution weights and the areas the app needs to turn litres of
+fat into millimetres), and simplifies and compresses everything. BodyParts3D has no
 latissimus dorsi or rectus abdominis, so `scripts/lib/synthesize.mjs` generates them by
 shrink-wrapping a parametric sheet over the surrounding ribs, spine and obliques.
 

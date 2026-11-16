@@ -3,6 +3,7 @@ import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import type { Muscle } from '../../api/anatomy'
 import { parseNodeName } from './modelNodes'
+import { POSABLE_JOINTS } from './posePresets'
 
 describe('parseNodeName', () => {
   it('parses muscle nodes, including hyphenated ids', () => {
@@ -13,6 +14,15 @@ describe('parseNodeName', () => {
   it('recognises bones and context meshes', () => {
     expect(parseNodeName('bones')).toEqual({ kind: 'bones' })
     expect(parseNodeName('context')).toEqual({ kind: 'context' })
+    expect(parseNodeName('head')).toEqual({ kind: 'head' })
+    expect(parseNodeName('fat-trunk')).toEqual({ kind: 'fat', part: 'trunk' })
+    expect(parseNodeName('fat-leg-r')).toEqual({ kind: 'fat', part: 'leg-r' })
+    expect(parseNodeName('fat-leg')).toEqual({ kind: 'unknown' })
+  })
+
+  it('recognises rig joints', () => {
+    expect(parseNodeName('joint-shoulder-l')).toEqual({ kind: 'joint', joint: 'shoulder-l' })
+    expect(parseNodeName('joint-spine')).toEqual({ kind: 'joint', joint: 'spine' })
   })
 
   it('rejects anything else', () => {
@@ -21,24 +31,53 @@ describe('parseNodeName', () => {
   })
 })
 
-/** Reads node names from the GLB's JSON chunk without decoding geometry. */
-function glbNodeNames(path: string): string[] {
+interface GltfJson {
+  nodes: { name?: string; mesh?: number; skin?: number; extras?: Record<string, number> }[]
+  skins: { joints: number[] }[]
+}
+
+/** Reads the GLB's JSON chunk without decoding geometry. */
+function glbJson(path: string): GltfJson {
   const buf = readFileSync(path)
   expect(buf.toString('ascii', 0, 4)).toBe('glTF')
   const jsonLength = buf.readUInt32LE(12)
   expect(buf.toString('ascii', 16, 20)).toBe('JSON')
-  const json = JSON.parse(buf.toString('utf8', 20, 20 + jsonLength)) as { nodes: { name?: string }[] }
-  return json.nodes.map((n) => n.name ?? '')
+  return JSON.parse(buf.toString('utf8', 20, 20 + jsonLength)) as GltfJson
 }
 
 describe('public/models/body.glb', () => {
-  const names = glbNodeNames(resolve(__dirname, '../../../public/models/body.glb'))
+  const gltf = glbJson(resolve(__dirname, '../../../public/models/body.glb'))
+  const names = gltf.nodes.map((n) => n.name ?? '')
+
+  it('is rigged: every mesh is skinned to the full set of joints', () => {
+    // Position quantization gives each mesh its own skin (its own inverse
+    // bind matrices), all sharing the same joint nodes.
+    for (const n of gltf.nodes) {
+      if (n.mesh === undefined) continue
+      expect(n.skin, n.name).toBeDefined()
+      const jointNames = gltf.skins[n.skin!].joints.map((i) => names[i])
+      for (const j of ['root', ...POSABLE_JOINTS]) expect(jointNames, n.name).toContain(`joint-${j}`)
+    }
+  })
   const muscles = JSON.parse(
     readFileSync(resolve(__dirname, '../../../../backend/data/muscles.json'), 'utf8'),
   ) as Muscle[]
 
   it('only contains nodes the viewer understands', () => {
     for (const name of names) expect(parseNodeName(name).kind, name).not.toBe('unknown')
+  })
+
+  it('has a sculpted head instead of a skull', () => {
+    expect(names).toContain('head')
+  })
+
+  it('has a separate fat layer over the whole body, with its areas', () => {
+    for (const part of ['trunk', 'arm-l', 'arm-r', 'leg-l', 'leg-r']) {
+      const node = gltf.nodes.find((n) => n.name === `fat-${part}`)
+      expect(node, part).toBeDefined()
+      expect(node!.extras?.area, part).toBeGreaterThan(0.1)
+      expect(node!.extras?.weightedArea, part).toBeGreaterThan(0)
+    }
   })
 
   it('has a left and right mesh for every muscle the API serves', () => {

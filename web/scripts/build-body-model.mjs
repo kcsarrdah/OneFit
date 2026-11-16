@@ -6,7 +6,8 @@
 // The pack ships ~33 MB of regional GLBs with one node per source mesh. This
 // script keeps only what the explorer renders, groups the muscle meshes into
 // the app's muscle ids (one node per id and side), joins all bones into one
-// mesh, recentres the figure on the origin, then simplifies and compresses.
+// mesh, recentres the figure on the origin, rigs it with a light skeleton
+// (lib/rig.mjs) for posing, then simplifies and compresses.
 
 import { Document, NodeIO } from '@gltf-transform/core'
 import { EXTMeshoptCompression, KHRMeshQuantization } from '@gltf-transform/extensions'
@@ -25,7 +26,17 @@ import { readFileSync, mkdirSync, statSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { MeshoptEncoder, MeshoptSimplifier } from 'meshoptimizer'
-import { WRAP_SLUGS, buildRadiusField, latissimusDorsi, rectusAbdominis } from './lib/synthesize.mjs'
+import { bakeAmbientOcclusion } from './lib/ao.mjs'
+import { FAT_PARTS, envelope, fatLandmarks, fatWeight, signedVolume } from './lib/fatLayer.mjs'
+import { JOINTS, boneJoint, computeJoints, contextHint, muscleHint, skinAttributes, vertexWeights } from './lib/rig.mjs'
+import {
+  SKULL_SLUGS,
+  WRAP_SLUGS,
+  buildRadiusField,
+  headShell,
+  latissimusDorsi,
+  rectusAbdominis,
+} from './lib/synthesize.mjs'
 
 // BodyParts3D structure slug → explorer muscle id (backend/data/muscles.json).
 // Muscles not listed here are rendered as non-selectable context.
@@ -77,6 +88,10 @@ const MUSCLE_GROUPS = {
   'fibularis-brevis': 'shins',
 }
 
+/** _FATW stores weight / FAT_WEIGHT_MAX as a normalized byte. */
+const FAT_WEIGHT_MAX = 4
+const isFat = (name) => name.startsWith('fat-')
+
 const OUT = resolve(dirname(fileURLToPath(import.meta.url)), '../public/models/body.glb')
 
 const packDir = process.argv[2]
@@ -123,7 +138,8 @@ for (const asset of pack.assets) {
     const type = typeBySlug.get(slug)
 
     let key
-    if (type === 'bone') key = 'bones'
+    // The skull is replaced by a sculpted head (see headShell below).
+    if (type === 'bone') key = SKULL_SLUGS.test(slug) ? null : 'bones'
     else if (type === 'muscle') {
       const group = MUSCLE_GROUPS[slug]
       const side = sideBySelector.get(name) ?? (name.endsWith('M') ? 'left' : 'right')
@@ -135,7 +151,7 @@ for (const asset of pack.assets) {
     clearNodeTransform(baked)
     for (const prim of baked.getMesh().listPrimitives()) {
       prim.setMaterial(material)
-      addTo(groups, key, prim)
+      if (key) addTo(groups, key, prim)
       addTo(bySlug, slug, prim)
     }
   }
@@ -180,6 +196,10 @@ if (process.env.PROBE) {
     addTo(groups, `muscle-lats-${side}`, toPrim(latissimusDorsi(radius, sign, HUMERUS_INSERTION)))
     addTo(groups, `muscle-abs-${side}`, toPrim(rectusAbdominis(radius, sign)))
   }
+  const skull = [...bySlug]
+    .filter(([slug]) => SKULL_SLUGS.test(slug))
+    .flatMap(([, prims]) => prims.map((p) => p.getAttribute('POSITION').getArray()))
+  addTo(groups, 'head', toPrim(headShell(skull)))
 }
 
 // Sanity check the side convention the app relies on: body's left is +X.
@@ -188,6 +208,118 @@ if (process.env.PROBE) {
   let sx = 0
   for (let i = 0; i < a.length; i += 3) sx += a[i]
   if (sx <= 0) throw new Error('expected left-side muscles on +X')
+}
+
+// Rig: joint landmarks from the source bones, then skin weights on every
+// primitive while we still know what each one is. Bones bind rigidly to a
+// single joint; muscles blend smoothly across the joints they cross.
+const jointPos = computeJoints(bySlug)
+const sideOf = (p) => (p[0] >= 0 ? 'l' : 'r')
+const skinPrim = (prim, hint, rigid) => {
+  const { joints, weights } = skinAttributes(prim.getAttribute('POSITION').getArray(), hint, jointPos, rigid)
+  prim
+    .setAttribute('JOINTS_0', out.createAccessor().setType('VEC4').setArray(joints))
+    .setAttribute('WEIGHTS_0', out.createAccessor().setType('VEC4').setArray(weights))
+}
+for (const [slug, prims] of bySlug) {
+  const type = typeBySlug.get(slug)
+  for (const prim of prims) {
+    if (type === 'bone') skinPrim(prim, null, (p) => boneJoint(slug, sideOf(p)))
+    else if (MUSCLE_GROUPS[slug]) skinPrim(prim, muscleHint(MUSCLE_GROUPS[slug]))
+    else skinPrim(prim, contextHint(slug))
+  }
+}
+for (const [key, prims] of groups) {
+  // Generated muscles (lats, abs) aren't in bySlug.
+  const id = key.replace(/^muscle-|-[lrc]$/g, '')
+  for (const prim of prims) if (!prim.getAttribute('JOINTS_0')) skinPrim(prim, muscleHint(id))
+}
+
+// Subcutaneous fat layer (lib/fatLayer.mjs): one envelope per body part,
+// separate from the muscles, with a per-vertex distribution weight the app
+// scales by the user's fat mass.
+{
+  const t0 = Date.now()
+  const centroidOf = (a) => {
+    const c = [0, 0, 0]
+    for (let i = 0; i < a.length; i += 3) for (let k = 0; k < 3; k++) c[k] += (a[i + k] * 3) / a.length
+    return c
+  }
+  const sideOfX = (x) => (x >= 0 ? 'l' : 'r')
+  /** Which part a source primitive belongs to. */
+  const partOf = (slug, prim) => {
+    const c = centroidOf(prim.getAttribute('POSITION').getArray())
+    const s = sideOfX(c[0])
+    const type = typeBySlug.get(slug)
+    if (type === 'bone') {
+      const joint = boneJoint(slug, s)
+      // Hands and feet hold almost no fat; wrapping them only blurs them.
+      if (/^(wrist|ankle)/.test(joint)) return null
+      if (/^(shoulder|elbow)/.test(joint)) return `arm-${s}`
+      if (/^(hip|knee)/.test(joint)) return `leg-${s}`
+      return 'trunk'
+    }
+    const hint = MUSCLE_GROUPS[slug] ? muscleHint(MUSCLE_GROUPS[slug]) : null
+    if (hint === 'arm') return `arm-${s}`
+    if (hint === 'leg') return `leg-${s}`
+    if (hint) return 'trunk'
+    // Context muscles: by where they sit (forearm, hand and foot muscles).
+    const w = vertexWeights(c, 'auto', jointPos)
+    const sum = (re) => Object.entries(w).reduce((acc, [j, v]) => acc + (re.test(JOINTS[j].name) ? v : 0), 0)
+    if (sum(/^(wrist|ankle)/) > 0.5) return null
+    if (sum(/^(shoulder|elbow|wrist)/) > 0.5) return `arm-${s}`
+    if (sum(/^(hip|knee|ankle)/) > 0.5 || contextHint(slug) === 'leg') return `leg-${s}`
+    return 'trunk'
+  }
+  const parts = new Map(FAT_PARTS.map((p) => [p, []]))
+  const geometry = (prim) => ({
+    positions: prim.getAttribute('POSITION').getArray(),
+    indices: prim.getIndices()?.getArray() ?? Uint32Array.from({ length: prim.getAttribute('POSITION').getCount() }, (_, i) => i),
+  })
+  for (const [slug, prims] of bySlug) {
+    if (SKULL_SLUGS.test(slug)) continue
+    for (const prim of prims) {
+      const part = partOf(slug, prim)
+      if (part) parts.get(part).push(geometry(prim))
+    }
+  }
+  // Generated muscles and the head belong to the trunk.
+  for (const [key, prims] of groups)
+    if (key === 'head' || /^muscle-(lats|abs)-/.test(key)) for (const prim of prims) parts.get('trunk').push(geometry(prim))
+
+  let headBottomY = Infinity
+  for (const prim of groups.get('head')) {
+    const a = prim.getAttribute('POSITION').getArray()
+    for (let i = 1; i < a.length; i += 3) headBottomY = Math.min(headBottomY, a[i])
+  }
+  const marks = fatLandmarks(jointPos, headBottomY)
+  const HINT = { trunk: 'auto', 'arm-l': 'arm', 'arm-r': 'arm', 'leg-l': 'leg', 'leg-r': 'leg' }
+  const toByte = (v) => Math.min(255, Math.round((v / FAT_WEIGHT_MAX) * 255))
+  for (const [part, meshes] of parts) {
+    const env = envelope(meshes)
+    if (signedVolume(env.positions, env.indices) < 0) throw new Error(`fat envelope ${part} is inside out`)
+    const n = env.positions.length / 3
+    const w = new Uint8Array(n)
+    const visc = new Uint8Array(n)
+    for (let i = 0; i < n; i++) {
+      const p = [env.positions[i * 3], env.positions[i * 3 + 1], env.positions[i * 3 + 2]]
+      const nn = [env.normals[i * 3], env.normals[i * 3 + 1], env.normals[i * 3 + 2]]
+      const f = fatWeight(part, p, nn, marks)
+      w[i] = toByte(f.w)
+      visc[i] = Math.round(Math.min(1, f.visceral) * 255)
+    }
+    const prim = out
+      .createPrimitive()
+      .setAttribute('POSITION', out.createAccessor().setType('VEC3').setArray(env.positions))
+      .setAttribute('NORMAL', out.createAccessor().setType('VEC3').setArray(env.normals))
+      .setAttribute('_FATW', out.createAccessor().setType('SCALAR').setArray(w).setNormalized(true))
+      .setAttribute('_VISC', out.createAccessor().setType('SCALAR').setArray(visc).setNormalized(true))
+      .setIndices(out.createAccessor().setType('SCALAR').setArray(env.indices))
+      .setMaterial(material)
+    skinPrim(prim, HINT[part])
+    addTo(groups, `fat-${part}`, prim)
+  }
+  console.log(`fat layer built in ${((Date.now() - t0) / 1000).toFixed(1)} s`)
 }
 
 // One node + mesh per group, with its primitives joined into one draw call.
@@ -200,6 +332,8 @@ for (const [key, prims] of groups) {
 const min = [Infinity, Infinity, Infinity]
 const max = [-Infinity, -Infinity, -Infinity]
 for (const node of scene.listChildren()) {
+  // The feet, not the fat under them, stand on the pedestal.
+  if (isFat(node.getName())) continue
   const pos = node.getMesh().listPrimitives()[0].getAttribute('POSITION')
   const lo = pos.getMin([])
   const hi = pos.getMax([])
@@ -217,9 +351,8 @@ console.log('bounds (m):', min.map((v, i) => +(max[i] - v).toFixed(3)))
 
 // Triangle budgets per node. Bones and the dense abdominal/forearm meshes
 // dominate the source; selectable muscles keep the most detail.
-const BUDGET = { bones: 70_000, context: 9_000, default: 7_000 }
-const budgetFor = (name) =>
-  name === 'bones' ? BUDGET.bones : name === 'context' ? BUDGET.context : BUDGET.default
+const BUDGET = { bones: 60_000, context: 9_000, 'fat-trunk': 16_000, fat: 5_000, default: 7_000 }
+const budgetFor = (name) => BUDGET[name] ?? (isFat(name) ? BUDGET.fat : BUDGET.default)
 
 await out.transform(unpartition(), prune(), dedup(), weld())
 let total = 0
@@ -231,6 +364,82 @@ for (const node of scene.listChildren()) {
   total += prim.getIndices().getCount() / 3
 }
 console.log('triangles:', Math.round(total))
+
+// Crevice occlusion per vertex (lib/ao.mjs), stored as the custom _AO
+// attribute; the app deepens it at low body fat to show definition.
+{
+  // The fat layer would occlude everything beneath it.
+  const nodes = scene.listChildren().filter((n) => n.getMesh() && !isFat(n.getName()))
+  const prims = nodes.map((n) => n.getMesh().listPrimitives()[0])
+  const t0 = Date.now()
+  const ao = bakeAmbientOcclusion(
+    prims.map((p) => ({
+      positions: p.getAttribute('POSITION').getArray(),
+      normals: p.getAttribute('NORMAL').getArray(),
+      indices: p.getIndices().getArray(),
+    })),
+  )
+  // One normalized byte per vertex is plenty for a shading term.
+  const toBytes = (a) => Uint8Array.from(a, (v) => Math.round(v * 255))
+  prims.forEach((p, i) =>
+    p.setAttribute('_AO', out.createAccessor().setType('SCALAR').setArray(toBytes(ao[i])).setNormalized(true)),
+  )
+  console.log(`ambient occlusion baked in ${((Date.now() - t0) / 1000).toFixed(1)} s`)
+}
+
+// Fat layer areas, so the app can turn a fat volume into a thickness:
+// thickness = volume / weightedArea × weight (all in metres).
+for (const node of scene.listChildren()) {
+  if (!isFat(node.getName())) continue
+  const prim = node.getMesh().listPrimitives()[0]
+  const pos = prim.getAttribute('POSITION').getArray()
+  const fw = prim.getAttribute('_FATW').getArray()
+  const vs = prim.getAttribute('_VISC').getArray()
+  const idx = prim.getIndices().getArray()
+  let area = 0
+  let weightedArea = 0
+  let visceralArea = 0
+  for (let t = 0; t < idx.length; t += 3) {
+    const [a, b, c] = [idx[t], idx[t + 1], idx[t + 2]]
+    const u = [0, 1, 2].map((k) => pos[b * 3 + k] - pos[a * 3 + k])
+    const v = [0, 1, 2].map((k) => pos[c * 3 + k] - pos[a * 3 + k])
+    const ar = Math.hypot(u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]) / 2
+    area += ar
+    weightedArea += (ar * FAT_WEIGHT_MAX * (fw[a] + fw[b] + fw[c])) / (3 * 255)
+    visceralArea += (ar * (vs[a] + vs[b] + vs[c])) / (3 * 255)
+  }
+  node.setExtras({ area, weightedArea, visceralArea, weightMax: FAT_WEIGHT_MAX })
+  console.log(node.getName(), 'area', area.toFixed(3), 'mean weight', (weightedArea / area).toFixed(2))
+}
+
+// Rig: joint nodes in a hierarchy (skin weights were set before joining).
+for (const [name, p] of Object.entries(jointPos)) if (name !== 'root') jointPos[name] = p.map((v, k) => v + offset[k])
+const jointNodes = new Map()
+for (const { name, parent } of JOINTS) {
+  const world = jointPos[name]
+  const parentWorld = parent ? jointPos[parent] : [0, 0, 0]
+  const node = out.createNode(`joint-${name}`).setTranslation(world.map((v, k) => v - parentWorld[k]))
+  if (parent) jointNodes.get(parent).addChild(node)
+  else scene.addChild(node)
+  jointNodes.set(name, node)
+}
+const ibm = new Float32Array(JOINTS.length * 16)
+JOINTS.forEach(({ name }, i) => {
+  // Joints carry no rotation in the bind pose, so the inverse bind matrix is
+  // just the negated world translation (column-major).
+  ibm.set([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, ...jointPos[name].map((v) => -v), 1], i * 16)
+})
+const skin = out
+  .createSkin('body')
+  .setSkeleton(jointNodes.get('root'))
+  .setInverseBindMatrices(out.createAccessor().setType('MAT4').setArray(ibm))
+for (const { name } of JOINTS) skin.addJoint(jointNodes.get(name))
+
+for (const node of scene.listChildren()) if (node.getMesh()) node.setSkin(skin)
+console.log('joints:', Object.fromEntries(Object.entries(jointPos).map(([k, v]) => [k, v.map((x) => +x.toFixed(3))])))
+
+// Quantizing positions of skinned meshes is folded into the inverse bind
+// matrices, so skinned output (and the shaders) still work in metres.
 await out.transform(prune(), quantize())
 out.createExtension(EXTMeshoptCompression).setRequired(true).setEncoderOptions({
   method: EXTMeshoptCompression.EncoderMethod.FILTER,

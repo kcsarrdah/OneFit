@@ -22,10 +22,32 @@ const MUSCLES: Muscle[] = [
     region: 'upper',
     views: ['front'],
     strength: [
-      { name: 'Push-ups', equipment: 'bodyweight', difficulty: 'beginner', prescription: '3 × 10', cues: ['Go'] },
-      { name: 'Bench Press', equipment: 'barbell', difficulty: 'intermediate', prescription: '4 × 5', cues: ['Press'] },
+      {
+        name: 'Push-ups',
+        equipment: 'bodyweight',
+        difficulty: 'beginner',
+        prescription: '3 × 10',
+        cues: ['Go'],
+        video_url: 'https://www.youtube.com/results?search_query=push-ups',
+      },
+      {
+        name: 'Bench Press',
+        equipment: 'barbell',
+        difficulty: 'intermediate',
+        prescription: '4 × 5',
+        cues: ['Press'],
+        video_url: 'https://www.youtube.com/results?search_query=bench',
+      },
     ],
-    flexibility: [{ name: 'Doorway Stretch', type: 'static', duration: '30 s', cues: ['Lean'] }],
+    flexibility: [
+      {
+        name: 'Doorway Stretch',
+        type: 'static',
+        duration: '30 s',
+        cues: ['Lean'],
+        video_url: 'https://www.youtube.com/results?search_query=doorway',
+      },
+    ],
   }),
   muscle({ id: 'glutes', name: 'Glutes', region: 'lower', views: ['back'] }),
 ]
@@ -72,8 +94,14 @@ describe('App', () => {
     expect(screen.queryByText('Push-ups')).not.toBeInTheDocument()
     expect(screen.getByText('Bench Press')).toBeInTheDocument()
 
+    const tutorial = screen.getByRole('link', { name: /Watch tutorial for Bench Press/ })
+    expect(tutorial).toHaveAttribute('href', 'https://www.youtube.com/results?search_query=bench')
+    expect(tutorial).toHaveAttribute('target', '_blank')
+    expect(tutorial).toHaveAttribute('rel', expect.stringContaining('noopener'))
+
     await user.click(screen.getByRole('radio', { name: 'Flexibility' }))
     expect(screen.getByText('Doorway Stretch')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Watch tutorial for Doorway Stretch/ })).toBeInTheDocument()
   })
 
   it('turns the figure around when a back-only muscle is picked from the roster', async () => {
@@ -92,6 +120,21 @@ describe('App', () => {
     renderApp()
     expect(await screen.findByRole('group', { name: 'Body diagram, front view' })).toBeInTheDocument()
     expect(screen.getByText(/switch sides to see the back/)).toBeInTheDocument()
+  })
+
+  it('switches between dark gym themes and remembers the choice', async () => {
+    const user = userEvent.setup()
+    const { unmount } = renderApp()
+    expect(document.documentElement.dataset.theme).toBe('iron')
+
+    await user.click(screen.getByRole('radio', { name: 'Volt' }))
+    expect(document.documentElement.dataset.theme).toBe('volt')
+    expect(screen.getByRole('radio', { name: 'Volt' })).toHaveAttribute('aria-checked', 'true')
+    unmount()
+
+    renderApp()
+    expect(document.documentElement.dataset.theme).toBe('volt')
+    localStorage.clear()
   })
 
   it('credits the 3D anatomy source', () => {
