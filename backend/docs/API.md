@@ -297,8 +297,8 @@ Create a custom exercise owned by the caller. Body: `{"name": string (required),
 
 - `201 {"message": "Exercise created successfully", "exercise": Exercise}`
 - `400` binding error / `{"error": "exercise name is required"}` (blank after trimming)
-- `409 {"error": "exercise with name '<name>' already exists"}`: the caller already has a custom exercise with this name
-- `500 {"error": "Failed to create exercise"}`: also returned for a name that exists anywhere else (`exercises.name` is globally unique, including soft-deleted rows and built-ins).
+- `409 {"error": "exercise with name '<name>' already exists"}`: the caller already has a custom exercise with this name (built-ins and other users' exercises may share it)
+- `500 {"error": "Failed to create exercise"}`
 
 ### `PUT /api/exercises/:id`
 

@@ -1,6 +1,7 @@
 package services
 
 import (
+	"errors"
 	"onefit/backend/models"
 	"onefit/backend/testutil"
 	"reflect"
@@ -57,5 +58,40 @@ func TestGetExercisesFilters(t *testing.T) {
 				t.Errorf("got %v, want %v", names, tc.want)
 			}
 		})
+	}
+}
+
+func TestCreateCustomExerciseNamesAreUniquePerUser(t *testing.T) {
+	db := testutil.NewDB(t)
+	es := NewExerciseService(db)
+	if err := es.SeedDefaultExercises(); err != nil {
+		t.Fatalf("seed: %v", err)
+	}
+	user := testutil.NewUser(t, db, "user")
+	other := testutil.NewUser(t, db, "other")
+
+	if _, err := es.CreateCustomExercise(user.ID, "Push-ups", "", "", ""); err != nil {
+		t.Errorf("same name as a built-in: %v", err)
+	}
+	if _, err := es.CreateCustomExercise(other.ID, "Push-ups", "", "", ""); err != nil {
+		t.Errorf("same name as another user's exercise: %v", err)
+	}
+	if _, err := es.CreateCustomExercise(user.ID, " Push-ups ", "", "", ""); !errors.Is(err, ErrConflict) {
+		t.Errorf("duplicate for the same user: got %v, want ErrConflict", err)
+	}
+
+	renamed, err := es.CreateCustomExercise(user.ID, "Dips", "", "", "")
+	if err != nil {
+		t.Fatalf("create: %v", err)
+	}
+	pushUps := "Push-ups"
+	if _, err := es.UpdateCustomExercise(user.ID, renamed.ID, &pushUps, nil, nil, nil); !errors.Is(err, ErrConflict) {
+		t.Errorf("rename onto an own name: got %v, want ErrConflict", err)
+	}
+	if err := es.DeleteCustomExercise(user.ID, renamed.ID); err != nil {
+		t.Fatalf("delete: %v", err)
+	}
+	if _, err := es.CreateCustomExercise(user.ID, "Dips", "", "", ""); err != nil {
+		t.Errorf("reuse a deleted exercise's name: %v", err)
 	}
 }

@@ -63,11 +63,12 @@ func (es *ExerciseService) GetExerciseByID(exerciseID uint) (*models.Exercise, e
 // CreateCustomExercise creates a new custom exercise for a user
 func (es *ExerciseService) CreateCustomExercise(userID uint, name, muscleGroups, equipment, instructions string) (*models.Exercise, error) {
 	// Validate required fields
-	if strings.TrimSpace(name) == "" {
+	name = strings.TrimSpace(name)
+	if name == "" {
 		return nil, newError(ErrInvalidInput, "exercise name is required")
 	}
 
-	// Check if exercise name already exists for this user
+	// Names are unique per user; built-ins and other users' exercises may share them
 	var existingExercise models.Exercise
 	err := es.db.Where("name = ? AND created_by_user_id = ?", name, userID).First(&existingExercise).Error
 	if err == nil {
@@ -79,7 +80,7 @@ func (es *ExerciseService) CreateCustomExercise(userID uint, name, muscleGroups,
 
 	// Create the exercise
 	exercise := models.Exercise{
-		Name:            strings.TrimSpace(name),
+		Name:            name,
 		MuscleGroups:    strings.TrimSpace(muscleGroups),
 		Equipment:       strings.TrimSpace(equipment),
 		Instructions:    strings.TrimSpace(instructions),

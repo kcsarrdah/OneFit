@@ -21,6 +21,14 @@ func SetupDB() *gorm.DB {
 
 // Migrate creates or updates the tables for every model.
 func Migrate(db *gorm.DB) error {
+	// exercises.name used to be globally unique; names are now unique per
+	// user, checked in ExerciseService. AutoMigrate never drops indexes.
+	if db.Migrator().HasIndex(&Exercise{}, "idx_exercises_name") {
+		if err := db.Migrator().DropIndex(&Exercise{}, "idx_exercises_name"); err != nil {
+			return err
+		}
+	}
+
 	return db.AutoMigrate(
 		&User{},
 		&Meal{},

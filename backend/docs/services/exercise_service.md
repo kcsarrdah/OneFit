@@ -24,7 +24,7 @@ func (es *ExerciseService) SeedDefaultExercises() error          // unused
 
 - `GetExercises` chains one `Where` per condition, which GORM ANDs and parenthesises: built-ins (`is_custom = false OR NULL`), plus the user's own custom exercises when `includeCustom`; then `LIKE %x%` for `muscleGroup` and `equipment`, and `LOWER(name) LIKE LOWER(%x%)` for `search` (SQLite has no `ILIKE`). Order: `is_custom ASC, name ASC`.
 - `GetExerciseByID`: any row by primary key (no ownership check).
-- `CreateCustomExercise`: rejects a blank name, rejects a name the user already has (untrimmed comparison), inserts trimmed values with `IsCustom = true`, `CreatedByUserID = userID`.
+- `CreateCustomExercise`: trims the name, rejects it if blank or if the user already has a custom exercise with it (built-ins and other users' names are allowed), inserts trimmed values with `IsCustom = true`, `CreatedByUserID = userID`.
 - `UpdateCustomExercise`: loads `id + created_by_user_id + is_custom = true` (else `ErrRecordNotFound`), checks the new trimmed name against the user's other exercises, applies non-nil fields (blank name ignored), `Save`.
 - `DeleteCustomExercise`: same ownership lookup; refuses (`cannot delete exercise: it is being used ...`) if any `template_exercises` or `session_exercises` row references it; then soft-deletes.
 - Errors ([errors.go](errors.md)): a blank name wraps `ErrInvalidInput`; a duplicate name and deleting an exercise still in use wrap `ErrConflict`. Missing rows are `gorm.ErrRecordNotFound`.
@@ -41,11 +41,11 @@ func (es *ExerciseService) SeedDefaultExercises() error          // unused
 
 ## Tests
 
-[exercise_service_test.go](exercise_service_test.md): filter, search and `includeCustom` combinations.
+[exercise_service_test.go](exercise_service_test.md): filter, search and `includeCustom` combinations; per-user name uniqueness.
 
 ## Gotchas / TODO
 
-- **Bug (verified):** names are globally unique in the DB (see [models/exercise.md](../models/exercise.md)), so the per-user duplicate check is not enough; a clash with a built-in or another user's exercise fails on insert with a 500.
+- Name uniqueness is per user and only enforced by this check (see [models/exercise.md](../models/exercise.md)); it is case-sensitive and racy under concurrent creates.
 - `LOWER` folds ASCII only, so `search` is case-sensitive for non-ASCII letters. `%` and `_` in filters are not escaped and act as wildcards.
 - `SeedDefaultExercises` is never called: a fresh database has no built-in exercises.
 - The in-use check counts `template_exercises` / `session_exercises` rows left behind when their template or workout was soft-deleted, so an exercise used only in deleted workouts can never be deleted.
