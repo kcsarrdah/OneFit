@@ -12,6 +12,7 @@ Unit tests for [routines](../../../../features/workouts/lib/routines.md). 9 test
 | `duplicateOf` | 1 | A built-in copied as custom, named "(Copy)" |
 | `allRoutines / isCustomRoutine` | 1 | Built-ins first (not custom), then the user's own |
 | `filterRoutines` | 3 | `All`, one category, empty result |
+| `routineSummary` | 2 | Minutes, exercises and category; "Custom" prefix and singular "exercise" |
 | `searchExercises` | 3 | Case-insensitive name match, muscle-group filter, excluding picked exercises |
 
 ## How it works

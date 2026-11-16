@@ -5,23 +5,7 @@
 
 const pad = (n: number) => String(n).padStart(2, '0');
 
-/** Seconds as "HH:MM:SS", or "MM:SS" under an hour. Negative counts as 0. */
-export function formatTime(totalSeconds: number): string {
-  const s = Math.max(0, totalSeconds);
-  const hours = Math.floor(s / 3600);
-  const minutes = Math.floor((s % 3600) / 60);
-  const seconds = Math.floor(s % 60);
-  return hours > 0 ? `${pad(hours)}:${pad(minutes)}:${pad(seconds)}` : `${pad(minutes)}:${pad(seconds)}`;
-}
-
-/** Seconds as "16h 0m", or "45m" under an hour. */
-export function formatHoursMinutes(seconds: number): string {
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
-}
-
-/** Like formatHoursMinutes but drops "0m": "16h", "16h 5m", "45m". */
+/** A fast's length without a "0m": "16h", "16h 5m", "45m". */
 export function formatFastLength(seconds: number): string {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
@@ -29,16 +13,16 @@ export function formatFastLength(seconds: number): string {
   return `${minutes}m`;
 }
 
-/** A timestamp as "Nov 12, 9:30 PM", or "Not started" when there is none. */
-export function formatClock(timestamp: number | null): string {
-  if (!timestamp) return 'Not started';
-  return new Date(timestamp).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true,
-  });
+/** Seconds as a clock of hours and minutes: "16:00", "7:42", "0:05". Negative counts as 0. */
+export function formatHoursClock(totalSeconds: number): string {
+  const s = Math.max(0, totalSeconds);
+  return `${Math.floor(s / 3600)}:${pad(Math.floor((s % 3600) / 60))}`;
+}
+
+/** A timestamp as weekday and time, "Tue 12:30 PM"; "Now" when there is none. */
+export function formatDayTime(timestamp: number | null): string {
+  if (!timestamp) return 'Now';
+  return new Date(timestamp).toLocaleString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit', hour12: true });
 }
 
 /** When a fast started at `startTime` reaches its goal; null if not started. */

@@ -37,16 +37,20 @@ Code shared by several features goes to `components/ui`, `hooks/`,
 
 - The **stack header** ("OneFit") from [app/_layout](app/_layout.md).
 - The **liquid glass tab bar** ([ScrollableTabBar](components/ui/ScrollableTabBar.md))
-  along the bottom: seven tabs, horizontally scrollable.
+  along the bottom: seven tabs, horizontally scrollable; it scrolls the
+  active tab into view.
 - The **liquid glass sidebar** ([VerticalTabBar](components/ui/VerticalTabBar.md))
   on the left, driven by [NavigationContext](contexts/NavigationContext.md):
   the route sets `currentMode`, the mode's config lists the sidebar options,
   and a tap sets `currentSidebarOption`. Screens switch content on that value
   (only [WorkoutsTab](features/workouts/screens/WorkoutsTab.md) does today:
   Workout, Routines, Exercises, History). Global options (Analytics,
-  Settings) `router.push` to routes that do not exist yet.
+  Settings) `router.push` to routes that do not exist yet. The sidebar
+  floats over content: every screen pads its content on the left by
+  `GlassEffectConfig.dimensions.vertical.contentInset` (84 pt).
 - **Focus mode** (`setFocusMode(true)`, set by [WorkoutScreen](features/workouts/screens/WorkoutScreen.md)
-  while a set is being logged) hides the header, tab bar and sidebar.
+  while a set is being logged and by [FastingScreen](features/fasting/screens/FastingScreen.md)
+  while a finished fast takes over) hides the header, tab bar and sidebar.
 
 The glass is two translucent layers (70% fill + 3% overlay + hairline border),
 not a real blur. The sidebar overlays content; screens must inset themselves
@@ -142,6 +146,7 @@ update [tests/README](tests/README.md). Never copy secrets into docs.
 
 ### `components/ui/`
 
+- [ActionButton.md](components/ui/ActionButton.md): a screen's one primary action, 64 pt accent pill.
 - [Badge.md](components/ui/Badge.md): pill label; muscle-group and standard variants.
 - [BigNumber.md](components/ui/BigNumber.md): huge tappable number (set logger).
 - [Button.md](components/ui/Button.md): variants, sizes, press scale.
@@ -154,9 +159,10 @@ update [tests/README](tests/README.md). Never copy secrets into docs.
 - [Input.md](components/ui/Input.md): text field.
 - [Label.md](components/ui/Label.md): form label (unused).
 - [NumberInput.md](components/ui/NumberInput.md): numeric field with steppers.
-- [Popover.md](components/ui/Popover.md): modal popover (fasting milestones).
+- [Popover.md](components/ui/Popover.md): modal popover (unused).
 - [RadioGroup.md](components/ui/RadioGroup.md): radio buttons via context.
-- [ScrollableTabBar.md](components/ui/ScrollableTabBar.md): floating glass tab bar.
+- [ScreenTitle.md](components/ui/ScreenTitle.md): Oswald screen title.
+- [ScrollableTabBar.md](components/ui/ScrollableTabBar.md): floating glass tab bar, scrolls to the active tab.
 - [SideBarLayout.md](components/ui/SideBarLayout.md): wraps tabs with the sidebar.
 - [Stepper.md](components/ui/Stepper.md): minus/plus pill.
 - [SwipeToConfirm.md](components/ui/SwipeToConfirm.md): Robinhood-style swipe up to confirm.
@@ -166,6 +172,10 @@ update [tests/README](tests/README.md). Never copy secrets into docs.
 - [Toast.md](components/ui/Toast.md): one sliding toast.
 - [Toaster.md](components/ui/Toaster.md): toast list (not mounted).
 - [VerticalTabBar.md](components/ui/VerticalTabBar.md): floating glass sidebar.
+
+### `lib/`
+
+- [tabBarScroll.md](lib/tabBarScroll.md): scroll offset that centres a tab.
 
 ### `constants/`
 
@@ -195,14 +205,15 @@ update [tests/README](tests/README.md). Never copy secrets into docs.
 - [constants.md](features/workouts/constants.md): 22 exercises, 5 starter routines, filter lists.
 - [screens/WorkoutsTab.md](features/workouts/screens/WorkoutsTab.md): sidebar switch; owns the session.
 - [screens/WorkoutScreen.md](features/workouts/screens/WorkoutScreen.md): swipe-to-log (PickNext ↔ SetLogger), finish.
-- [screens/RoutinesScreen.md](features/workouts/screens/RoutinesScreen.md): routines list, filter, create.
-- [screens/HistoryScreen.md](features/workouts/screens/HistoryScreen.md): progress stats and saved workouts.
+- [screens/RoutinesScreen.md](features/workouts/screens/RoutinesScreen.md): routines list, category chips, + New.
+- [screens/HistoryScreen.md](features/workouts/screens/HistoryScreen.md): totals and saved workouts; empty state.
 - [screens/ExercisesScreen.md](features/workouts/screens/ExercisesScreen.md): placeholder.
 - [components/PickNext.md](features/workouts/components/PickNext.md): "What's next?" list, search, finish.
 - [components/SetLogger.md](features/workouts/components/SetLogger.md): big numbers, swipe to log, rest takeover.
-- [components/RoutineCard.md](features/workouts/components/RoutineCard.md): one routine with actions.
-- [components/WorkoutHistoryCard.md](features/workouts/components/WorkoutHistoryCard.md): one saved workout.
-- [components/StatColumn.md](features/workouts/components/StatColumn.md): number over label.
+- [components/RoutineCard.md](features/workouts/components/RoutineCard.md): one routine row, ⋯ and start.
+- [components/RoutineMenu.md](features/workouts/components/RoutineMenu.md): duplicate / delete (confirmed) dialog.
+- [components/WorkoutHistoryCard.md](features/workouts/components/WorkoutHistoryCard.md): one saved workout row.
+- [components/HistoryTotals.md](features/workouts/components/HistoryTotals.md): workouts, minutes, volume totals.
 - [components/CenteredMessage.md](features/workouts/components/CenteredMessage.md): loading/empty message.
 - [components/CreateCustomRoutineModal.md](features/workouts/components/CreateCustomRoutineModal.md): two-step create dialog.
 - [components/RoutineDetailsStep.md](features/workouts/components/RoutineDetailsStep.md): step 1, details.
@@ -213,27 +224,27 @@ update [tests/README](tests/README.md). Never copy secrets into docs.
 - [hooks/useWeightUnit.md](features/workouts/hooks/useWeightUnit.md): kg/lbs preference.
 - [lib/setLogging.md](features/workouts/lib/setLogging.md): last performance, next options, starting set, nudge, formats.
 - [lib/session.md](features/workouts/lib/session.md): routine entries, log/undo, count.
-- [lib/history.md](features/workouts/lib/history.md): totals, saved workout, stats, formats.
-- [lib/routines.md](features/workouts/lib/routines.md): list, filter, create, duplicate, search.
+- [lib/history.md](features/workouts/lib/history.md): totals, saved workout, stats, compact/summary/day formats.
+- [lib/routines.md](features/workouts/lib/routines.md): list, filter, summary, create, duplicate, search.
 
 ### `features/fasting/`
 
 - [types.md](features/fasting/types.md): `CompletedFastData`.
 - [constants.md](features/fasting/constants.md): schedules and milestones.
-- [screens/FastingScreen.md](features/fasting/screens/FastingScreen.md): FastTrack ring, start/complete/reset.
-- [components/CircularProgress.md](features/fasting/components/CircularProgress.md): SVG progress ring.
-- [components/FastCompleteDialog.md](features/fasting/components/FastCompleteDialog.md): save or discard a fast.
+- [screens/FastingScreen.md](features/fasting/screens/FastingScreen.md): time left, start/end, Start / End fast.
+- [components/FastRing.md](features/fasting/components/FastRing.md): chalk progress ring with one big number.
+- [components/FastComplete.md](features/fasting/components/FastComplete.md): accent takeover to save or discard a fast.
 - [hooks/useFastingTimer.md](features/fasting/hooks/useFastingTimer.md): running fast, persisted start time.
-- [hooks/useFastCompletion.md](features/fasting/hooks/useFastCompletion.md): dialog state, POST to the backend.
+- [hooks/useFastCompletion.md](features/fasting/hooks/useFastCompletion.md): completion state, POST to the backend.
 - [lib/format.md](features/fasting/lib/format.md): time formats and progress.
 - [lib/restore.md](features/fasting/lib/restore.md): resume or complete a stored fast at launch.
 
 ### `features/water/`
 
 - [constants.md](features/water/constants.md): defaults and storage keys.
-- [screens/WaterScreen.md](features/water/screens/WaterScreen.md): intake, remaining, fill.
+- [screens/WaterScreen.md](features/water/screens/WaterScreen.md): intake, to go, fill, + 250 ml.
 - [components/WaterFill.md](features/water/components/WaterFill.md): Reanimated rising water.
-- [components/HydrationActions.md](features/water/components/HydrationActions.md): log and reset buttons.
+- [components/ResetIntake.md](features/water/components/ResetIntake.md): quiet Reset with confirmation.
 - [hooks/useHydration.md](features/water/hooks/useHydration.md): intake, local-day rollover, history.
 - [lib/hydration.md](features/water/lib/hydration.md): local day key and migration, rollover, fill fraction, history.
 
@@ -244,6 +255,7 @@ update [tests/README](tests/README.md). Never copy secrets into docs.
 ### `__tests__/`
 
 - [setup.md](__tests__/setup.md): global mocks (AsyncStorage, Reanimated, a minimal `react-native`).
+- [lib/tabBarScroll.test.md](__tests__/lib/tabBarScroll.test.md): tab bar centring maths.
 - [features/workouts/lib/setLogging.test.md](__tests__/features/workouts/lib/setLogging.test.md): swipe-to-log logic.
 - [features/workouts/lib/session.test.md](__tests__/features/workouts/lib/session.test.md): session helpers.
 - [features/workouts/lib/history.test.md](__tests__/features/workouts/lib/history.test.md): history helpers.

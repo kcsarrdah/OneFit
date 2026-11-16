@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Overall progress (workouts, minutes, volume) and every saved workout, newest
+Overall totals (workouts, minutes, volume) and every saved workout, newest
 first.
 
 ## Public API
@@ -11,17 +11,25 @@ first.
 
 ## How it works
 
-From [useWorkoutHistory](../hooks/useWorkoutHistory.md): a loading message,
-an empty state ("No Workouts Yet"), or a "Your Progress" card with three
-[StatColumn](../components/StatColumn.md)s (`totalWorkouts`, minutes =
-`round(totalDuration / 60)`, `round(totalVolume)`) above a list of
-[WorkoutHistoryCard](../components/WorkoutHistoryCard.md)s.
+From [useWorkoutHistory](../hooks/useWorkoutHistory.md):
+
+- Loading: a centred message.
+- Empty: [ScreenTitle](../../../components/ui/ScreenTitle.md) "History",
+  "NO WORKOUTS YET" with a line on what will appear, and an
+  [ActionButton](../../../components/ui/ActionButton.md) "Start a workout"
+  that switches the sidebar to Workout (`setCurrentSidebarOption('workout')`).
+- Otherwise: the title, [HistoryTotals](../components/HistoryTotals.md) with
+  the [weight unit](../hooks/useWeightUnit.md), then a
+  [WorkoutHistoryCard](../components/WorkoutHistoryCard.md) per workout.
+- Inset on the left by `contentInset` to clear the sidebar.
 
 ## Depends on
 
-[useWorkoutHistory](../hooks/useWorkoutHistory.md), [StatColumn](../components/StatColumn.md),
-[WorkoutHistoryCard](../components/WorkoutHistoryCard.md), [CenteredMessage](../components/CenteredMessage.md),
-[Card](../../../components/ui/Card.md), [ThemedText](../../../components/ThemedText.md), [Colors](../../../constants/Colors.md).
+[useWorkoutHistory](../hooks/useWorkoutHistory.md), [useWeightUnit](../hooks/useWeightUnit.md),
+[HistoryTotals](../components/HistoryTotals.md), [WorkoutHistoryCard](../components/WorkoutHistoryCard.md),
+[CenteredMessage](../components/CenteredMessage.md), [ActionButton](../../../components/ui/ActionButton.md),
+[ScreenTitle](../../../components/ui/ScreenTitle.md), [NavigationContext](../../../contexts/NavigationContext.md),
+[Colors](../../../constants/Colors.md), [Fonts](../../../constants/Fonts.md).
 
 ## Used by
 
@@ -33,5 +41,4 @@ none.
 
 ## Gotchas / TODO
 
-- "Total Volume" has no unit and mixes kg and lbs workouts.
-- No sidebar inset.
+Volume mixes kg and lbs workouts (see [HistoryTotals](../components/HistoryTotals.md)).

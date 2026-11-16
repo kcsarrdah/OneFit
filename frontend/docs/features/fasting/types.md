@@ -22,7 +22,7 @@ nothing.
 ## Used by
 
 [useFastingTimer](hooks/useFastingTimer.md), [useFastCompletion](hooks/useFastCompletion.md),
-[FastCompleteDialog](components/FastCompleteDialog.md).
+[FastComplete](components/FastComplete.md).
 
 ## Tests
 

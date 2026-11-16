@@ -63,6 +63,8 @@ const MAPPING = {
   'plus': 'add',
   'minus': 'remove',
   'arrow.uturn.backward': 'undo',
+  'xmark': 'close',
+  'ellipsis': 'more-horiz',
 } as const satisfies Record<string, string>;
 
 /**

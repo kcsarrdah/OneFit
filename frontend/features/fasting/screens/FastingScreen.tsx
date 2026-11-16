@@ -1,137 +1,124 @@
-import React from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
-import { IconSymbol } from '@/components/ui/IconSymbol';
-import { Colors } from '@/constants/Colors';
-import { CircularProgress } from '../components/CircularProgress';
-import { FastCompleteDialog } from '../components/FastCompleteDialog';
+import React, { useEffect, useState } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ActionButton } from '@/components/ui/ActionButton';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { ScreenTitle } from '@/components/ui/ScreenTitle';
+import { Colors, GlassEffectConfig } from '@/constants/Colors';
+import { Fonts } from '@/constants/Fonts';
+import { useNavigation } from '@/contexts/NavigationContext';
+import { FastComplete } from '../components/FastComplete';
+import { FastRing } from '../components/FastRing';
 import { FASTING_SCHEDULES } from '../constants';
 import { useFastCompletion } from '../hooks/useFastCompletion';
 import { useFastingTimer } from '../hooks/useFastingTimer';
-import { expectedEnd, formatClock, formatTime } from '../lib/format';
+import { expectedEnd, formatDayTime, formatFastLength, formatHoursClock } from '../lib/format';
 
 /**
  * @file FastingScreen.tsx
- * @description FastTrack: the current fast's progress ring, start and
- * expected end, and Start / Complete / Reset. Completing opens the
- * "Fast complete" dialog to save or discard it.
+ * @description The fasting timer: one big number for the time left in the
+ * ring, when the fast started and when it ends, and one action at the thumb
+ * (Start fast, then End fast). Ending early asks first. A finished fast takes
+ * over the screen in the accent (FastComplete) to save or discard it.
  */
+
+const SIDEBAR_INSET = GlassEffectConfig.dimensions.vertical.contentInset;
 
 export function FastingScreen() {
   const colors = Colors.dark;
+  const insets = useSafeAreaInsets();
+  const { setFocusMode } = useNavigation();
+  const [confirmingEnd, setConfirmingEnd] = useState(false);
 
   // Always 16:8 for now; the schedule will come from user settings.
   const schedule = FASTING_SCHEDULES[0];
   const goalDurationSeconds = schedule.durationHours * 3600;
 
   const completion = useFastCompletion();
-  const { isActive, elapsedSeconds, remainingSeconds, progressPercentage, startTime, startFast, stopFast, resetTimer } =
-    useFastingTimer({ goalDurationSeconds, onComplete: completion.openModal });
+  const { isActive, remainingSeconds, progressPercentage, startTime, startFast, stopFast } = useFastingTimer({
+    goalDurationSeconds,
+    onComplete: completion.openModal,
+  });
 
-  const main = isActive
-    ? { icon: 'stop.fill' as const, text: 'Complete Fast', onPress: stopFast, color: colors.destructive }
-    : { icon: 'play.fill' as const, text: 'Start Fast', onPress: startFast, color: colors.accent };
+  const done = completion.showModal && completion.completedFast !== null;
 
-  const timeColumn = (label: string, value: string) => (
-    <View style={styles.timeInfoColumn}>
-      <Text style={[styles.timeInfoLabel, { color: colors.mutedForeground }]}>{label}</Text>
-      <Text style={[styles.timeInfoValue, { color: colors.foreground }]}>{value}</Text>
+  // The completion takeover hides the header, sidebar and tab bar.
+  useEffect(() => {
+    setFocusMode(done);
+    return () => setFocusMode(false);
+  }, [done, setFocusMode]);
+
+  const endFast = () => (remainingSeconds > 0 ? setConfirmingEnd(true) : stopFast());
+
+  const time = (label: string, value: string) => (
+    <View style={styles.time}>
+      <Text style={[styles.timeLabel, { color: colors.mutedForeground }]}>{label}</Text>
+      <Text style={[styles.timeValue, { color: colors.foreground }]}>{value}</Text>
     </View>
   );
 
   return (
-    <>
-      <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
-        <View style={styles.header}>
-          <Text style={[styles.title, { color: colors.foreground }]}>FastTrack</Text>
+    <View style={[styles.screen, { backgroundColor: colors.background }]}>
+      <View style={[styles.content, { paddingLeft: SIDEBAR_INSET }]}>
+        <ScreenTitle>Fasting</ScreenTitle>
+        <Text style={[styles.schedule, { color: colors.mutedForeground }]}>
+          {schedule.name} · {schedule.durationHours} hours fasting
+        </Text>
+
+        <View style={styles.ring}>
+          <FastRing
+            progress={progressPercentage}
+            value={formatHoursClock(isActive ? remainingSeconds : goalDurationSeconds)}
+            caption={isActive ? `left · ${Math.floor(progressPercentage)}%` : 'hours to go'}
+          />
         </View>
 
-        <Card style={[styles.mainCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <View style={styles.cardHeader}>
-            <Text style={[styles.cardTitle, { color: colors.cardForeground }]}>
-              {isActive ? 'Active Fast' : 'Current Fast'}
-            </Text>
-            <Text style={[styles.cardDescription, { color: colors.mutedForeground }]}>
-              {schedule.name} - {schedule.durationHours} hours
-            </Text>
-          </View>
+        <View style={styles.times}>
+          {time(isActive ? 'Started' : 'Start', formatDayTime(startTime))}
+          {time('Ends', formatDayTime(expectedEnd(startTime ?? Date.now(), goalDurationSeconds)))}
+        </View>
+      </View>
 
-          <View style={styles.cardContent}>
-            <CircularProgress
-              percentage={progressPercentage}
-              size={240}
-              strokeWidth={20}
-              label={isActive ? 'Time Elapsed' : 'Ready to Start'}
-              timeRemaining={formatTime(isActive ? remainingSeconds : goalDurationSeconds)}
-              goalDurationSeconds={goalDurationSeconds}
-            />
-
-            <View style={styles.timeInfo}>
-              {timeColumn('Start Time', formatClock(startTime))}
-              {timeColumn('Expected End', formatClock(expectedEnd(startTime, goalDurationSeconds)))}
-            </View>
-
-            {isActive && (
-              <View style={styles.progressInfo}>
-                <Text style={[styles.progressText, { color: colors.foreground }]}>
-                  {formatTime(elapsedSeconds)} elapsed • {Math.round(progressPercentage)}% complete
-                </Text>
-              </View>
-            )}
-          </View>
-
-          <View style={styles.cardFooter}>
-            <Button onPress={main.onPress} style={[styles.actionButton, { backgroundColor: main.color }]}>
-              <IconSymbol name={main.icon} size={24} color={colors.accentForeground} />
-              <Text style={[styles.buttonText, { color: colors.accentForeground }]}>{main.text}</Text>
-            </Button>
-            {/* Reset is off during an active fast. */}
-            <Button onPress={resetTimer} variant="outline" style={styles.actionButton} disabled={isActive}>
-              <IconSymbol name="arrow.counterclockwise" size={24} color={colors.foreground} />
-              <Text style={[styles.buttonText, { color: colors.foreground }]}>Reset</Text>
-            </Button>
-          </View>
-        </Card>
-      </ScrollView>
-
-      <FastCompleteDialog
-        visible={completion.showModal}
-        fast={completion.completedFast}
-        notes={completion.notes}
-        onNotes={completion.setNotes}
-        saving={completion.isLoading}
-        onSave={() => completion.saveFast()}
-        onDiscard={completion.discardFast}
-        onDismiss={completion.closeModal}
+      <ActionButton
+        label={isActive ? 'End fast' : 'Start fast'}
+        onPress={isActive ? endFast : startFast}
+        style={[styles.action, { left: SIDEBAR_INSET, bottom: insets.bottom + 84 }]}
       />
-    </>
+
+      <ConfirmDialog
+        visible={confirmingEnd}
+        title="End your fast?"
+        description={`${formatFastLength(remainingSeconds)} to go of ${schedule.durationHours}h. It's saved as an early finish.`}
+        confirmLabel="End fast"
+        onConfirm={() => {
+          setConfirmingEnd(false);
+          stopFast();
+        }}
+        onCancel={() => setConfirmingEnd(false)}
+      />
+
+      {done && completion.completedFast && (
+        <FastComplete
+          fast={completion.completedFast}
+          notes={completion.notes}
+          onNotes={completion.setNotes}
+          saving={completion.isLoading}
+          onSave={() => completion.saveFast()}
+          onDiscard={completion.discardFast}
+        />
+      )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  header: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', padding: 16 },
-  title: { fontSize: 24, fontWeight: 'bold' },
-  mainCard: { margin: 16, borderRadius: 16, borderWidth: 1 },
-  cardHeader: { padding: 16, alignItems: 'center' },
-  cardTitle: { fontSize: 20, fontWeight: 'bold' },
-  cardDescription: { fontSize: 14, marginTop: 4 },
-  cardContent: { padding: 16, alignItems: 'center' },
-  cardFooter: { flexDirection: 'row', justifyContent: 'center', gap: 16, padding: 16 },
-  actionButton: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
-  buttonText: { fontSize: 16, fontWeight: '500' },
-  timeInfo: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    width: '100%',
-    marginTop: 16,
-    paddingHorizontal: 8,
-  },
-  timeInfoColumn: { flex: 1, alignItems: 'center' },
-  timeInfoLabel: { fontSize: 14, fontWeight: '500', textAlign: 'center' },
-  timeInfoValue: { fontSize: 14, textAlign: 'center', marginTop: 4 },
-  progressInfo: { marginTop: 12, alignItems: 'center' },
-  progressText: { fontSize: 14, fontWeight: '500' },
+  screen: { flex: 1 },
+  content: { paddingTop: 20, paddingRight: 20 },
+  schedule: { marginTop: 6, fontSize: 15 },
+  ring: { alignItems: 'center', marginTop: 28 },
+  times: { flexDirection: 'row', gap: 16, marginTop: 32 },
+  time: { flex: 1 },
+  timeLabel: { fontSize: 13 },
+  timeValue: { marginTop: 2, fontFamily: Fonts.display, fontSize: 22, letterSpacing: 0.4 },
+  action: { position: 'absolute', right: 20 },
 });

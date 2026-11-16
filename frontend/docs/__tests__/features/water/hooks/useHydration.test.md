@@ -39,4 +39,4 @@ This is a test file.
 Not covered: the `AppState` foreground rollover (the setup's `AppState` mock
 never fires), the UTC-to-local migration through the hook (covered as a pure
 function in [hydration.test](../lib/hydration.test.md)), and the
-[Reset dialog](../../../../features/water/components/HydrationActions.md).
+[Reset dialog](../../../../features/water/components/ResetIntake.md).

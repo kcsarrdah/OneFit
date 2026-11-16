@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ThemedText } from '@/components/ThemedText';
-import { Button } from '@/components/ui/Button';
-import { Colors } from '@/constants/Colors';
+import { ScreenTitle } from '@/components/ui/ScreenTitle';
+import { Colors, GlassEffectConfig } from '@/constants/Colors';
 import { CenteredMessage } from '../components/CenteredMessage';
 import { CreateCustomRoutineModal } from '../components/CreateCustomRoutineModal';
 import { RoutineCard } from '../components/RoutineCard';
@@ -14,13 +13,16 @@ import type { RoutineCategory } from '../types';
 
 /**
  * @file RoutinesScreen.tsx
- * @description Built-in and custom routines, filtered by category. Start one
- * to load its exercises into the workout, duplicate it, or create your own.
+ * @description Built-in and custom routines, filtered by category chips.
+ * Each row starts its routine with the orange button; Duplicate and Delete
+ * sit in its ⋯ menu. "+ New" opens the create-routine form.
  */
 
 interface RoutinesScreenProps {
   onStartRoutine: (routine: AnyRoutine) => void;
 }
+
+const SIDEBAR_INSET = GlassEffectConfig.dimensions.vertical.contentInset;
 
 const logError = (what: string) => (error: unknown) => console.error(`Failed to ${what}:`, error);
 
@@ -36,50 +38,50 @@ export function RoutinesScreen({ onStartRoutine }: RoutinesScreenProps) {
   const visible = filterRoutines(routines, filter);
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 20 }]}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={[styles.content, { paddingLeft: SIDEBAR_INSET, paddingBottom: insets.bottom + 96 }]}
+    >
       <View style={styles.header}>
-        <ThemedText style={[styles.title, { color: colors.foreground }]}>Workout Routines</ThemedText>
-        <Button
+        <ScreenTitle>Routines</ScreenTitle>
+        <Pressable
           onPress={() => setShowCreateModal(true)}
-          variant="default"
-          size="sm"
-          style={[styles.createButton, { backgroundColor: colors.accent }]}
+          accessibilityRole="button"
+          accessibilityLabel="New routine"
+          style={({ pressed }) => [styles.pill, { borderColor: colors.input }, pressed && { backgroundColor: colors.secondary }]}
         >
-          <ThemedText style={[styles.createText, { color: colors.accentForeground }]}>+ Create</ThemedText>
-        </Button>
+          <Text style={[styles.pillText, { color: colors.foreground }]}>+ New</Text>
+        </Pressable>
       </View>
 
-      <View style={styles.filters}>
-        <ThemedText style={[styles.filterLabel, { color: colors.mutedForeground }]}>Category</ThemedText>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll}>
-          {ROUTINE_FILTERS.map((option) => {
-            const selected = filter === option;
-            return (
-              <Button
-                key={option}
-                onPress={() => setFilter(option)}
-                variant={selected ? 'default' : 'outline'}
-                size="sm"
-                style={[styles.filterButton, selected && { backgroundColor: colors.accent }]}
-              >
-                <ThemedText
-                  style={[styles.filterText, { color: selected ? colors.accentForeground : colors.foreground }]}
-                >
-                  {option}
-                </ThemedText>
-              </Button>
-            );
-          })}
-        </ScrollView>
-      </View>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.chips}
+        style={styles.chipStrip}
+      >
+        {ROUTINE_FILTERS.map((option) => {
+          const selected = filter === option;
+          return (
+            <Pressable
+              key={option}
+              onPress={() => setFilter(option)}
+              accessibilityRole="button"
+              accessibilityState={{ selected }}
+              style={[
+                styles.pill,
+                selected ? { backgroundColor: colors.foreground, borderColor: colors.foreground } : { borderColor: colors.input },
+              ]}
+            >
+              <Text style={[styles.pillText, { color: selected ? colors.background : colors.foreground }]}>{option}</Text>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
 
       <View style={styles.list}>
         {visible.length === 0 ? (
-          <View style={styles.empty}>
-            <ThemedText style={[styles.emptyText, { color: colors.mutedForeground }]}>
-              No routines found matching your filters
-            </ThemedText>
-          </View>
+          <Text style={[styles.empty, { color: colors.mutedForeground }]}>No {filter} routines yet.</Text>
         ) : (
           visible.map((routine) => (
             <RoutineCard
@@ -104,17 +106,13 @@ export function RoutinesScreen({ onStartRoutine }: RoutinesScreenProps) {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { paddingTop: 15, paddingHorizontal: 16, paddingBottom: 16 },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 },
-  title: { fontSize: 24, fontWeight: 'bold' },
-  createButton: { borderRadius: 8, paddingHorizontal: 16, paddingVertical: 8 },
-  createText: { fontSize: 14, fontWeight: '600' },
-  filters: { marginBottom: 40 },
-  filterLabel: { fontSize: 14, fontWeight: '500', marginBottom: 8 },
-  filterScroll: { flexGrow: 0 },
-  filterButton: { marginRight: 8, borderRadius: 16, paddingHorizontal: 16, paddingVertical: 6 },
-  filterText: { fontSize: 12, fontWeight: '500' },
-  list: { gap: 16 },
-  empty: { padding: 32, alignItems: 'center' },
-  emptyText: { fontSize: 16, textAlign: 'center' },
+  content: { paddingTop: 20, paddingRight: 20 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 },
+  // The strip runs to the screen edge; its content keeps the gutter.
+  chipStrip: { marginRight: -20 },
+  chips: { gap: 8, paddingVertical: 18, paddingRight: 20 },
+  pill: { height: 40, paddingHorizontal: 16, borderRadius: 20, borderWidth: 1, justifyContent: 'center' },
+  pillText: { fontSize: 14, fontWeight: '600' },
+  list: { gap: 8 },
+  empty: { fontSize: 15, paddingVertical: 24 },
 });

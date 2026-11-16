@@ -2,9 +2,9 @@
 
 ## Purpose
 
-One saved workout on the History screen: name, date, duration, exercises,
-sets and volume, the exercise names, and a delete button that asks for
-confirmation first.
+One saved workout on the History screen, as a row: name and day, its numbers
+on one Oswald line, the exercises on one muted line, and a quiet × that asks
+before deleting.
 
 ## Public API
 
@@ -12,17 +12,17 @@ confirmation first.
 
 ## How it works
 
-Four small [StatColumn](StatColumn.md)s: [formatDuration](../lib/history.md),
-exercise count, `completedSets/totalSets`, `round(totalVolume) unit`. Date via
-[formatWorkoutDate](../lib/history.md). The ghost "✕" button (labelled
-"Delete workout") opens a [ConfirmDialog](../../../components/ui/ConfirmDialog.md)
-("Delete workout?", Cancel / Delete); only Delete calls `onDelete`.
+- `formatWorkoutDay` ("Today, 7:12 PM", "Sat, Nov 14") under the name;
+  `formatWorkoutSummary` ("52 MIN · 18/20 SETS · 4,240 KG", no-break spaces
+  inside each item so it only wraps between items) in Oswald 17; exercise
+  names joined, one line.
+- The × (44 pt, `icon` colour) opens a [ConfirmDialog](../../../components/ui/ConfirmDialog.md)
+  "Delete workout?"; confirming calls `onDelete`.
 
 ## Depends on
 
-[Card](../../../components/ui/Card.md), [Button](../../../components/ui/Button.md),
-[ConfirmDialog](../../../components/ui/ConfirmDialog.md), [ThemedText](../../../components/ThemedText.md), [StatColumn](StatColumn.md),
-[history](../lib/history.md), [Colors](../../../constants/Colors.md).
+[ConfirmDialog](../../../components/ui/ConfirmDialog.md), [IconSymbol](../../../components/ui/IconSymbol.md),
+[history](../lib/history.md), [Colors](../../../constants/Colors.md), [Fonts](../../../constants/Fonts.md).
 
 ## Used by
 
@@ -30,11 +30,9 @@ exercise count, `completedSets/totalSets`, `round(totalVolume) unit`. Date via
 
 ## Tests
 
-none.
+The formatting: [history.test](../../../__tests__/features/workouts/lib/history.test.md). The component: none.
 
 ## Gotchas / TODO
 
-- Workouts are saved with [completedOnly](../lib/setLogging.md), so "Sets" always
-  reads N/N.
-- The "✕" button is 28 px, below the 44 px touch target.
-- Stats borders are `rgba(0,0,0,0.1)`, invisible on dark.
+Saved workouts are named "Workout <date>" by [history](../lib/history.md), so
+the name and day repeat each other.

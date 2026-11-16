@@ -24,8 +24,8 @@ nothing.
 
 ## Used by
 
-[FastingScreen](screens/FastingScreen.md) (`FASTING_SCHEDULES[0]` only),
-[CircularProgress](components/CircularProgress.md) (the `FastingMilestone` type).
+[FastingScreen](screens/FastingScreen.md) (`FASTING_SCHEDULES[0]` only).
+`FASTING_MILESTONES` is not shown anywhere yet.
 
 ## Tests
 

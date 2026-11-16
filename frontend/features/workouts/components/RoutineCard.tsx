@@ -1,18 +1,15 @@
 import React, { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
-import { ThemedText } from '@/components/ThemedText';
-import { Button } from '@/components/ui/Button';
-import { Card, CardContent } from '@/components/ui/Card';
-import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { IconSymbol } from '@/components/ui/IconSymbol';
 import { Colors } from '@/constants/Colors';
-import { isCustomRoutine, type AnyRoutine } from '../lib/routines';
-import { StatColumn } from './StatColumn';
+import { isCustomRoutine, routineSummary, type AnyRoutine } from '../lib/routines';
+import { RoutineMenu } from './RoutineMenu';
 
 /**
  * @file RoutineCard.tsx
- * @description One routine on the Routines screen: name, description, its
- * minutes / exercises / category, and Start, Duplicate and (custom only)
- * Delete actions. Delete asks for confirmation first.
+ * @description One routine on the Routines screen, as a row: name, then
+ * "45 min · 5 exercises · Full Body", a ⋯ button for Duplicate / Delete, and
+ * the orange start button (the row's one action).
  */
 
 interface RoutineCardProps {
@@ -24,87 +21,61 @@ interface RoutineCardProps {
 
 export function RoutineCard({ routine, onStart, onDuplicate, onDelete }: RoutineCardProps) {
   const colors = Colors.dark;
-  const custom = isCustomRoutine(routine);
-  const [confirming, setConfirming] = useState(false);
-  const stat = (value: React.ReactNode, label: string) => (
-    <StatColumn value={value} label={label} valueColor={colors.foreground} labelColor={colors.mutedForeground} />
-  );
+  const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <Card style={[styles.card, { backgroundColor: colors.card }]}>
-      <CardContent style={styles.content}>
-        <View style={styles.header}>
-          <ThemedText style={[styles.name, { color: colors.foreground }]}>
-            {routine.name}
-            {custom && <ThemedText style={[styles.customBadge, { color: colors.accent }]}>{' '}• Custom</ThemedText>}
-          </ThemedText>
-          <ThemedText style={[styles.description, { color: colors.mutedForeground }]}>
-            {routine.description}
-          </ThemedText>
-        </View>
+    <View style={[styles.row, { backgroundColor: colors.card }]}>
+      <View style={styles.text}>
+        <Text style={[styles.name, { color: colors.foreground }]} numberOfLines={2}>
+          {routine.name}
+        </Text>
+        <Text style={[styles.sub, { color: colors.mutedForeground }]} numberOfLines={2}>
+          {routineSummary(routine)}
+        </Text>
+      </View>
 
-        <View style={styles.stats}>
-          {stat(routine.estimatedDuration, 'Minutes')}
-          {stat(routine.exercises.length, 'Exercises')}
-          {stat(routine.category, 'Category')}
-        </View>
+      <Pressable
+        onPress={() => setMenuOpen(true)}
+        accessibilityRole="button"
+        accessibilityLabel={`More for ${routine.name}`}
+        style={({ pressed }) => [styles.icon, pressed && { backgroundColor: colors.secondary }]}
+      >
+        <IconSymbol name="ellipsis" size={22} color={colors.mutedForeground} />
+      </Pressable>
+      <Pressable
+        onPress={onStart}
+        accessibilityRole="button"
+        accessibilityLabel={`Start ${routine.name}`}
+        style={({ pressed }) => [styles.icon, { backgroundColor: colors.accent, opacity: pressed ? 0.85 : 1 }]}
+      >
+        <IconSymbol name="play.fill" size={20} color={colors.accentForeground} />
+      </Pressable>
 
-        <View style={styles.actions}>
-          <Button onPress={onStart} variant="default" size="sm" style={[styles.startButton, { backgroundColor: colors.accent }]}>
-            <ThemedText style={[styles.startText, { color: colors.accentForeground }]}>Start Workout</ThemedText>
-          </Button>
-
-          <View style={styles.secondaryActions}>
-            <Button onPress={onDuplicate} variant="outline" size="sm" style={styles.secondaryButton}>
-              <ThemedText style={[styles.secondaryText, { color: colors.foreground }]}>Duplicate</ThemedText>
-            </Button>
-            {custom && (
-              <Button onPress={() => setConfirming(true)} variant="ghost" size="sm" style={styles.deleteButton}>
-                <ThemedText style={[styles.secondaryText, { color: colors.destructive }]}>Delete</ThemedText>
-              </Button>
-            )}
-          </View>
-        </View>
-      </CardContent>
-
-      {custom && (
-        <ConfirmDialog
-          visible={confirming}
-          title="Delete routine?"
-          description={`${routine.name} will be removed from your routines. This can't be undone.`}
-          confirmLabel="Delete"
-          onConfirm={() => {
-            setConfirming(false);
-            onDelete();
-          }}
-          onCancel={() => setConfirming(false)}
-        />
-      )}
-    </Card>
+      <RoutineMenu
+        visible={menuOpen}
+        routineName={routine.name}
+        canDelete={isCustomRoutine(routine)}
+        onDuplicate={onDuplicate}
+        onDelete={onDelete}
+        onClose={() => setMenuOpen(false)}
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  card: { borderRadius: 16 },
-  content: { padding: 16 },
-  header: { marginTop: 10, marginBottom: 14 },
-  name: { fontSize: 18, fontWeight: 'bold', marginBottom: 5 },
-  customBadge: { fontSize: 14, fontWeight: '500' },
-  description: { fontSize: 14, lineHeight: 20 },
-  stats: {
+  row: {
+    minHeight: 72,
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 16,
+    alignItems: 'center',
+    gap: 4,
+    borderRadius: 18,
     paddingVertical: 12,
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: 'rgba(0,0,0,0.1)',
+    paddingLeft: 16,
+    paddingRight: 10,
   },
-  actions: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  startButton: { flex: 1, marginRight: 12, borderRadius: 8, paddingVertical: 8, minHeight: 40 },
-  startText: { fontSize: 13, fontWeight: '600' },
-  secondaryActions: { flexDirection: 'row', gap: 8, alignItems: 'center' },
-  secondaryButton: { borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, minHeight: 40 },
-  secondaryText: { fontSize: 12, fontWeight: '500' },
-  deleteButton: { borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8 },
+  text: { flex: 1, minWidth: 0 },
+  name: { fontSize: 16, fontWeight: '600' },
+  sub: { marginTop: 3, fontSize: 13 },
+  icon: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
 });

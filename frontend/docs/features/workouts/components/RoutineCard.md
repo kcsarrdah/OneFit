@@ -2,28 +2,27 @@
 
 ## Purpose
 
-One routine on the Routines screen: name, description, minutes / exercises /
-category, and Start, Duplicate and (custom only) Delete, which asks for
-confirmation first.
+One routine on the Routines screen, as a row: name, a one-line summary, a ⋯
+button for Duplicate / Delete, and the orange start button.
 
 ## Public API
 
-`RoutineCard({ routine: AnyRoutine, onStart, onDuplicate, onDelete })` (all
-callbacks `() => void`).
+`RoutineCard({ routine: AnyRoutine, onStart, onDuplicate, onDelete })`.
 
 ## How it works
 
-[isCustomRoutine](../lib/routines.md) adds an accent "• Custom" after the name
-and shows the Delete button, which opens a
-[ConfirmDialog](../../../components/ui/ConfirmDialog.md) ("Delete routine?",
-Cancel / Delete); only Delete calls `onDelete`. Stats are three [StatColumn](StatColumn.md)s.
-"Start Workout" is the accent button.
+- A `card` row, radius 18, at least 72 pt: name (16 semibold) and
+  `routineSummary(routine)` ("45 min · 5 exercises · Full Body", led by
+  "Custom · " for the user's own), each up to two lines.
+- A 44 pt ⋯ button opens [RoutineMenu](RoutineMenu.md) (Delete only for
+  custom routines, and it confirms first).
+- A 44 pt accent circle with a play icon starts the routine: the row's one
+  orange element. Labelled "Start <name>".
 
 ## Depends on
 
-[Card](../../../components/ui/Card.md), [Button](../../../components/ui/Button.md),
-[ConfirmDialog](../../../components/ui/ConfirmDialog.md), [ThemedText](../../../components/ThemedText.md), [StatColumn](StatColumn.md),
-[routines](../lib/routines.md), [Colors](../../../constants/Colors.md).
+[RoutineMenu](RoutineMenu.md), [routines](../lib/routines.md), [IconSymbol](../../../components/ui/IconSymbol.md),
+[Colors](../../../constants/Colors.md).
 
 ## Used by
 
@@ -31,9 +30,8 @@ Cancel / Delete); only Delete calls `onDelete`. Stats are three [StatColumn](Sta
 
 ## Tests
 
-none.
+The summary: [routines.test](../../../__tests__/features/workouts/lib/routines.test.md). The component: none.
 
 ## Gotchas / TODO
 
-The stats row's top and bottom borders are `rgba(0,0,0,0.1)`, invisible on
-the dark card; use `colors.border`.
+The description is no longer shown; it is still stored on each routine.

@@ -26,8 +26,8 @@ the provider's scale to 0 and then sets `isOpen` false.
 
 ## Used by
 
-[CircularProgress](../../features/fasting/components/CircularProgress.md)
-(milestone markers, which no screen currently passes).
+nothing at the moment (the fasting ring that used it for milestone markers
+was replaced by [FastRing](../../features/fasting/components/FastRing.md)).
 
 ## Tests
 

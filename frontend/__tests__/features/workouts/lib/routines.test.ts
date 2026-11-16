@@ -5,6 +5,7 @@ import {
   duplicateOf,
   filterRoutines,
   isCustomRoutine,
+  routineSummary,
   searchExercises,
 } from '@/features/workouts/lib/routines';
 import type { CustomRoutine } from '@/features/workouts/types';
@@ -85,5 +86,19 @@ describe('searchExercises', () => {
   it('leaves out exercises already picked', () => {
     const result = searchExercises(EXERCISES, 'curl', 'Arms', [ex('bicep-curl')]);
     expect(result.map((e) => e.id)).toEqual(['hammer-curl']);
+  });
+});
+
+describe('routineSummary', () => {
+  it('lists minutes, exercises and category', () => {
+    const routine = allRoutines(WORKOUT_ROUTINES, [])[0];
+    expect(routineSummary(routine)).toBe(
+      `${routine.estimatedDuration} min · ${routine.exercises.length} exercises · ${routine.category}`,
+    );
+  });
+
+  it('leads with "Custom" for your own and says "1 exercise"', () => {
+    const copy = { ...duplicateOf(WORKOUT_ROUTINES[0]), exercises: WORKOUT_ROUTINES[0].exercises.slice(0, 1) };
+    expect(routineSummary(copy)).toBe(`Custom · ${copy.estimatedDuration} min · 1 exercise · ${copy.category}`);
   });
 });
