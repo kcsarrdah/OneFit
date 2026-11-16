@@ -274,15 +274,13 @@ Query (all optional):
 |---|---|
 | `muscle_group` | substring match on `muscle_groups` (`LIKE %x%`) |
 | `equipment` | substring match on `equipment` |
-| `search` | name search (**broken**, see below) |
+| `search` | case-insensitive substring match on `name` (`LOWER(name) LIKE LOWER(%x%)`; ASCII case folding only) |
 | `include_custom` | default `true`; any value other than `true` means false. When true, adds the caller's own custom exercises to the built-ins. |
 
-Ordered built-ins first, then by name.
+Filters apply to built-ins and custom exercises alike and combine with AND. Ordered built-ins first, then by name.
 
 - `200 {"exercises": [Exercise], "count": n}`
 - `500 {"error": "Failed to fetch exercises"}`
-
-Known bugs: any non-empty `search` returns 500 (the query uses `ILIKE`, which SQLite does not support). With `include_custom=false`, `muscle_group`/`equipment` filters are ignored for built-ins (missing parentheses). Details in [services/exercise_service.md](services/exercise_service.md).
 
 ### `GET /api/exercises/:id`
 

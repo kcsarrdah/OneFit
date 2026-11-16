@@ -34,6 +34,7 @@ ok  onefit/backend/services      0.417s
 | File | Covers | Doc |
 |---|---|---|
 | `controllers/errors_test.go` | Service errors → 400/404/409 through the exercise, template and workout handlers | [controllers/errors_test.md](../controllers/errors_test.md) |
+| `services/exercise_service_test.go` | `ExerciseService` queries and custom-exercise rules | [services/exercise_service_test.md](../services/exercise_service_test.md) |
 | `services/anatomy_service_test.go` | `AnatomyService` (list filters, lookup, id validation) and the embedded `data/muscles.json` content | [services/anatomy_service_test.md](../services/anatomy_service_test.md) |
 
 ## Coverage summary
@@ -42,7 +43,7 @@ Covered: the anatomy feature's service layer and content (indirectly `data/anato
 
 Not covered at all:
 
-- Every DB-backed service: `user_service`, `exercise_service`, `template_service`, `workout_service`. Several verified bugs live here (SQLite `ILIKE`, filter precedence, global exercise-name uniqueness, soft-delete leaving children counted in stats); see [services/exercise_service.md](../services/exercise_service.md) and [services/workout_service.md](../services/workout_service.md).
+- DB-backed services beyond the cases above: `user_service`, most of `template_service` and `workout_service`, and `exercise_service` update paths.
 - Controllers other than the 4xx error mapping (binding, fasting time checks, water date parsing, 500 paths).
 - Routes and middleware (auth header parsing, 401 paths, public vs protected split).
 - `main.go` startup behaviour (CORS, dev test-user reset).

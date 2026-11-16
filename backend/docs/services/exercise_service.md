@@ -22,7 +22,7 @@ func (es *ExerciseService) SeedDefaultExercises() error          // unused
 
 ## How it works
 
-- `GetExercises` builds a WHERE string: built-ins (`is_custom = false OR NULL`), plus the user's own custom exercises when `includeCustom`; then `LIKE %x%` for `muscleGroup` and `equipment`, `ILIKE` for `search`. Order: `is_custom ASC, name ASC`.
+- `GetExercises` chains one `Where` per condition, which GORM ANDs and parenthesises: built-ins (`is_custom = false OR NULL`), plus the user's own custom exercises when `includeCustom`; then `LIKE %x%` for `muscleGroup` and `equipment`, and `LOWER(name) LIKE LOWER(%x%)` for `search` (SQLite has no `ILIKE`). Order: `is_custom ASC, name ASC`.
 - `GetExerciseByID`: any row by primary key (no ownership check).
 - `CreateCustomExercise`: rejects a blank name, rejects a name the user already has (untrimmed comparison), inserts trimmed values with `IsCustom = true`, `CreatedByUserID = userID`.
 - `UpdateCustomExercise`: loads `id + created_by_user_id + is_custom = true` (else `ErrRecordNotFound`), checks the new trimmed name against the user's other exercises, applies non-nil fields (blank name ignored), `Save`.
@@ -41,12 +41,11 @@ func (es *ExerciseService) SeedDefaultExercises() error          // unused
 
 ## Tests
 
-none
+[exercise_service_test.go](exercise_service_test.md): filter, search and `includeCustom` combinations.
 
 ## Gotchas / TODO
 
-- **Bug (verified):** `search` uses `name ILIKE ?`. SQLite has no `ILIKE`; any search returns `SQL logic error: near "ILIKE"` → HTTP 500. Use `LIKE` (case-insensitive for ASCII in SQLite) or `LOWER(name) LIKE`.
-- **Bug (verified):** with `includeCustom = false`, the first condition `is_custom = ? OR is_custom IS NULL` is not parenthesised, so `... OR is_custom IS NULL AND muscle_groups LIKE ?` applies the filters only to NULL rows: built-ins come back unfiltered (a `legs` filter returned both test exercises).
 - **Bug (verified):** names are globally unique in the DB (see [models/exercise.md](../models/exercise.md)), so the per-user duplicate check is not enough; a clash with a built-in or another user's exercise fails on insert with a 500.
+- `LOWER` folds ASCII only, so `search` is case-sensitive for non-ASCII letters. `%` and `_` in filters are not escaped and act as wildcards.
 - `SeedDefaultExercises` is never called: a fresh database has no built-in exercises.
 - The in-use check counts `template_exercises` / `session_exercises` rows left behind when their template or workout was soft-deleted, so an exercise used only in deleted workouts can never be deleted.
