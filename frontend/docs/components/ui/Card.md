@@ -29,8 +29,7 @@ Plain views with theme colours from [Colors](../../constants/Colors.md).
 
 [FastingScreen](../../features/fasting/screens/FastingScreen.md), [HistoryScreen](../../features/workouts/screens/HistoryScreen.md),
 [RoutineCard](../../features/workouts/components/RoutineCard.md), [WorkoutHistoryCard](../../features/workouts/components/WorkoutHistoryCard.md),
-[RoutineExercisesStep](../../features/workouts/components/RoutineExercisesStep.md),
-[ExerciseSelectionModal](../../features/workouts/components/ExerciseSelectionModal.md).
+[RoutineExercisesStep](../../features/workouts/components/RoutineExercisesStep.md).
 
 ## Tests
 

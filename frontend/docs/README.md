@@ -206,7 +206,6 @@ update [tests/README](tests/README.md). Never copy secrets into docs.
 - [components/CreateCustomRoutineModal.md](features/workouts/components/CreateCustomRoutineModal.md): two-step create dialog.
 - [components/RoutineDetailsStep.md](features/workouts/components/RoutineDetailsStep.md): step 1, details.
 - [components/RoutineExercisesStep.md](features/workouts/components/RoutineExercisesStep.md): step 2, exercises.
-- [components/ExerciseSelectionModal.md](features/workouts/components/ExerciseSelectionModal.md): catalogue browser (unused).
 - [hooks/useWorkoutSession.md](features/workouts/hooks/useWorkoutSession.md): workout in progress, auto-saved.
 - [hooks/useWorkoutHistory.md](features/workouts/hooks/useWorkoutHistory.md): saved workouts and totals.
 - [hooks/useCustomRoutines.md](features/workouts/hooks/useCustomRoutines.md): built-in + custom routines.

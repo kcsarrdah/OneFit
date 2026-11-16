@@ -28,8 +28,7 @@ Pure; `now` is injectable for tests.
 ## Used by
 
 [useCustomRoutines](../hooks/useCustomRoutines.md), [RoutinesScreen](../screens/RoutinesScreen.md),
-[RoutineCard](../components/RoutineCard.md), [RoutineExercisesStep](../components/RoutineExercisesStep.md),
-[ExerciseSelectionModal](../components/ExerciseSelectionModal.md).
+[RoutineCard](../components/RoutineCard.md), [RoutineExercisesStep](../components/RoutineExercisesStep.md).
 
 ## Tests
 
