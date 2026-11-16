@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Colors } from '@/constants/Colors';
 import { formatDuration, formatWorkoutDate } from '../lib/history';
 import type { SavedWorkout } from '../types';
@@ -11,7 +12,8 @@ import { StatColumn } from './StatColumn';
 /**
  * @file WorkoutHistoryCard.tsx
  * @description One saved workout on the History screen: name, date, duration,
- * exercises, sets and volume, the exercise names, and a delete button.
+ * exercises, sets and volume, the exercise names, and a delete button that
+ * asks for confirmation first.
  */
 
 interface WorkoutHistoryCardProps {
@@ -21,6 +23,7 @@ interface WorkoutHistoryCardProps {
 
 export function WorkoutHistoryCard({ workout, onDelete }: WorkoutHistoryCardProps) {
   const colors = Colors.dark;
+  const [confirming, setConfirming] = useState(false);
   const stat = (value: React.ReactNode, label: string) => (
     <StatColumn
       size="sm"
@@ -42,7 +45,13 @@ export function WorkoutHistoryCard({ workout, onDelete }: WorkoutHistoryCardProp
             </ThemedText>
           </View>
           <View style={styles.actions}>
-            <Button onPress={onDelete} variant="ghost" size="sm" style={styles.deleteButton}>
+            <Button
+              onPress={() => setConfirming(true)}
+              variant="ghost"
+              size="sm"
+              style={styles.deleteButton}
+              accessibilityLabel="Delete workout"
+            >
               <ThemedText style={[styles.deleteText, { color: colors.destructive }]}>✕</ThemedText>
             </Button>
           </View>
@@ -62,6 +71,18 @@ export function WorkoutHistoryCard({ workout, onDelete }: WorkoutHistoryCardProp
           </ThemedText>
         </View>
       </CardContent>
+
+      <ConfirmDialog
+        visible={confirming}
+        title="Delete workout?"
+        description={`${workout.name} (${formatWorkoutDate(workout.date)}) will be removed from your history. This can't be undone.`}
+        confirmLabel="Delete"
+        onConfirm={() => {
+          setConfirming(false);
+          onDelete();
+        }}
+        onCancel={() => setConfirming(false)}
+      />
     </Card>
   );
 }
