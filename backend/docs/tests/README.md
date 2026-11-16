@@ -36,6 +36,8 @@ ok  onefit/backend/services      0.417s
 | `controllers/errors_test.go` | Service errors → 400/404/409 through the exercise, template and workout handlers | [controllers/errors_test.md](../controllers/errors_test.md) |
 | `models/setup_test.go` | `Migrate` drops the old global exercise-name index | [models/setup_test.md](../models/setup_test.md) |
 | `services/exercise_service_test.go` | `ExerciseService` queries and custom-exercise rules | [services/exercise_service_test.md](../services/exercise_service_test.md) |
+| `services/template_service_test.go` | Template delete soft-deletes its exercises | [services/template_service_test.md](../services/template_service_test.md) |
+| `services/workout_service_test.go` | Workout/exercise deletes soft-delete children; stats skip deleted rows | [services/workout_service_test.md](../services/workout_service_test.md) |
 | `services/anatomy_service_test.go` | `AnatomyService` (list filters, lookup, id validation) and the embedded `data/muscles.json` content | [services/anatomy_service_test.md](../services/anatomy_service_test.md) |
 
 ## Coverage summary

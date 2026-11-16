@@ -160,8 +160,13 @@ func (ts *TemplateService) DeleteTemplate(userID, templateID uint) error {
 		return newError(ErrConflict, "cannot delete template: it is being used in workout sessions")
 	}
 
-	// Delete template (cascade will handle template_exercises)
-	return ts.db.Delete(&template).Error
+	// Deletes are soft, so ON DELETE CASCADE never fires: delete the exercises too
+	return ts.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Where("template_id = ?", template.ID).Delete(&models.TemplateExercise{}).Error; err != nil {
+			return err
+		}
+		return tx.Delete(&template).Error
+	})
 }
 
 // AddExerciseToTemplate adds an exercise to a template

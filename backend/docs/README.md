@@ -28,7 +28,7 @@ Firebase Authentication. The client signs in with the Firebase SDK and sends `Au
 
 ### Database
 
-SQLite through GORM and `github.com/glebarez/sqlite` (pure Go, no cgo). [models/setup.go](models/setup.md) opens `onefit.db` in the working directory and runs `AutoMigrate` for every model on each start; there are no versioned migrations, and AutoMigrate never drops or renames columns. Every model embeds [`Base`](models/base.md), so deletes are soft (`deleted_at`) and `ON DELETE CASCADE` never fires.
+SQLite through GORM and `github.com/glebarez/sqlite` (pure Go, no cgo). [models/setup.go](models/setup.md) opens `onefit.db` in the working directory and runs `AutoMigrate` for every model on each start; there are no versioned migrations, and AutoMigrate never drops or renames columns. Every model embeds [`Base`](models/base.md), so deletes are soft (`deleted_at`) and `ON DELETE CASCADE` never fires; the workout and template services soft-delete child rows themselves.
 
 ### Config
 
@@ -84,7 +84,9 @@ Secrets: `backend/.env` and the Firebase service-account JSON are git-ignored.
 - [services/exercise_service.md](services/exercise_service.md): exercise queries and custom CRUD.
 - [services/exercise_service_test.md](services/exercise_service_test.md): tests for exercise filters, search and custom names.
 - [services/template_service.md](services/template_service.md): template CRUD, template exercises, duplicate.
+- [services/template_service_test.md](services/template_service_test.md): tests for template delete cascading.
 - [services/workout_service.md](services/workout_service.md): workout lifecycle, sets, active workout, stats.
+- [services/workout_service_test.md](services/workout_service_test.md): tests for workout delete cascading and stats.
 - [services/anatomy_service.md](services/anatomy_service.md): in-memory muscle list/filter/lookup.
 - [services/anatomy_service_test.md](services/anatomy_service_test.md): tests for the anatomy service and content.
 

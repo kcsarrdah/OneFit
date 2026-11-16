@@ -365,7 +365,7 @@ Owner only. Body (all optional): `{"name", "description", "category", "is_public
 
 ### `DELETE /api/templates/:id`
 
-Owner only. Soft-deletes the template only (its `template_exercises` rows remain).
+Owner only. Soft-deletes the template and its `template_exercises` rows in one transaction.
 
 - `200 {"message": "Template deleted successfully"}`
 - `400 {"error": "Invalid template ID"}`
@@ -451,7 +451,7 @@ Query: `days` (default 30; invalid or ≤ 0 becomes 30).
            "average_duration_minutes": 45, "period_days": 30}}
 ```
 
-`total_workouts` and `total_minutes` count finished workouts started in the window. `total_sets` counts sets in all workouts started in the window, including unfinished and **deleted** workouts (bug, see service doc).
+`total_workouts` and `total_minutes` count finished workouts started in the window. `total_sets` counts sets in all non-deleted workouts started in the window, including unfinished ones; sets of deleted workouts or removed exercises are not counted.
 
 - `500 {"error": "Failed to fetch workout stats"}`
 
@@ -481,7 +481,7 @@ Rename, edit notes, or finish. Body (all optional):
 
 ### `DELETE /api/workouts/:id`
 
-Soft-deletes the workout row only; its session exercises and sets stay in the database.
+Soft-deletes the workout, its session exercises and their sets in one transaction.
 
 - `200 {"message": "Workout deleted successfully"}`
 - `400 {"error": "Invalid workout ID"}`
@@ -508,7 +508,7 @@ Body: `{"exercise_id": uint (required, Exercise ID), "order_index": int, "notes"
 
 ### `DELETE /api/workouts/:id/exercises/:exercise_id`
 
-`exercise_id` = SessionExercise ID. Soft-deletes the row; its sets remain.
+`exercise_id` = SessionExercise ID. Soft-deletes the row and its sets in one transaction.
 
 - `200 {"message": "Exercise removed from workout successfully"}`
 - `400 {"error": "Invalid workout ID"}` / `{"error": "Invalid session exercise ID"}`
@@ -581,7 +581,7 @@ The older reference is [`../Data_&_API_Related_Documentation/API_EndPoints.md`](
 2. **Counts.** It says workouts have 10 endpoints and the total is 23; the code has 13 workout endpoints and 40 in total.
 3. **"All endpoints require Firebase auth".** `/`, `/health`, `/api/auth/firebase-test` and `/api/anatomy/*` are public.
 4. **Template `order_index` "required".** It is optional; 0 or omitted appends.
-5. **"Cascade deletes".** Deletes are GORM soft deletes. The `OnDelete:CASCADE` constraints never fire, so template exercises, session exercises and sets remain after their parent is deleted.
+5. **"Cascade deletes".** Deletes are GORM soft deletes and the `OnDelete:CASCADE` constraints never fire; the services soft-delete template exercises, session exercises and sets themselves when their parent is deleted.
 6. **"Users can only access their own data".** `GET /api/exercises/:id` returns any user's custom exercise.
 7. **"Timestamps are UTC".** Responses use the server's local offset; fasting and water requests take epoch milliseconds, not ISO strings.
 8. **Status codes.** It implies 400 for every invalid input; the code returns 400 for invalid input, 404 for an inaccessible template and 409 for conflicts (duplicate names, "in use" deletes, an exercise already in a template).

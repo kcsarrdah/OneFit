@@ -66,5 +66,5 @@ none
 
 ## Gotchas / TODO
 
-- **Bug (verified):** `constraint:OnDelete:CASCADE` has no effect because deletes are soft. Deleting a session leaves its `session_exercises` and `exercise_sets` rows live, and those sets are still counted by `GetWorkoutStats`.
+- `constraint:OnDelete:CASCADE` has no effect because deletes are soft; [workout_service.go](../services/workout_service.md) soft-deletes session exercises and sets with their parent instead.
 - `Exercise` is a value, not a pointer: when not preloaded it serialises as a zero-valued exercise object rather than being omitted.

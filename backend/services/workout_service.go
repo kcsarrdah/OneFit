@@ -185,8 +185,17 @@ func (ws *WorkoutService) DeleteWorkout(userID, workoutID uint) error {
 		return err
 	}
 
-	// Delete workout (cascade will handle exercises and sets)
-	return ws.db.Delete(&workout).Error
+	// Deletes are soft, so ON DELETE CASCADE never fires: delete the children too
+	return ws.db.Transaction(func(tx *gorm.DB) error {
+		sessionExerciseIDs := tx.Model(&models.SessionExercise{}).Select("id").Where("session_id = ?", workout.ID)
+		if err := tx.Where("session_exercise_id IN (?)", sessionExerciseIDs).Delete(&models.ExerciseSet{}).Error; err != nil {
+			return err
+		}
+		if err := tx.Where("session_id = ?", workout.ID).Delete(&models.SessionExercise{}).Error; err != nil {
+			return err
+		}
+		return tx.Delete(&workout).Error
+	})
 }
 
 // AddExerciseToWorkout adds an exercise to a workout session
@@ -418,12 +427,14 @@ func (ws *WorkoutService) GetWorkoutStats(userID uint, days int) (map[string]int
 		Select("COALESCE(SUM(duration_minutes), 0)").
 		Scan(&totalMinutes)
 
-	// Total sets logged
+	// Total sets logged. GORM only adds deleted_at for exercise_sets, so
+	// exclude sets whose exercise or workout was deleted here.
 	var totalSets int64
 	err = ws.db.Model(&models.ExerciseSet{}).
 		Joins("JOIN session_exercises ON exercise_sets.session_exercise_id = session_exercises.id").
 		Joins("JOIN workout_sessions ON session_exercises.session_id = workout_sessions.id").
 		Where("workout_sessions.user_id = ? AND workout_sessions.started_at >= ?", userID, startDate).
+		Where("session_exercises.deleted_at IS NULL AND workout_sessions.deleted_at IS NULL").
 		Count(&totalSets).Error
 	if err != nil {
 		return nil, err
@@ -454,6 +465,11 @@ func (ws *WorkoutService) RemoveExerciseFromWorkout(userID, workoutID, sessionEx
 		return err
 	}
 
-	// Delete session exercise (cascade will handle sets)
-	return ws.db.Delete(&sessionExercise).Error
+	// Deletes are soft, so ON DELETE CASCADE never fires: delete the sets too
+	return ws.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Where("session_exercise_id = ?", sessionExercise.ID).Delete(&models.ExerciseSet{}).Error; err != nil {
+			return err
+		}
+		return tx.Delete(&sessionExercise).Error
+	})
 }

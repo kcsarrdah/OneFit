@@ -51,5 +51,5 @@ none
 
 ## Gotchas / TODO
 
-- `OnDelete:CASCADE` never fires (soft delete); deleted templates leave their `template_exercises` rows.
+- `OnDelete:CASCADE` never fires (soft delete); [template_service.go](../services/template_service.md) soft-deletes `template_exercises` with the template.
 - `gorm:"default:false"` on `IsPublic`: GORM skips zero values that have a default on create, which is fine because the default is false.

@@ -35,7 +35,8 @@ func (ws *WorkoutService) GetWorkoutStats(userID uint, days int) (map[string]int
 - `AddExerciseToWorkout`: exercise must exist; `orderIndex == 0` → max + 1.
 - `LogSet`: requires one of reps/weight/duration/distance; `SetNumber = max + 1`; `CompletedAt = now`.
 - Errors ([errors.go](errors.md)): a blank name and a set with no metric wrap `ErrInvalidInput`; a template that is missing or not the caller's (and not public) wraps `ErrNotFound`. Missing rows are `gorm.ErrRecordNotFound`.
-- `GetWorkoutStats`: window `now - days`. `total_workouts`, `total_minutes` over finished sessions; `total_sets` over sets joined to sessions in the window; `average_duration_minutes = total_minutes / total_workouts`.
+- `DeleteWorkout` / `RemoveExerciseFromWorkout`: in one transaction, soft-delete the children first (sets, then session exercises), then the row itself. Soft deletes never trigger `ON DELETE CASCADE`, so the service does it.
+- `GetWorkoutStats`: window `now - days`. `total_workouts`, `total_minutes` over finished sessions; `total_sets` over sets joined to sessions in the window, skipping sets whose session exercise or workout is soft-deleted (also covers rows orphaned before deletes cascaded); `average_duration_minutes = total_minutes / total_workouts`.
 
 ## Depends on
 
@@ -47,11 +48,11 @@ func (ws *WorkoutService) GetWorkoutStats(userID uint, days int) (map[string]int
 
 ## Tests
 
-none
+[workout_service_test.go](workout_service_test.md): delete cascades and stats after deletes.
 
 ## Gotchas / TODO
 
-- **Bug (verified):** deletes are soft and do not cascade. After `DeleteWorkout`, the session's exercises and sets stay live, and `GetWorkoutStats.total_sets` still counts them (the join does not filter `workout_sessions.deleted_at`). Same for `RemoveExerciseFromWorkout` (sets remain).
+- Workouts deleted before the cascade fix still have live `session_exercises`/`exercise_sets` rows. Stats ignore them, but they still count as "in use" when deleting a custom exercise.
 - `total_sets` also counts sets from unfinished workouts, while `total_workouts`/`total_minutes` only count finished ones.
 - `StartWorkout` does not block a second active workout; `GetActiveWorkout` then returns the oldest.
 - `UpdateWorkout` accepts an `ended_at` before `started_at` (negative duration) and lets a finished workout be re-ended.

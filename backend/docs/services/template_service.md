@@ -30,7 +30,7 @@ func (ts *TemplateService) DuplicateTemplate(userID, templateID uint, newName st
 - `GetUserTemplates`: preloads `Exercises.Exercise` (no order), `created_at DESC`.
 - `GetTemplateWithExercises`: preloads exercises ordered by `order_index`.
 - Create/Update trim strings and enforce unique names per user (service check, no DB index).
-- `DeleteTemplate`: refuses if any non-deleted `workout_sessions.template_id` points at it; soft-deletes the template only.
+- `DeleteTemplate`: refuses if any non-deleted `workout_sessions.template_id` points at it; then, in one transaction, soft-deletes its `template_exercises` and the template (soft deletes never trigger `ON DELETE CASCADE`).
 - `AddExerciseToTemplate`: checks the exercise exists and is not already in the template; `orderIndex == 0` → `MAX(order_index) + 1`; returns the row with `Exercise` preloaded.
 - Errors ([errors.go](errors.md)): a blank name wraps `ErrInvalidInput`; a duplicate name, an exercise already in the template and deleting a template still used by a workout wrap `ErrConflict`. Missing rows are `gorm.ErrRecordNotFound`.
 - `DuplicateTemplate`: copies a readable template and its exercises as a private template (default name `"<name> (Copy)"`).
@@ -45,11 +45,11 @@ func (ts *TemplateService) DuplicateTemplate(userID, templateID uint, newName st
 
 ## Tests
 
-none
+[template_service_test.go](template_service_test.md): delete cascades to template exercises.
 
 ## Gotchas / TODO
 
 - `AddExerciseToTemplate` accepts any exercise ID, including other users' custom exercises.
-- Soft-deleted templates leave `template_exercises` rows behind (no cascade).
+- Templates deleted before the cascade fix still have live `template_exercises` rows; nothing cleans those up.
 - Multi-row writes (`DuplicateTemplate`) are not in a transaction.
 - `MAX(order_index)` reads ignore the scan error; concurrent appends can get the same index.
