@@ -46,6 +46,4 @@ none (hooks and format are tested).
   picker.
 - The "Complete Fast" label and icon use `accentForeground` (near-black) on
   the destructive red.
-- After completing, Start Time and the ring keep the last fast's values until
-  Reset or the next Start.
 - No sidebar inset; headings use system bold, not Oswald.
