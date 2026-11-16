@@ -9,6 +9,7 @@ import Animated, {
 
 import { ThemedView } from '@/components/ThemedView';
 import { useBottomTabOverflow } from '@/components/ui/TabBarBackground';
+import { GlassEffectConfig } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 
 const HEADER_HEIGHT = 250;
@@ -76,6 +77,8 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     padding: 32,
+    // Clear of the floating sidebar.
+    paddingLeft: GlassEffectConfig.dimensions.vertical.contentInset,
     gap: 16,
     overflow: 'hidden',
   },

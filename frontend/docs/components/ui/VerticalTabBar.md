@@ -20,19 +20,24 @@ The floating liquid-glass sidebar on the left: the current tab's sections
 - Pressing a mode option only sets `currentSidebarOption`; the tab's screen
   reads it and swaps content (see [WorkoutsTab](../../features/workouts/screens/WorkoutsTab.md)).
   Pressing a global option also calls `router.push(option.route)`.
-- Height: `options x tabHeight + 16`, capped at `maxHeight`; scrolls and
-  bounces only when capped. Width 55 (iOS) / 60 (Android), 15 px from the edge,
-  `insets.top + topOffset` from the top.
-- Same two-layer glass as [ScrollableTabBar](ScrollableTabBar.md); global
-  options use the muted icon colour; an optional `badge` shows a destructive
-  pill.
+- Size from `GlassEffectConfig.dimensions.vertical` in [Colors](../../constants/Colors.md):
+  60 pt wide, 64 pt per item, so six items (four sections plus Analytics and
+  Settings) fit the 400 pt cap without scrolling. Height is
+  `items x 64 + 16`, capped at `maxHeight`; it scrolls and bounces only when
+  capped. 15 pt from the edge, `insets.top + topOffset` from the top.
+- Each item is the full 60 pt wide so labels like "Schedules" and
+  "Reminders" fit at 10 pt on one line; the active item gets a 52 pt soft
+  glass pill (`rgba(255,255,255,0.10)`) drawn behind icon and label, a
+  slightly larger icon and a semibold label.
+- Always the dark glass (`GlassmorphismColors.dark`): the app is dark only.
+  Global options use the muted icon colour; an optional `badge` shows a red pill.
 - Returns `null` in focus mode or when the mode has no config.
 
 ## Depends on
 
 [NavigationContext](../../contexts/NavigationContext.md), [IconSymbol](IconSymbol.md),
-[Colors](../../constants/Colors.md), [useColorScheme](../../hooks/useColorScheme.md),
-`expo-router`, `expo-haptics`, `react-native-safe-area-context`.
+[Colors](../../constants/Colors.md), `expo-router`, `expo-haptics`,
+`react-native-safe-area-context`.
 
 ## Used by
 
@@ -48,10 +53,8 @@ none.
   [+not-found](../../app/+not-found.md).
 - Only Workouts reads `currentSidebarOption`. On Fasting, Water, Nutrition,
   Home, Habits and Explore the sidebar items highlight but change nothing.
-- The sidebar overlays content (absolute). Screens must pad
-  `GlassEffectConfig.dimensions.vertical.contentInset` themselves; only
-  [PickNext](../../features/workouts/components/PickNext.md) does, so it covers
-  the left edge of the other screens.
+- The sidebar overlays content (absolute). Every screen pads
+  `GlassEffectConfig.dimensions.vertical.contentInset` (84 pt) on the left
+  itself; a new screen must too.
 - `option.icon as any`: icons are not type-checked against the
   [IconSymbol](IconSymbol.md) map (all current ones are mapped).
-- Lint: `Colors` imported twice.

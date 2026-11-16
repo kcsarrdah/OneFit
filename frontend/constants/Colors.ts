@@ -72,16 +72,8 @@ const iron = {
 /** Both schemes resolve to Iron, so screens that still ask for 'light' stay dark. */
 export const Colors = { light: iron, dark: iron };
 
+/** The liquid-glass panels (tab bar, sidebar). Dark only, like the app. */
 export const GlassmorphismColors = {
-  light: {
-    background: 'rgba(255, 255, 255, 0.70)',
-    overlay: 'rgba(0, 0, 0, 0.02)',
-    border: 'rgba(255, 255, 255, 0.08)',
-    shadow: 'rgba(0, 0, 0, 0.25)',
-    iconActive: '#1A1A1A',
-    iconInactive: '#2A2A2A',
-    iconMuted: '#404040',
-  },
   dark: {
     background: 'rgba(20, 20, 20, 0.70)',
     overlay: 'rgba(255, 255, 255, 0.03)',
@@ -107,10 +99,12 @@ export const GlassEffectConfig = {
   },
   dimensions: {
     vertical: {
-      width: Platform.OS === 'android' ? 60 : 55,
+      /** Wide enough for "Exercises", "Schedules", "Reminders" at 10 pt. */
+      width: 60,
       /** Left padding that keeps screen content clear of the floating sidebar. */
-      contentInset: Platform.OS === 'android' ? 84 : 80,
-      tabHeight: Platform.OS === 'android' ? 80 : 70,
+      contentInset: 84,
+      /** Six items (four sections + Analytics, Settings) fit in 400 pt. */
+      tabHeight: 64,
     },
     horizontal: {
       height: Platform.OS === 'android' ? 70 : 55,

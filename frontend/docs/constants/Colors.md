@@ -11,8 +11,8 @@ liquid glass colours and geometry.
 |---|---|
 | `Colors` | `{ light: iron, dark: iron }`. Both schemes are iron, so code that still asks for `'light'` stays dark |
 | `WaterColors` | Water blues (`primary #1E88E5`, `secondary`, `light`, `surface`, `drop`) and progress steps (`empty`, `low` orange, `medium`, `high #1976D2`, `full`) |
-| `GlassmorphismColors` | `{ light, dark }`: glass `background` (70% fill), `overlay`, `border` (8% white), `shadow`, `iconActive/Inactive/Muted` |
-| `GlassEffectConfig` | Glass geometry per platform: `borderRadius.vertical/horizontal`, `shadow`, `dimensions.vertical` (`width`, `contentInset` 80 iOS / 84 Android, `tabHeight`), `dimensions.horizontal` (`height`, `margin` 40) |
+| `GlassmorphismColors` | `{ dark }` only (the app is dark only): glass `background` (70% fill), `overlay`, `border` (8% white), `shadow`, `iconActive/Inactive/Muted` |
+| `GlassEffectConfig` | Glass geometry: `borderRadius.vertical/horizontal` and `shadow` per platform, `dimensions.vertical` (`width` 60, `contentInset` 84: the left padding every screen uses to clear the sidebar, `tabHeight` 64), `dimensions.horizontal` (`height`, `margin` 40) |
 | `getWaterProgressColor(percentage, colorScheme)` | `WaterColors` step for a percentage (>=100 full, >=75 high, >=50 medium, >=25 low, else empty) |
 
 Iron tokens (`Colors.dark`):
@@ -56,7 +56,7 @@ none.
 
 - The header comment still says colours are "defined in the light and dark
   mode"; they are not, by design (`CLAUDE.md` rule 4: dark only).
-- `GlassmorphismColors.light` and `getWaterProgressColor` are unused;
+- `getWaterProgressColor` is unused;
   `getWaterProgressColor`'s `colorScheme` argument is ignored.
 - The water blues are outside the iron palette on purpose (the Water screen).
 - Iron matches the web app's default theme (`web/src/index.css`); keep the
